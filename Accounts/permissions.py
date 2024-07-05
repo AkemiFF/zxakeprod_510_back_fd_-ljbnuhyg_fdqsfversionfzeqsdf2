@@ -10,13 +10,13 @@ class IsClientUser(BasePermission):
         return bool(request.user)
 
 
-class IsResponsableHotel(BasePermission):
-    """
-    Permet l'accès uniquement aux utilisateurs qui sont responsables d'un type 'Hotel'.
-    """
+# class IsResponsableHebergement(BasePermission):
+#     """
+#     Permet l'accès uniquement aux utilisateurs qui sont responsables d'un type 'Hebergement'.
+#     """
 
-    def has_permission(self, request, view):
-        if not request.user or not request.user.is_authenticated:
-            return False
+#     def has_permission(self, request, view):
+#         if not request.user or not request.user.is_authenticated:
+#             return False
 
-        return hasattr(request.user, 'type_responsable') and request.user.type_responsable.type_name == 'Hotel'
+#         return hasattr(request.user, 'type_responsable') and request.user.type_responsable.type_name == 'Hebergement'

@@ -4,7 +4,7 @@ from Hebergement import views
 
 
 urlpatterns = [
-    path('images-chambre/', views.ImageChambreListAPIView.as_view(),
-         name='images-chambre-list'),
-    path('get-hebergement-count/', views.get_count, name='hebergement-count'),
+    path('get-count-hebergement/', views.get_count, name='hebergement-count'),
+    path('get-all-hebergement/', views.get_all_hebergements, name='hebergement-all'),
+    path('create-hebergement/', views.get_all_hebergements, name='hebergement-create'),
 ]

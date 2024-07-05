@@ -1,55 +1,23 @@
-# views.py
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from Hebergement.serializers import ImageChambreSerializer, HebergementSerializer
-from rest_framework import generics
-from Hebergement.models import ImageChambre, Hebergement
-
-
-class ImageChambreListAPIView(generics.ListAPIView):
-    queryset = ImageChambre.objects.all()
-    serializer_class = ImageChambreSerializer
-
+from Hebergement.serializers import HebergementSerializer
+from Hebergement.models import Hebergement
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 @api_view(['GET'])
 def get_count(request):
     try:
-        number_hebergement = Hebergement.objects.count(pk=pk)
+        number_hebergement = Hebergement.objects.count()
     except Hebergement.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
+    return Response({'count': number_hebergement}, status=status.HTTP_200_OK)
 
-    serializer = HebergementSerializer(number_hebergement)
-    return Response(serializer.data)
-
-
-@api_view(['POST'])
-def post_count(request, pk):
-    serializer = HebergementSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['PUT'])
-def put_count(request, pk):
+@api_view(['GET'])
+def get_all_hebergements(request):
     try:
-        type_responsable = Hebergement.objects.get(pk=pk)
+        all_hebergement = Hebergement.objects.all()
     except Hebergement.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
-
-    serializer = Hebergement(type_responsable, data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['DELETE'])
-def delete_count(request, pk):
-    try:
-        type_responsable = Hebergement.objects.get(pk=pk)
-    except Hebergement.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    type_responsable.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
+    serializer = HebergementSerializer(all_hebergement, many=True)
+    return Response({'hebergements': serializer.data}, status=status.HTTP_200_OK)
