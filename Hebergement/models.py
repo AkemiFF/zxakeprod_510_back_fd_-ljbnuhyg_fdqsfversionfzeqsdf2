@@ -97,7 +97,7 @@ class Chambre(models.Model):
 class ChambrePersonaliser(models.Model):
     type_chambre = models.CharField(max_length=100)
     nombre_personnes = models.IntegerField(default=1)
-
+    
     def __str__(self):
         return self.type_chambre
 
