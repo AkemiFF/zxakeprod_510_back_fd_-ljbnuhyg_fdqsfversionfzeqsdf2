@@ -166,6 +166,17 @@ def client_detail(request, pk):
     serializer = ClientSerializer(client)
     return Response(serializer.data)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def fecth_clients_detail(request):
+    try:
+        client = Client.objects.all()
+    except Client.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    serializer = ClientSerializer(client)
+    return Response(serializer.data)
+
 
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
