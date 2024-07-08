@@ -21,4 +21,23 @@ urlpatterns = [
     # Get hebergement accessoire selon hebergement creer par responsable
     path('get-accessoire-hebergement/<int:hebergement_id>/', views.get_accessoires_hebergement, name='hebergement-accessoire-list'),
 
+    # Accessoire par defaut
+    path('accessoire_hebergement/<int:pk>/', views.get_accessoire_hebergement, name='get_accessoire_hebergement'),
+    path('accessoire_hebergement/', views.create_accessoire_hebergement, name='create_accessoire_hebergement'),
+    path('accessoire_hebergement/<int:pk>/', views.update_accessoire_hebergement, name='update_accessoire_hebergement'),
+    path('accessoire_hebergement/<int:pk>/', views.delete_accessoire_hebergement, name='delete_accessoire_hebergement'),
+
+    # Accessoire chambre par defaut
+    path('accessoires-chambre/', views.get_accessoire_chambre, name='get_accessoire_chambre'),
+    path('accessoires-chambre/create/', views.create_accessoire_chambre, name='create_accessoire_chambre'),
+    path('accessoires-chambre/update/<int:pk>/', views.update_accessoire_chambre, name='update_accessoire_chambre'),
+    path('accessoires-chambre/delete/<int:pk>/', views.delete_accessoire_chambre, name='delete_accessoire_chambre'),
+
+    # Chambre personaliser 
+    path('chambre_personaliser/', views.chambre_personaliser_list, name='chambre_personaliser_list'),
+    path('chambre_personaliser/<int:pk>/', views.chambre_personaliser_detail, name='chambre_personaliser_detail'),
+
+    # Chambre par defaut admin
+    path('get-post-chambres/', views.get_post_chambres, name='get-post-chambres'),
+    path('put-delete-chambre/<int:pk>/', views.put_delete_chambre, name='put-delete-chambre'),
 ]
