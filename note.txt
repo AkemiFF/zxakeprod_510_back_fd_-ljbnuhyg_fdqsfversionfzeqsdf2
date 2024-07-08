@@ -1,0 +1,12 @@
+
+docker build --no-cache -t reservationhotel .
+docker image list
+
+docker tag python:3.10 gcr.io/Aftrip/Aftrip-back
+
+docker image list
+
+gcloud auth configure-docker
+
+gcloud projects add-iam-policy-binding Aftrip --member='user:mirado.akemi@gmail.com' --role='roles/storage.admin'
+gcloud projects add-iam-policy-binding Aftrip --member='user:mirado.akemi@gmail.com' --role='roles/storage.objectAdmin'
