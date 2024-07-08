@@ -80,7 +80,7 @@ def get_all_reservations(request):
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = ReservationVoyageSerializer(reservations, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
-
+8
 @api_view(['GET'])
 def get_reservation_by_id(request, pk):
     try:
