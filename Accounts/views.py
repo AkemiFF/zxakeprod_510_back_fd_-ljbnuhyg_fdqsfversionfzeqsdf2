@@ -1,4 +1,5 @@
 from imaplib import _Authenticator
+from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -175,6 +176,18 @@ def client_detail(request, pk):
 
     serializer = ClientSerializer(client)
     return Response(serializer.data)
+
+# Get all customer lists
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def fetch_clients_detail(request):
+    try:
+        clients = Client.objects.all()
+    except Client.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    serializer = ClientSerializer(clients, many=True)
+    return JsonResponse(serializer.data, safe=False)
 
 
 @api_view(['POST'])
