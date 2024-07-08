@@ -13,4 +13,5 @@ urlpatterns = [
     path('tourOperateur/', include('TourOperateur.urls')), #Include TourOperateur URLs her
 
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+
 ]

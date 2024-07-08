@@ -1,8 +1,8 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from Hebergement.serializers import HebergementAccessoireSerializer, HebergementSerializer
-from Hebergement.models import Hebergement, HebergementAccessoire
+from Hebergement.serializers import ChambreSerializer, HebergementAccessoireSerializer, HebergementSerializer, AccessoireHebergementSerializer, AccessoireChambreSerializer, ChambrePersonaliserSerializer
+from Hebergement.models import Chambre, Hebergement, HebergementAccessoire, AccessoireHebergement, AccessoireChambre, ChambrePersonaliser
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 # Nombre hebergement creer
@@ -87,3 +87,144 @@ def get_accessoires_hebergement(request, hebergement_id):
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = HebergementAccessoireSerializer(accessoires, many=True)
     return Response({'accessoires': serializer.data}, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def get_accessoire_hebergement(request, pk):
+    try:
+        accessoire = AccessoireHebergement.objects.get(pk=pk)
+    except AccessoireHebergement.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    serializer = AccessoireHebergementSerializer(accessoire)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+def create_accessoire_hebergement(request):
+    serializer = AccessoireHebergementSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PUT'])
+def update_accessoire_hebergement(request, pk):
+    try:
+        accessoire = AccessoireHebergement.objects.get(pk=pk)
+    except AccessoireHebergement.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    serializer = AccessoireHebergementSerializer(accessoire, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['DELETE'])
+def delete_accessoire_hebergement(request, pk):
+    try:
+        accessoire = AccessoireHebergement.objects.get(pk=pk)
+    except AccessoireHebergement.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    accessoire.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+@api_view(['GET'])
+def get_accessoire_chambre(request):
+    accessoires = AccessoireChambre.objects.all()
+    serializer = AccessoireChambreSerializer(accessoires, many=True)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+def create_accessoire_chambre(request):
+    serializer = AccessoireChambreSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PUT'])
+def update_accessoire_chambre(request, pk):
+    try:
+        accessoire = AccessoireChambre.objects.get(pk=pk)
+    except AccessoireChambre.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    serializer = AccessoireChambreSerializer(accessoire, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['DELETE'])
+def delete_accessoire_chambre(request, pk):
+    try:
+        accessoire = AccessoireChambre.objects.get(pk=pk)
+    except AccessoireChambre.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    accessoire.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+@api_view(['GET', 'POST'])
+def chambre_personaliser_list(request):
+    if request.method == 'GET':
+        chambre_personaliser = ChambrePersonaliser.objects.all()
+        serializer = ChambrePersonaliserSerializer(chambre_personaliser, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    elif request.method == 'POST':
+        serializer = ChambrePersonaliserSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def chambre_personaliser_detail(request, pk):
+    try:
+        chambre_personaliser = ChambrePersonaliser.objects.get(pk=pk)
+    except ChambrePersonaliser.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = ChambrePersonaliserSerializer(chambre_personaliser)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    elif request.method == 'PUT':
+        serializer = ChambrePersonaliserSerializer(chambre_personaliser, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'DELETE':
+        chambre_personaliser.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+@api_view(['GET', 'POST'])
+def get_post_chambres(request):
+    if request.method == 'GET':
+        chambres = Chambre.objects.all()
+        serializer = ChambreSerializer(chambres, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    elif request.method == 'POST':
+        serializer = ChambreSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PUT', 'DELETE'])
+def put_delete_chambre(request, pk):
+    try:
+        chambre = Chambre.objects.get(pk=pk)
+    except Chambre.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'PUT':
+        serializer = ChambreSerializer(chambre, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'DELETE':
+        chambre.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

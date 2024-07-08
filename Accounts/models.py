@@ -73,13 +73,13 @@ class Client(AbstractUser):
 
     )
     email = models.EmailField(_('email address'), unique=True)
-    numero_client = models.CharField(max_length=10)
-    numero_bancaire_client = models.CharField(max_length=19, null=True, validators=[RegexValidator(
+    numero_client = models.CharField(max_length=10, blank=True)
+    numero_bancaire_client = models.CharField(max_length=19, null=True, blank=True, validators=[RegexValidator(
         regex=r'^(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12}|(?:2131|1800|35\d{3})\d{11})$',
         message='Le numéro de carte bancaire n\'est pas valide.'
     )])
     type_carte_bancaire = models.ForeignKey(
-        TypeCarteBancaire, on_delete=models.SET_NULL, null=True)
+        TypeCarteBancaire, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -90,9 +90,9 @@ class Client(AbstractUser):
         verbose_name = _('client')
         verbose_name_plural = _('clients')
 
-    # def save(self, *args, **kwargs):
-    #     self.password = make_password(self.password)
-    #     super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        self.password = make_password(self.password)
+        super().save(*args, **kwargs)
 
 
 Client._meta.get_field('password').validators = [
