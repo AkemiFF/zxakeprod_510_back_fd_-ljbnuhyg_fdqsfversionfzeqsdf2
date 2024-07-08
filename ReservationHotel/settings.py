@@ -14,7 +14,7 @@ SECRET_KEY = 'django-insecure-bny-#1=2sz=nsz&(m1fjw&kjy0=33p-i09nowjwf+n8wev-!z9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.88.92', '127.0.0.1', '192.168.88.56']
+ALLOWED_HOSTS = ['192.168.88.92', '127.0.0.1', '192.168.88.56', "localhost"]
 
 
 # Application definition
@@ -183,6 +183,11 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:8000",
 ]
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000']
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+
 
 CORS_ALLOW_METHODS = [
     'DELETE',

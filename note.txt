@@ -8,5 +8,9 @@ docker image list
 
 gcloud auth configure-docker
 
-gcloud projects add-iam-policy-binding Aftrip --member='user:mirado.akemi@gmail.com' --role='roles/storage.admin'
-gcloud projects add-iam-policy-binding Aftrip --member='user:mirado.akemi@gmail.com' --role='roles/storage.objectAdmin'
+gcloud artifacts repositories create quickstart-docker-repo --repository-format=docker \ --location=us-west2 --description="Docker repository"
+
+gcloud artifacts repositories list
+
+Obtenez votre ID de projet Google Cloud en exécutant la commande suivante:
+gcloud config get-value project
