@@ -36,11 +36,11 @@ urlpatterns = [
     # URLs pour Client
     path('client/<int:pk>/', views.client_detail, name='client_detail'),
     path('client/create/', views.client_create, name='client_create'),
-#     path('client/login/', views.login_view, name='client_login'),
     path('client/update/<int:pk>/', views.client_update, name='client_update'),
     path('client/delete/<int:pk>/', views.client_delete, name='client_delete'),
 
      # Registers
+     path('client/login/', views.client_login, name='client_login'),
      # path('registers/', views.RegisterView.as_view(), name='register'),
 
 ]

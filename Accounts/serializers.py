@@ -5,7 +5,7 @@ from Accounts.models import *
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
-        fields = '__all__'
+        fields = ['email', 'password']
         extra_kwargs = {
             'password' : {
                 'write_only': True
