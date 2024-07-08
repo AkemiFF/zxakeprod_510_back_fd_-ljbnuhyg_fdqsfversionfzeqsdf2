@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from Artisanal.models import *
 from Hebergement.models import *
+from TourOperateur.models import TourOperateur
 from polymorphic.models import PolymorphicModel
 
 
@@ -21,11 +22,12 @@ class HebergementMessage(Message):
     receiver = models.ForeignKey(
         Hebergement, related_name='messages', on_delete=models.CASCADE)
 
-# class ArtisanatMessage(Message):
-#     artisanat = models.ForeignKey(
-#         Artisanat, related_name='messages', on_delete=models.CASCADE)
+
+class ArtisanatMessage(Message):
+    artisanat = models.ForeignKey(
+        Artisanat, related_name='messages', on_delete=models.CASCADE)
 
 
-# class TourOperateurMessage(Message):
-#     tour_operateur = models.ForeignKey(
-#         TourOperateur, related_name='messages', on_delete=models.CASCADE)
+class TourOperateurMessage(Message):
+    tour_operateur = models.ForeignKey(
+        TourOperateur, related_name='messages', on_delete=models.CASCADE)

@@ -1,10 +1,21 @@
+from imaplib import _Authenticator
+from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework import status
-from .serializers import TypeResponsableSerializer, ResponsableEtablissementSerializer, TypeCarteBancaireSerializer, ClientSerializer
+from .serializers import UserSerializer, TypeResponsableSerializer, ResponsableEtablissementSerializer, TypeCarteBancaireSerializer, ClientSerializer
 from Accounts.models import TypeResponsable, ResponsableEtablissement, TypeCarteBancaire, Client
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import *
 from .permissions import IsClientUser
+from rest_framework_simplejwt.tokens import RefreshToken
+
+# class RegisterView(APIView):
+#     def post(self, request):
+#         serializer = UserSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save()
+#         return Response(serializer.data)
 
 # Pour la partie TypeResponsable
 @api_view(['GET'])
@@ -156,7 +167,7 @@ def type_carte_bancaire_delete(request, pk):
 
 # Pour la partie Clients
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def client_detail(request, pk):
     try:
         client = Client.objects.get(pk=pk)
@@ -166,17 +177,47 @@ def client_detail(request, pk):
     serializer = ClientSerializer(client)
     return Response(serializer.data)
 
+# Get all customer lists
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def fetch_clients_detail(request):
+    try:
+        clients = Client.objects.all()
+    except Client.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    serializer = ClientSerializer(clients, many=True)
+    return JsonResponse(serializer.data, safe=False)
+
 
 @api_view(['POST'])
-@permission_classes([IsAdminUser])
+@permission_classes([AllowAny])
 def client_create(request):
-    serializer = ClientSerializer(data=request.data)
+    serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def client_login(request):
+    serializer = UserSerializer(data=request.data)
+    if serializer.is_valid():
+        email = serializer.validated_data['email']
+        password = serializer.validated_data['password']
+        
+        try:
+            client = Client.objects.get(email=email)
+            if client.check_password(password):
+                refresh = RefreshToken.for_user(client)
+                return Response({'message': 'Login successful', 'refresh': str(refresh), 'access': str(refresh.access_token)})
+            else:
+                return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        except Client.DoesNotExist:
+            return Response({'error': 'Client not found'}, status=status.HTTP_404_NOT_FOUND)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 @api_view(['PUT'])
 @permission_classes([IsAdminUser])
 def client_update(request, pk):
@@ -202,3 +243,4 @@ def client_delete(request, pk):
 
     client.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
+

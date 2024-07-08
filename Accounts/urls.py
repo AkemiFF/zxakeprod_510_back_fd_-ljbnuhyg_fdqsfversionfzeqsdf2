@@ -34,8 +34,14 @@ urlpatterns = [
          views.type_carte_bancaire_delete, name='type_carte_bancaire_delete'),
 
     # URLs pour Client
-    path('client/<int:pk>/', views.client_detail, name='client_detail'),
+    path('client/<int:pk>/', views.client_detail, name='client_detail'), # Urls pour obtenir un Client
+    path('clients/', views.fetch_clients_detail, name='fecth_clients_detail'), # Urls pour obtenir tous les clients
     path('client/create/', views.client_create, name='client_create'),
     path('client/update/<int:pk>/', views.client_update, name='client_update'),
     path('client/delete/<int:pk>/', views.client_delete, name='client_delete'),
+
+     # Registers
+     path('client/login/', views.client_login, name='client_login'),
+     # path('registers/', views.RegisterView.as_view(), name='register'),
+
 ]

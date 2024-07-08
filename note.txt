@@ -1,0 +1,16 @@
+
+docker build --no-cache -t reservationhotel .
+docker image list
+
+docker tag python:3.10 gcr.io/Aftrip/Aftrip-back
+
+docker image list
+
+gcloud auth configure-docker
+
+gcloud artifacts repositories create quickstart-docker-repo --repository-format=docker \ --location=us-west2 --description="Docker repository"
+
+gcloud artifacts repositories list
+
+Obtenez votre ID de projet Google Cloud en exécutant la commande suivante:
+gcloud config get-value project

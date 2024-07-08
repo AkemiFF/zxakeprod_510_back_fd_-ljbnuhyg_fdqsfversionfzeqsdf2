@@ -20,6 +20,7 @@ class HebergementImage(models.Model):
         'Hebergement', on_delete=models.CASCADE, related_name='images')
     couverture = models.BooleanField(default=False)
     legende_hebergement = models.CharField(max_length=200, blank=True)
+    images = models.ImageField(upload_to='images/images_Hebergement', null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -96,7 +97,7 @@ class Chambre(models.Model):
 class ChambrePersonaliser(models.Model):
     type_chambre = models.CharField(max_length=100)
     nombre_personnes = models.IntegerField(default=1)
-
+    
     def __str__(self):
         return self.type_chambre
 

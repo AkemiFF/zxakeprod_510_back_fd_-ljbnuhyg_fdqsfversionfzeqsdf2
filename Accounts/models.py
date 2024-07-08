@@ -20,7 +20,7 @@ class TypeResponsable(models.Model):
 class ResponsableEtablissement(AbstractUser):
     numero_responsable = models.CharField(max_length=10, validators=[RegexValidator(
         regex=r'^(032|033|034|038)\d{7}$', message='Le numéro doit commencer par 032, 033, 034 ou 038 et contenir 7 chiffres supplémentaires.')])
-
+    
     type_responsable = models.ForeignKey(
         TypeResponsable, null=True, on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -46,7 +46,7 @@ class ResponsableEtablissement(AbstractUser):
         verbose_name_plural = _('ResponsableEtablissement')
 
     def __str__(self):
-        return f"{self.nom_responsable} {self.prenom_responsable} ({self.type_responsable})"
+        return f"{self.username} {self.email} ({self.type_responsable})"
     # def save(self, *args, **kwargs):
     #     self.password_responsable = make_password(self.password_responsable)
     #     super().save(*args, **kwargs)
@@ -73,13 +73,13 @@ class Client(AbstractUser):
 
     )
     email = models.EmailField(_('email address'), unique=True)
-    numero_client = models.CharField(max_length=10)
-    numero_bancaire_client = models.CharField(max_length=19, null=True, validators=[RegexValidator(
+    numero_client = models.CharField(max_length=10, blank=True)
+    numero_bancaire_client = models.CharField(max_length=19, null=True, blank=True, validators=[RegexValidator(
         regex=r'^(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12}|(?:2131|1800|35\d{3})\d{11})$',
         message='Le numéro de carte bancaire n\'est pas valide.'
     )])
     type_carte_bancaire = models.ForeignKey(
-        TypeCarteBancaire, on_delete=models.SET_NULL, null=True)
+        TypeCarteBancaire, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -90,9 +90,9 @@ class Client(AbstractUser):
         verbose_name = _('client')
         verbose_name_plural = _('clients')
 
-    # def save(self, *args, **kwargs):
-    #     self.password = make_password(self.password)
-    #     super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        self.password = make_password(self.password)
+        super().save(*args, **kwargs)
 
 
 Client._meta.get_field('password').validators = [
