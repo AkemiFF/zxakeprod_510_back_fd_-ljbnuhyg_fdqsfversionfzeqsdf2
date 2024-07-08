@@ -14,7 +14,7 @@ SECRET_KEY = 'django-insecure-bny-#1=2sz=nsz&(m1fjw&kjy0=33p-i09nowjwf+n8wev-!z9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.88.92', '127.0.0.1', '192.168.88.88']
+ALLOWED_HOSTS = ['192.168.88.92', '127.0.0.1', '192.168.88.56']
 
 
 # Application definition
@@ -71,23 +71,23 @@ WSGI_APPLICATION = 'ReservationHotel.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'aftrip',
-        'USER': 'postgres',
-        'PASSWORD': 'H{S[jcJ7(x50LD2N',
-        'HOST': '34.122.112.53',
-        'PORT': '5432',
-    }
-}
-
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'aftrip',
+#         'USER': 'postgres',
+#         'PASSWORD': 'H{S[jcJ7(x50LD2N',
+#         'HOST': '34.122.112.53',
+#         'PORT': '5432',
 #     }
 # }
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
