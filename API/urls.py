@@ -6,7 +6,7 @@ from API import views
 urlpatterns = [
     # Include Hebergements URLs here
     path('hebergement/', include('Hebergement.urls')),
-    path('info/', include('Accounts.urls')),
+    path('accounts/', include('Accounts.urls')),
     path('user/', views.user_endpoint, name='user_endpoint'),
 
     # Include Artisanal URLs here

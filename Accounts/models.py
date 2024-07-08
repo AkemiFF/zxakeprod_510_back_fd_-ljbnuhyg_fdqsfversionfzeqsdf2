@@ -90,9 +90,9 @@ class Client(AbstractUser):
         verbose_name = _('client')
         verbose_name_plural = _('clients')
 
-    def save(self, *args, **kwargs):
-        self.password = make_password(self.password)
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     self.password = make_password(self.password)
+    #     super().save(*args, **kwargs)
 
 
 Client._meta.get_field('password').validators = [
