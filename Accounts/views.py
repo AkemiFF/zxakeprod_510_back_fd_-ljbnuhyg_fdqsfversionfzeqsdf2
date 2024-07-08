@@ -166,16 +166,17 @@ def client_detail(request, pk):
     serializer = ClientSerializer(client)
     return Response(serializer.data)
 
+# Get all customer lists
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def fecth_clients_detail(request):
+@permission_classes([IsAdminUser])
+def fetch_clients_detail(request):
     try:
-        client = Client.objects.all()
+        clients = Client.objects.all()
     except Client.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
-
-    serializer = ClientSerializer(client)
-    return Response(serializer.data)
+    
+    serializer = ClientSerializer(clients, many=True)
+    return JsonResponse(serializer.data, safe=False)
 
 
 @api_view(['POST'])
