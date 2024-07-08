@@ -193,10 +193,29 @@ def fetch_clients_detail(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def client_create(request):
-    serializer = ClientSerializer(data=request.data)
+    serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def client_login(request):
+    serializer = UserSerializer(data=request.data)
+    if serializer.is_valid():
+        email = serializer.validated_data['email']
+        password = serializer.validated_data['password']
+        
+        try:
+            client = Client.objects.get(email=email)
+            if client.check_password(password):
+                refresh = RefreshToken.for_user(client)
+                return Response({'message': 'Login successful', 'refresh': str(refresh), 'access': str(refresh.access_token)})
+            else:
+                return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        except Client.DoesNotExist:
+            return Response({'error': 'Client not found'}, status=status.HTTP_404_NOT_FOUND)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 @api_view(['PUT'])
