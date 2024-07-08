@@ -9,4 +9,5 @@ urlpatterns = [
     path('user/', views.user_endpoint, name='user_endpoint'),
 
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+
 ]
