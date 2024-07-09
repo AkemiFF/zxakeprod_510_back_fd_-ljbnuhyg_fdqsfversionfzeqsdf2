@@ -8,7 +8,7 @@ docker image list
 
 gcloud auth configure-docker
 
-gcloud artifacts repositories create quickstart-docker-repo --repository-format=docker \ --location=us-west2 --description="Docker repository"
+gcloud artifacts repositories create aftrip-docker-back --repository-format=docker \ --location=us-west2 --description="Aftrip Back-End"
 
 gcloud artifacts repositories list
 
