@@ -5,7 +5,7 @@ from API import views
 
 urlpatterns = [
     path('hebergement/', include('Hebergement.urls')),
-    path('info/', include('Accounts.urls')),
+    path('accounts/', include('Accounts.urls')),
     path('user/', views.user_endpoint, name='user_endpoint'),
     path('artisanal/', include('Artisanal.urls')),
     path('tourOperateur/', include('TourOperateur.urls')),

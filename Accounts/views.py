@@ -1,3 +1,4 @@
+from multiprocessing import AuthenticationError
 from django.contrib.auth.hashers import check_password
 from imaplib import _Authenticator
 from django.http import JsonResponse
@@ -219,15 +220,34 @@ def client_login(request):
 
         try:
             client = Client.objects.get(email=email)
-            print(check_password(password, client.password))
             if check_password(password, client.password):
                 refresh = RefreshToken.for_user(client)
                 return Response({'message': 'Login successful', 'refresh': str(refresh), 'access': str(refresh.access_token)})
             else:
-                return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+                return Response({'password': ['Mot de passe incorrect']}, status=status.HTTP_401_UNAUTHORIZED)
         except Client.DoesNotExist:
-            return Response({'error': 'Client not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'email': ['Email incorrect ou n\'existe pas']}, status=status.HTTP_404_NOT_FOUND)
+    
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def client_login(request):
+    email = request.data.get('email')
+    password = request.data.get('password')
+    user = AuthenticationError(email=email, password=password)
+
+    if user is not None:
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+        })
+
+    return Response({
+        'email': ['Email incorrect ou n\'existe pas.'],
+        'password': ['Mot de passe incorrect.'],
+    }, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['PUT'])

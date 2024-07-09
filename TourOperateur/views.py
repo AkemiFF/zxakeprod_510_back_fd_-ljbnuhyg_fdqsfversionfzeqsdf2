@@ -1,9 +1,10 @@
 # views.py
 
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from .models import TourOperateur, Voyage, ImageVoyage, Reservation_voyage
+from rest_framework.permissions import *
 from .serializers import (
     TourOperateurSerializer,
     VoyageSerializer,
@@ -15,6 +16,7 @@ from .serializers import (
 # Tour Operateur Views
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_all_tour_operateurs(request):
     try:
         tour_operateurs = TourOperateur.objects.all()
@@ -24,6 +26,7 @@ def get_all_tour_operateurs(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_tour_operateur_by_id(request, pk):
     try:
         tour_operateur = TourOperateur.objects.get(pk=pk)
@@ -33,6 +36,7 @@ def get_tour_operateur_by_id(request, pk):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_tour_operateur_voyages(request, pk):
     try:
         voyages = Voyage.objects.filter(tour_operateur=pk)
