@@ -1,17 +1,24 @@
 # MyAccount/serialisers.py
 from rest_framework import serializers
 from Accounts.models import *
+from rest_framework import serializers
+
+
+class UserSerializerVerify(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField()
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = ['email', 'password']
         extra_kwargs = {
-            'password' : {
+            'password': {
                 'write_only': True
             }
         }
-        
+
     def create(self, validated_data):
         password = validated_data.pop('password', None)
         instance = self.Meta.model(**validated_data)
@@ -21,6 +28,8 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
 
 # Pour le TypeResponsable
+
+
 class TypeResponsableSerializer(serializers.ModelSerializer):
     class Meta:
         model = TypeResponsable

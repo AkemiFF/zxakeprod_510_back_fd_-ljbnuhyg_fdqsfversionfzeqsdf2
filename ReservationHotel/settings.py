@@ -5,16 +5,13 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-bny-#1=2sz=nsz&(m1fjw&kjy0=33p-i09nowjwf+n8wev-!z9'
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.88.92', '127.0.0.1', '192.168.88.56']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -46,6 +43,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'Accounts.middleware.CSRFMiddleware',
 ]
 
 ROOT_URLCONF = 'ReservationHotel.urls'
@@ -179,10 +177,15 @@ SIMPLE_JWT = {
 }
 
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:8000",
-]
+CORS_ALLOWED_ORIGINS = ["http://localhost:3000",
+                        "http://127.0.0.1:3000",]
+
+CSRF_TRUSTED_ORIGINS = ["http://localhost:3000",
+                        "http://127.0.0.1:3000",]
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+
 
 CORS_ALLOW_METHODS = [
     'DELETE',
@@ -200,4 +203,5 @@ CORS_ALLOW_HEADERS = [
     'Content-Type',
     'Origin',
     'User-Agent',
+    'X-CSRFToken',
 ]
