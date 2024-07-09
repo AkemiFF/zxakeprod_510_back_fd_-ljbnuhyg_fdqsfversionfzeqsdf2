@@ -48,8 +48,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'Accounts.middleware.CSRFMiddleware',
-    'allauth.account.auth_backends.AuthenticationBackend',
     'allauth.account.middleware.AccountMiddleware',
+]
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 ROOT_URLCONF = 'ReservationHotel.urls'
@@ -71,6 +75,9 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'ReservationHotel.wsgi.application'
+SITE_ID = 1
+
+LOGIN_REDIRECT_URL = '/'
 
 
 # Database
@@ -193,9 +200,6 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
-SITE_ID = 1
-
-LOGIN_REDIRECT_URL = '/'
 
 CORS_ALLOWED_ORIGINS = ["http://localhost:3000",
                         "http://127.0.0.1:3000",]
