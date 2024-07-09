@@ -188,7 +188,7 @@ def client_detail(request, pk):
 
 
 @api_view(['GET'])
-@permission_classes([IsAdminUser])
+@permission_classes([AllowAny])
 def fetch_clients_detail(request):
     try:
         clients = Client.objects.all()
