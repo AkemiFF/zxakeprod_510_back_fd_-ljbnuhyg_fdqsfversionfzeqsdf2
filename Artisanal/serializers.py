@@ -1,19 +1,21 @@
 from rest_framework import serializers
-from Artisanal.models import Artisanat,ProduitArtisanal,Panier,ItemPanier,Commande  # Assurez-vous d'importer Commande depuis Artisanal.models
+# Assurez-vous d'importer Commande depuis Artisanal.models
+from Artisanal.models import Artisanat, ProduitArtisanal, Panier, ItemPanier, Commande
+
 
 class ArtisanatSerializer(serializers.ModelSerializer):
     class Meta:
         model = Artisanat
         fields = (
-            'responsable_artisanat', 'localisation'
+            'id', 'responsable_artisanat', 'localisation'
         )
+
 
 class ProduitArtisanalSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProduitArtisanal
-        fields = (
-            'description_artisanat', 'prix_artisanat', 'disponible_artisanat', 'image_artisanat', 'responsable', 'created_at', 'updated_at'
-        )
+        fields = '__all__'
+
 
 class PanierSerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,6 +24,7 @@ class PanierSerializer(serializers.ModelSerializer):
             'client', 'produits', 'total'
         )
 
+
 class ItemPanierSerializer(serializers.ModelSerializer):
     class Meta:
         model = ItemPanier
@@ -29,7 +32,9 @@ class ItemPanierSerializer(serializers.ModelSerializer):
             'panier', 'produit', 'quantite'
         )
 
-class CommandeSerializer(serializers.ModelSerializer):  # Utilisez serializers.ModelSerializer ici
+
+# Utilisez serializers.ModelSerializer ici
+class CommandeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Commande
         fields = (

@@ -5,9 +5,15 @@ from . import views
 
 urlpatterns = [
     # Tour Operateur URLs
-    path('tour_operateurs/', views.get_all_tour_operateurs, name='tour-operateurs-list'),
-    path('tour_operateurs/<int:pk>/', views.get_tour_operateur_by_id, name='tour-operateur-detail'),
-    path('tour_operateurs/<int:pk>/voyages/', views.get_tour_operateur_voyages, name='tour-operateur-voyages'),
+    path('responsable/<int:responsable_id>/',
+         views.TourOperateurListByResponsableView.as_view(), name='tour_operateurs-by-responsable'),
+
+    path('', views.get_all_tour_operateurs,
+         name='tour-operateurs-list'),
+    path('<int:pk>/', views.get_tour_operateur_by_id,
+         name='tour-operateur-detail'),
+    path('<int:pk>/voyages/',
+         views.get_tour_operateur_voyages, name='tour-operateur-voyages'),
 
     # Voyage URLs
     path('voyages/', views.get_all_voyages, name='voyages-list'),
@@ -16,7 +22,10 @@ urlpatterns = [
 
     # Reservation Voyage URLs
     path('reservations/', views.get_all_reservations, name='reservations-list'),
-    path('reservations/<int:pk>/', views.get_reservation_by_id, name='reservation-detail'),
-    path('reservations/create/', views.create_reservation, name='reservation-create'),
-    path('reservations/<int:pk>/', views.reservation_detail, name='reservation-detail'),
+    path('reservations/<int:pk>/', views.get_reservation_by_id,
+         name='reservation-detail'),
+    path('reservations/create/', views.create_reservation,
+         name='reservation-create'),
+    path('reservations/<int:pk>/', views.reservation_detail,
+         name='reservation-detail'),
 ]

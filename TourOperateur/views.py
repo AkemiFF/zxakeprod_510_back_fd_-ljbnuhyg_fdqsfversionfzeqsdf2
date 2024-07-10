@@ -1,9 +1,13 @@
 # views.py
 
+from rest_framework import generics
+from .serializers import TourOperateurSerializer
+from .models import TourOperateur
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from .models import TourOperateur, Voyage, ImageVoyage, Reservation_voyage
+from rest_framework.permissions import *
 from .serializers import (
     TourOperateurSerializer,
     VoyageSerializer,
@@ -15,6 +19,7 @@ from .serializers import (
 # Tour Operateur Views
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_all_tour_operateurs(request):
     try:
         tour_operateurs = TourOperateur.objects.all()
@@ -23,7 +28,9 @@ def get_all_tour_operateurs(request):
     serializer = TourOperateurSerializer(tour_operateurs, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_tour_operateur_by_id(request, pk):
     try:
         tour_operateur = TourOperateur.objects.get(pk=pk)
@@ -32,7 +39,9 @@ def get_tour_operateur_by_id(request, pk):
     serializer = TourOperateurSerializer(tour_operateur)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_tour_operateur_voyages(request, pk):
     try:
         voyages = Voyage.objects.filter(tour_operateur=pk)
@@ -43,6 +52,7 @@ def get_tour_operateur_voyages(request, pk):
 
 # Voyage Views
 
+
 @api_view(['GET'])
 def get_all_voyages(request):
     try:
@@ -52,6 +62,7 @@ def get_all_voyages(request):
     serializer = VoyageSerializer(voyages, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 @api_view(['GET'])
 def get_voyage_by_id(request, pk):
     try:
@@ -60,6 +71,7 @@ def get_voyage_by_id(request, pk):
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = VoyageSerializer(voyage)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 @api_view(['GET'])
 def get_voyage_images(request, pk):
@@ -72,6 +84,7 @@ def get_voyage_images(request, pk):
 
 # Reservation Voyage Views
 
+
 @api_view(['GET'])
 def get_all_reservations(request):
     try:
@@ -80,7 +93,11 @@ def get_all_reservations(request):
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = ReservationVoyageSerializer(reservations, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 8
+
+
 @api_view(['GET'])
 def get_reservation_by_id(request, pk):
     try:
@@ -99,6 +116,7 @@ def create_reservation(request):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 @api_view(['PUT', 'DELETE'])
 def reservation_detail(request, pk):
     try:
@@ -107,7 +125,8 @@ def reservation_detail(request, pk):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'PUT':
-        serializer = ReservationVoyageSerializer(reservation, data=request.data)
+        serializer = ReservationVoyageSerializer(
+            reservation, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -116,3 +135,11 @@ def reservation_detail(request, pk):
     elif request.method == 'DELETE':
         reservation.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TourOperateurListByResponsableView(generics.ListAPIView):
+    serializer_class = TourOperateurSerializer
+
+    def get_queryset(self):
+        responsable_id = self.kwargs['responsable_id']
+        return TourOperateur.objects.filter(responsable_TourOperateur__id=responsable_id)

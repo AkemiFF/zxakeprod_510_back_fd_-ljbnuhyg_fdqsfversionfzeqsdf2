@@ -12,5 +12,7 @@ gcloud artifacts repositories create aftrip-docker-back --repository-format=dock
 
 gcloud artifacts repositories list
 
+gcloud builds submit --region=us-west2 --tag us-west2-docker.pkg.dev/impactful-post-428514-j8/aftrip-docker-back/reservationhotel:latest
+
 Obtenez votre ID de projet Google Cloud en exécutant la commande suivante:
 gcloud config get-value project

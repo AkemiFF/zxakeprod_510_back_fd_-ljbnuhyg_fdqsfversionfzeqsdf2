@@ -2,6 +2,8 @@ from django.urls import path
 from .import views
 
 urlpatterns = [
+    path('client-update/<int:pk>/ban/', views.update_ban_status,
+         name='client-ban-update'),
 
     path('type-responsable/<int:pk>/', views.type_responsable_detail,
          name='type_responsable_detail'),
@@ -34,14 +36,19 @@ urlpatterns = [
          views.type_carte_bancaire_delete, name='type_carte_bancaire_delete'),
 
     # URLs pour Client
-    path('client/<int:pk>/', views.client_detail, name='client_detail'), # Urls pour obtenir un Client
-    path('clients/', views.fetch_clients_detail, name='fecth_clients_detail'), # Urls pour obtenir tous les clients
+    path('client/<int:pk>/', views.client_detail,
+         name='client_detail'),  # Urls pour obtenir un Client
+    # Urls pour obtenir tous les clients
+    path('clients/', views.fetch_clients_detail, name='fecth_clients_detail'),
     path('client/create/', views.client_create, name='client_create'),
     path('client/update/<int:pk>/', views.client_update, name='client_update'),
     path('client/delete/<int:pk>/', views.client_delete, name='client_delete'),
 
-     # Registers
-     path('client/login/', views.client_login, name='client_login'),
-     # path('registers/', views.RegisterView.as_view(), name='register'),
+    # Registers
+    path('client/login/', views.client_login, name='client_login'),
+    # path('registers/', views.RegisterView.as_view(), name='register'),
+    path('responsables/type/<int:type_id>/',
+         views.ResponsableEtablissementListByTypeView.as_view(), name='responsables-by-type'),
+
 
 ]

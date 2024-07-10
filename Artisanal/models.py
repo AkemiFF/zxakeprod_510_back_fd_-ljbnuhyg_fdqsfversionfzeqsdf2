@@ -12,25 +12,24 @@ class Artisanat(models.Model):
         ResponsableEtablissement, on_delete=models.CASCADE, related_name='Aoio')
     localisation = models.ForeignKey(Localisation, on_delete=models.CASCADE,)
 
+    def __str__(self):
+        return f'{self.responsable_artisanat} ({self.localisation.adresse})'
+
 
 class ProduitArtisanal(models.Model):
+    nom_produit_artisanal = models.CharField(max_length=100, default="")
     description_artisanat = models.TextField()
     prix_artisanat = models.DecimalField(max_digits=8, decimal_places=2)
     disponible_artisanat = models.BooleanField(default=True)
     image_artisanat = models.ImageField(
         upload_to='artisanat_images', blank=True)
-    responsable = models.ForeignKey(
+    artisanat = models.ForeignKey(
         Artisanat, on_delete=models.CASCADE, related_name='responsable', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def clean(self):
-        super().clean()
-        if self.responsable_artisanat.type_responsable.type_name != "Hotel":
-            raise ValidationError("Le responsable doit être de type 'Hotel'.")
-
     def __str__(self):
-        return self.nom_artisanat
+        return f'({self.nom_produit_artisanal}) - {self.artisanat.responsable_artisanat.email}'
 
 
 class Panier(models.Model):
