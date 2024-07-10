@@ -14,4 +14,5 @@ urlpatterns = [
          views.get_csrf_token_direct, name='get_csrf_token_direct'),
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('message/', include('Message.urls'))
 ]
