@@ -72,6 +72,7 @@ class Client(AbstractUser):
         null=True, blank=True
 
     )
+    ban = models.BooleanField(default=False)
     email = models.EmailField(_('email address'), unique=True)
     numero_client = models.CharField(max_length=10, blank=True)
     numero_bancaire_client = models.CharField(max_length=19, null=True, blank=True, validators=[RegexValidator(

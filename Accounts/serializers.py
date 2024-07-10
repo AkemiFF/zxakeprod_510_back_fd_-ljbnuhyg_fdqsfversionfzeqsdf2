@@ -1,4 +1,5 @@
 # MyAccount/serialisers.py
+from .models import Client
 from rest_framework import serializers
 from Accounts.models import *
 from rest_framework import serializers
@@ -42,7 +43,7 @@ class ResponsableEtablissementSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResponsableEtablissement
         fields = (
-            'email_responsable', 'nom_responsable', 'prenom_responsable',
+            'id', 'first_name', 'last_name', 'username', 'email',
             'numero_responsable', 'created_at', 'updated_at', 'type_responsable'
         )
         extra_kwargs = {
@@ -64,9 +65,21 @@ class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = (
-            'username', 'email', 'numero_client', 'numero_bancaire_client',
+            'id', 'username', 'ban', 'email', 'numero_client', 'numero_bancaire_client',
             'type_carte_bancaire', 'created_at', 'updated_at', 'first_name', 'last_name', 'email', 'is_staff', 'is_active'
         )
     extra_kwargs = {
         'password': {'write_only': True},
     }
+
+
+class ClientUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        fields = ['ban']
+
+
+class ClientBanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        fields = ['ban']

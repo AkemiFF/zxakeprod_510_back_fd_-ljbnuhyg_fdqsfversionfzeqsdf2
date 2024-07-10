@@ -1,14 +1,31 @@
 # views.py
 
+from rest_framework import generics
+from .serializers import ProduitArtisanalSerializer
+from .models import ProduitArtisanal
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics
 from Artisanal.models import Artisanat, ProduitArtisanal, Panier, ItemPanier, Commande
 from Artisanal.serializers import ArtisanatSerializer, ProduitArtisanalSerializer, PanierSerializer, ItemPanierSerializer, CommandeSerializer
 
-# Artisanat Views
 
-# Nombre d'artisanal créé
+class ArtisanatListByResponsableView(generics.ListAPIView):
+    serializer_class = ArtisanatSerializer
+
+    def get_queryset(self):
+        responsable_id = self.kwargs['responsable_id']
+        return Artisanat.objects.filter(responsable_artisanat__id=responsable_id)
+
+
+class ProduitArtisanalListByArtisanatView(generics.ListAPIView):
+    serializer_class = ProduitArtisanalSerializer
+
+    def get_queryset(self):
+        artisanat_id = self.kwargs['artisanat_id']
+        return ProduitArtisanal.objects.filter(artisanat__id=artisanat_id)
+
+
 @api_view(['GET'])
 def get_count_artisanat(request):
     try:
@@ -18,6 +35,8 @@ def get_count_artisanat(request):
     return Response({'count': number_artisanat}, status=status.HTTP_200_OK)
 
 # Visualiser tous les artisanal
+
+
 @api_view(['GET'])
 def get_all_artisanat(request):
     try:
@@ -28,6 +47,8 @@ def get_all_artisanat(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 # Visualiser artisanal selon id
+
+
 @api_view(['GET'])
 def get_artisanat_by_id(request, pk):
     try:
@@ -38,14 +59,18 @@ def get_artisanat_by_id(request, pk):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 # Visualiser artisanal selon id avec son responsable
+
+
 @api_view(['GET'])
 def get_artisanat_by_responsable_id(request, responsable_id):
     try:
-        artisanat = Artisanat.objects.filter(responsable_artisanat=responsable_id)
+        artisanat = Artisanat.objects.filter(
+            responsable_artisanat=responsable_id)
     except Artisanat.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = ArtisanatSerializer(artisanat, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 @api_view(['GET', 'POST'])
 def artisanat_list_create(request):
@@ -60,6 +85,7 @@ def artisanat_list_create(request):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def artisanat_detail(request, pk):
@@ -86,6 +112,8 @@ def artisanat_detail(request, pk):
 # ProduitArtisanal Views
 
 # Nombre de produits artisanal créés
+
+
 @api_view(['GET'])
 def get_count_produit_artisanal(request):
     try:
@@ -95,6 +123,8 @@ def get_count_produit_artisanal(request):
     return Response({'count': number_produit}, status=status.HTTP_200_OK)
 
 # Visualiser tous les produits artisanal
+
+
 @api_view(['GET'])
 def get_all_produit_artisanal(request):
     try:
@@ -105,6 +135,8 @@ def get_all_produit_artisanal(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 # Visualiser produit artisanal selon id
+
+
 @api_view(['GET'])
 def get_produit_artisanal_by_id(request, pk):
     try:
@@ -115,6 +147,8 @@ def get_produit_artisanal_by_id(request, pk):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 # Visualiser produit artisanal selon id avec son responsable
+
+
 @api_view(['GET'])
 def get_produit_artisanal_by_responsable_id(request, responsable_id):
     try:
@@ -123,6 +157,7 @@ def get_produit_artisanal_by_responsable_id(request, responsable_id):
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = ProduitArtisanalSerializer(produits, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 @api_view(['GET', 'POST'])
 def produit_artisanal_list_create(request):
@@ -137,6 +172,7 @@ def produit_artisanal_list_create(request):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def produit_artisanal_detail(request, pk):
@@ -163,6 +199,8 @@ def produit_artisanal_detail(request, pk):
 # Panier Views
 
 # Nombre de paniers créés
+
+
 @api_view(['GET'])
 def get_count_panier(request):
     try:
@@ -172,6 +210,8 @@ def get_count_panier(request):
     return Response({'count': number_panier}, status=status.HTTP_200_OK)
 
 # Visualiser tous les paniers
+
+
 @api_view(['GET'])
 def get_all_panier(request):
     try:
@@ -182,6 +222,8 @@ def get_all_panier(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 # Visualiser panier selon id
+
+
 @api_view(['GET'])
 def get_panier_by_id(request, pk):
     try:
@@ -190,6 +232,7 @@ def get_panier_by_id(request, pk):
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = PanierSerializer(panier)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 @api_view(['GET', 'POST'])
 def panier_list_create(request):
@@ -204,6 +247,7 @@ def panier_list_create(request):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def panier_detail(request, pk):
@@ -230,6 +274,8 @@ def panier_detail(request, pk):
 # ItemPanier Views
 
 # Nombre d'items panier créés
+
+
 @api_view(['GET'])
 def get_count_item_panier(request):
     try:
@@ -239,6 +285,8 @@ def get_count_item_panier(request):
     return Response({'count': number_item_panier}, status=status.HTTP_200_OK)
 
 # Visualiser tous les items panier
+
+
 @api_view(['GET'])
 def get_all_item_panier(request):
     try:
@@ -249,6 +297,8 @@ def get_all_item_panier(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 # Visualiser item panier selon id
+
+
 @api_view(['GET'])
 def get_item_panier_by_id(request, pk):
     try:
@@ -257,6 +307,7 @@ def get_item_panier_by_id(request, pk):
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = ItemPanierSerializer(item_panier)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 @api_view(['GET', 'POST'])
 def item_panier_list_create(request):
@@ -271,6 +322,7 @@ def item_panier_list_create(request):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def item_panier_detail(request, pk):
@@ -297,6 +349,8 @@ def item_panier_detail(request, pk):
 # Commande Views
 
 # Nombre de commandes créées
+
+
 @api_view(['GET'])
 def get_count_commande(request):
     try:
@@ -306,6 +360,8 @@ def get_count_commande(request):
     return Response({'count': number_commande}, status=status.HTTP_200_OK)
 
 # Visualiser toutes les commandes
+
+
 @api_view(['GET'])
 def get_all_commande(request):
     try:
@@ -316,6 +372,8 @@ def get_all_commande(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 # Visualiser commande selon id
+
+
 @api_view(['GET'])
 def get_commande_by_id(request, pk):
     try:
@@ -324,6 +382,7 @@ def get_commande_by_id(request, pk):
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = CommandeSerializer(commande)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 @api_view(['GET', 'POST'])
 def commande_list_create(request):
@@ -338,6 +397,7 @@ def commande_list_create(request):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def commande_detail(request, pk):
