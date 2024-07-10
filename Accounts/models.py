@@ -47,6 +47,7 @@ class ResponsableEtablissement(AbstractUser):
 
     def __str__(self):
         return f"{self.username} {self.email} ({self.type_responsable})"
+    
     # def save(self, *args, **kwargs):
     #     self.password_responsable = make_password(self.password_responsable)
     #     super().save(*args, **kwargs)

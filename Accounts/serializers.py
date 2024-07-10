@@ -1,4 +1,5 @@
 # MyAccount/serialisers.py
+from django.contrib.auth.models import User
 from .models import Client
 from rest_framework import serializers
 from Accounts.models import *
@@ -83,3 +84,18 @@ class ClientBanSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = ['ban']
+
+
+class AdminCheckSerializer(serializers.ModelSerializer):
+    is_admin = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['is_admin']
+
+    def get_is_admin(self, obj):
+        return obj.is_superuser
+
+
+class TokenSerializer(serializers.Serializer):
+    token = serializers.CharField()

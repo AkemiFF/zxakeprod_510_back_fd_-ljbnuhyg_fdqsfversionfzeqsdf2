@@ -49,6 +49,7 @@ urlpatterns = [
     # path('registers/', views.RegisterView.as_view(), name='register'),
     path('responsables/type/<int:type_id>/',
          views.ResponsableEtablissementListByTypeView.as_view(), name='responsables-by-type'),
-
+    path('check-admin/', views.AdminCheckAPIView.as_view(),
+         name='check-admin-status'),
 
 ]
