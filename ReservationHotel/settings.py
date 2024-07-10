@@ -49,9 +49,9 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'Accounts.middleware.CSRFMiddleware',
     'allauth.account.middleware.AccountMiddleware',
-=======
- #   'allauth.account.auth_backends.AuthenticationBackend',
->>>>>>> Stashed changes
+# =======
+#  #   'allauth.account.auth_backends.AuthenticationBackend',
+# >>>>>>> Stashed changes
 ]
 
 AUTHENTICATION_BACKENDS = [
