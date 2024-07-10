@@ -8,7 +8,7 @@ urlpatterns = [
     path('accounts/', include('Accounts.urls')),
     path('user/', views.user_endpoint, name='user_endpoint'),
     path('artisanal/', include('Artisanal.urls')),
-    path('tourOperateur/', include('TourOperateur.urls')),
+    path('tour-operateurs/', include('TourOperateur.urls')),
     path('get-csrf-token/', views.get_csrf_token, name='get_csrf_token'),
     path('get-csrf-token-direct/',
          views.get_csrf_token_direct, name='get_csrf_token_direct'),

@@ -1,3 +1,11 @@
+from .serializers import ClientBanSerializer
+from rest_framework.decorators import api_view
+from .serializers import ClientUpdateSerializer
+from .models import Client
+from rest_framework.status import HTTP_200_OK
+from .serializers import ResponsableEtablissementSerializer
+from .models import ResponsableEtablissement
+from rest_framework import generics
 from multiprocessing import AuthenticationError
 from django.contrib.auth.hashers import check_password
 from imaplib import _Authenticator
@@ -11,7 +19,12 @@ from Accounts.models import TypeResponsable, ResponsableEtablissement, TypeCarte
 from rest_framework.permissions import *
 from .permissions import IsClientUser
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 
+from .models import Client
+from .serializers import ClientUpdateSerializer
 # class RegisterView(APIView):
 #     def post(self, request):
 #         serializer = UserSerializer(data=request.data)
@@ -227,7 +240,7 @@ def client_login(request):
                 return Response({'password': ['Mot de passe incorrect']}, status=status.HTTP_401_UNAUTHORIZED)
         except Client.DoesNotExist:
             return Response({'email': ['Email incorrect ou n\'existe pas']}, status=status.HTTP_404_NOT_FOUND)
-    
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -275,3 +288,32 @@ def client_delete(request, pk):
 
     client.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@permission_classes([AllowAny])
+class ResponsableEtablissementListByTypeView(generics.ListAPIView):
+    serializer_class = ResponsableEtablissementSerializer
+
+    def get_queryset(self):
+        type_id = self.kwargs['type_id']
+        return ResponsableEtablissement.objects.filter(type_responsable__id=type_id)
+
+
+@api_view(['PATCH'])
+def update_ban_status(request, pk):
+    try:
+        client = Client.objects.get(pk=pk)
+        if client.ban == True:
+            client.ban = False
+        elif client.ban == False:
+            client.ban = True
+
+    except Client.DoesNotExist:
+        return Response({'error': 'Client not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = ClientBanSerializer(client, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
