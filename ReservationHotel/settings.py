@@ -4,6 +4,9 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+FrontHosts = ["http://localhost:3000",
+              "http://127.0.0.1:3000",]
+
 
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
@@ -201,11 +204,8 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
-CORS_ALLOWED_ORIGINS = ["http://localhost:3000",
-                        "http://127.0.0.1:3000",]
-
-CSRF_TRUSTED_ORIGINS = ["http://localhost:3000",
-                        "http://127.0.0.1:3000",]
+CORS_ALLOWED_ORIGINS = FrontHosts
+CSRF_TRUSTED_ORIGINS = FrontHosts
 CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'

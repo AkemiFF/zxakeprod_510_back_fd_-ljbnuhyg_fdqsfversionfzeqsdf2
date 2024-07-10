@@ -1,3 +1,13 @@
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework import views, status
+from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from django.contrib.auth.models import User
 from .serializers import ClientBanSerializer
 from rest_framework.decorators import api_view
 from .serializers import ClientUpdateSerializer
@@ -10,21 +20,18 @@ from multiprocessing import AuthenticationError
 from django.contrib.auth.hashers import check_password
 from imaplib import _Authenticator
 from django.http import JsonResponse
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework import status
+
 from .serializers import UserSerializer, TypeResponsableSerializer, ResponsableEtablissementSerializer, TypeCarteBancaireSerializer, ClientSerializer, UserSerializerVerify
 from Accounts.models import TypeResponsable, ResponsableEtablissement, TypeCarteBancaire, Client
 from rest_framework.permissions import *
 from .permissions import IsClientUser
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 
 from .models import Client
-from .serializers import ClientUpdateSerializer
+
 # class RegisterView(APIView):
 #     def post(self, request):
 #         serializer = UserSerializer(data=request.data)
@@ -300,6 +307,7 @@ class ResponsableEtablissementListByTypeView(generics.ListAPIView):
 
 
 @api_view(['PATCH'])
+@permission_classes([AllowAny])
 def update_ban_status(request, pk):
     try:
         client = Client.objects.get(pk=pk)
@@ -317,3 +325,20 @@ def update_ban_status(request, pk):
         return Response(serializer.data)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        return response
+
+
+class AdminCheckAPIView(views.APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        is_admin = user.is_superuser
+
+        return Response({'is_admin': is_admin}, status=status.HTTP_200_OK)
