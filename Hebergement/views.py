@@ -12,6 +12,7 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 
 @api_view(['GET'])
+@permission_classes([IsAdminUser])
 def get_count(request):
     try:
         number_hebergement = Hebergement.objects.count()
