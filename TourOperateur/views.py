@@ -17,7 +17,6 @@ from .serializers import (
 
 
 # Tour Operateur Views
-
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def get_all_tour_operateurs(request):
@@ -28,6 +27,14 @@ def get_all_tour_operateurs(request):
     serializer = TourOperateurSerializer(tour_operateurs, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def get_count(request): # Avoir le nombre de count operateur
+    try:
+        number_operateur = TourOperateur.objects.count()
+    except TourOperateur.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    return Response({'count': number_operateur}, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -50,9 +57,9 @@ def get_tour_operateur_voyages(request, pk):
     serializer = VoyageSerializer(voyages, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+
 # Voyage Views
-
-
 @api_view(['GET'])
 def get_all_voyages(request):
     try:

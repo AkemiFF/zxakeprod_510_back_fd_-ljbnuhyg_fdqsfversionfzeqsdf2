@@ -4,6 +4,7 @@ from .import views
 urlpatterns = [
     path('client-update/<int:pk>/ban/', views.update_ban_status,
          name='client-ban-update'),
+    path('get_count_client/', views.get_count_client, name='get_count_client'),
 
     path('type-responsable/<int:pk>/', views.type_responsable_detail,
          name='type_responsable_detail'),
