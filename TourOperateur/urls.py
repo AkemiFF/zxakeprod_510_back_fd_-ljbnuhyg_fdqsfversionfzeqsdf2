@@ -8,8 +8,9 @@ urlpatterns = [
     path('responsable/<int:responsable_id>/',
          views.TourOperateurListByResponsableView.as_view(), name='tour_operateurs-by-responsable'),
 
-    path('', views.get_all_tour_operateurs,
+    path('get_all_tour_operateurs/', views.get_all_tour_operateurs,
          name='tour-operateurs-list'),
+    path('get_count_operateur/', views.get_count, name='get_count_operateur'),
     path('<int:pk>/', views.get_tour_operateur_by_id,
          name='tour-operateur-detail'),
     path('<int:pk>/voyages/',

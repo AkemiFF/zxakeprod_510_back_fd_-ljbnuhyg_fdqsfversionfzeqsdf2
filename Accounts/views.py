@@ -206,8 +206,6 @@ def client_detail(request, pk):
     return Response(serializer.data)
 
 # Get all customer lists
-
-
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def fetch_clients_detail(request):
@@ -218,6 +216,14 @@ def fetch_clients_detail(request):
 
     serializer = ClientSerializer(clients, many=True)
     return JsonResponse(serializer.data, safe=False)
+
+@api_view(['GET'])
+def get_count_client(request):
+    try:
+        number_client = Client.objects.count()
+    except Client.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    return Response({'count': number_client}, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
