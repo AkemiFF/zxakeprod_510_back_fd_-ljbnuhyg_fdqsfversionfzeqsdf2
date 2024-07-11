@@ -42,6 +42,8 @@ urlpatterns = [
     # Urls pour obtenir tous les clients
     path('clients/', views.fetch_clients_detail, name='fecth_clients_detail'),
     path('client/create/', views.client_create, name='client_create'),
+    path('client/create/emailinfo/',
+         views.client_create_email_info, name='client_create'),
     path('client/update/<int:pk>/', views.client_update, name='client_update'),
     path('client/delete/<int:pk>/', views.client_delete, name='client_delete'),
 

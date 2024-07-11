@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from django.contrib.auth.models import User
-from .serializers import ClientBanSerializer
+from .serializers import ClientBanSerializer, InfoUserSerializer
 from rest_framework.decorators import api_view
 from .serializers import ClientUpdateSerializer
 from .models import Client
@@ -230,6 +230,16 @@ def get_count_client(request):
 @permission_classes([AllowAny])
 def client_create(request):
     serializer = UserSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def client_create_email_info(request):
+    serializer = InfoUserSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)

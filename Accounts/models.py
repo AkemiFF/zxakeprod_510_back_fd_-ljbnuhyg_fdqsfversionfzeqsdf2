@@ -47,7 +47,7 @@ class ResponsableEtablissement(AbstractUser):
 
     def __str__(self):
         return f"{self.username} {self.email} ({self.type_responsable})"
-    
+
     # def save(self, *args, **kwargs):
     #     self.password_responsable = make_password(self.password_responsable)
     #     super().save(*args, **kwargs)
@@ -73,6 +73,10 @@ class Client(AbstractUser):
         null=True, blank=True
 
     )
+    emailProviderId = models.CharField(max_length=80, null=True)
+    emailProviderUid = models.CharField(max_length=80, null=True)
+    emailPhotoUrl = models.CharField(max_length=280, null=True)
+
     ban = models.BooleanField(default=False)
     email = models.EmailField(_('email address'), unique=True)
     numero_client = models.CharField(max_length=10, blank=True)
