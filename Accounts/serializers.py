@@ -1,4 +1,5 @@
 # MyAccount/serialisers.py
+from django.contrib.auth.models import User
 from .models import Client
 from rest_framework import serializers
 from Accounts.models import *
@@ -10,10 +11,36 @@ class UserSerializerVerify(serializers.Serializer):
     password = serializers.CharField()
 
 
+class UserEmailSerializerVerify(serializers.Serializer):
+    email = serializers.EmailField()
+    emailProviderUid = serializers.CharField()
+
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = ['email', 'password']
+        extra_kwargs = {
+            'password': {
+                'write_only': True
+            }
+        }
+
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        instance = self.Meta.model(**validated_data)
+        if password is not None:
+            instance.set_password(password)
+        instance.save()
+        return instance
+
+
+class InfoUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        fields = ['username', 'email', 'password', 'emailProviderId',
+                  "numero_client",
+                  'emailProviderUid', 'emailPhotoUrl']
         extra_kwargs = {
             'password': {
                 'write_only': True
@@ -83,3 +110,18 @@ class ClientBanSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = ['ban']
+
+
+class AdminCheckSerializer(serializers.ModelSerializer):
+    is_admin = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['is_admin']
+
+    def get_is_admin(self, obj):
+        return obj.is_superuser
+
+
+class TokenSerializer(serializers.Serializer):
+    token = serializers.CharField()

@@ -420,3 +420,5 @@ def commande_detail(request, pk):
     elif request.method == 'DELETE':
         commande.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    # TEST

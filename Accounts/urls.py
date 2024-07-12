@@ -4,6 +4,7 @@ from .import views
 urlpatterns = [
     path('client-update/<int:pk>/ban/', views.update_ban_status,
          name='client-ban-update'),
+    path('get_count_client/', views.get_count_client, name='get_count_client'),
 
     path('type-responsable/<int:pk>/', views.type_responsable_detail,
          name='type_responsable_detail'),
@@ -41,14 +42,19 @@ urlpatterns = [
     # Urls pour obtenir tous les clients
     path('clients/', views.fetch_clients_detail, name='fecth_clients_detail'),
     path('client/create/', views.client_create, name='client_create'),
+    path('client/create/emailinfo/',
+         views.client_create_email_info, name='client_create'),
     path('client/update/<int:pk>/', views.client_update, name='client_update'),
     path('client/delete/<int:pk>/', views.client_delete, name='client_delete'),
 
     # Registers
     path('client/login/', views.client_login, name='client_login'),
+    path('client/loginwithemail/',
+         views.client_login_with_email, name='client_login'),
     # path('registers/', views.RegisterView.as_view(), name='register'),
     path('responsables/type/<int:type_id>/',
          views.ResponsableEtablissementListByTypeView.as_view(), name='responsables-by-type'),
-
+    path('check-admin/', views.AdminCheckAPIView.as_view(),
+         name='check-admin-status'),
 
 ]

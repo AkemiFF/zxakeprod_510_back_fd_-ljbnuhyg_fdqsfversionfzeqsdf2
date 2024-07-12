@@ -9,9 +9,8 @@ from Hebergement.models import Chambre, Hebergement, HebergementAccessoire, Acce
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 # Nombre hebergement creer
-
-
 @api_view(['GET'])
+@permission_classes([IsAdminUser])
 def get_count(request):
     try:
         number_hebergement = Hebergement.objects.count()
@@ -20,9 +19,8 @@ def get_count(request):
     return Response({'count': number_hebergement}, status=status.HTTP_200_OK)
 
 # (Creer hebergement, visualiser hebergement tout les hebergement, modifier et supprimer hebergement)
-
-
 @api_view(['GET'])
+@permission_classes([IsAdminUser])
 def get_all_hebergements(request):
     try:
         all_hebergement = Hebergement.objects.all()
