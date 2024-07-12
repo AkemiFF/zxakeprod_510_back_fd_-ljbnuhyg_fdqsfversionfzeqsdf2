@@ -1,3 +1,7 @@
+from rest_framework.decorators import api_view, permission_classes
+from .serializers import UserEmailSerializerVerify, UserSerializerVerify
+from rest_framework import status
+from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import views, status
@@ -206,6 +210,8 @@ def client_detail(request, pk):
     return Response(serializer.data)
 
 # Get all customer lists
+
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def fetch_clients_detail(request):
@@ -216,6 +222,7 @@ def fetch_clients_detail(request):
 
     serializer = ClientSerializer(clients, many=True)
     return JsonResponse(serializer.data, safe=False)
+
 
 @api_view(['GET'])
 def get_count_client(request):
@@ -265,6 +272,30 @@ def client_login(request):
             return Response({'email': ['Email incorrect ou n\'existe pas']}, status=status.HTTP_404_NOT_FOUND)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def client_login_with_email(request):
+    serializer = UserEmailSerializerVerify(data=request.data)
+    if serializer.is_valid():
+        email = serializer.validated_data['email']
+        provider_id = serializer.validated_data['emailProviderUid']
+
+        try:
+            client = Client.objects.get(
+                email=email, emailProviderUid=provider_id)
+            refresh = RefreshToken.for_user(client)
+            return Response({
+                'message': 'Login successful',
+                'refresh': str(refresh),
+                'access': str(refresh.access_token)
+            })
+
+        except Client.DoesNotExist:
+            return Response({'email': ['Vous ne posseder pas encore de compte']}, status=status.HTTP_404_NOT_FOUND)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
