@@ -11,6 +11,11 @@ class UserSerializerVerify(serializers.Serializer):
     password = serializers.CharField()
 
 
+class UserEmailSerializerVerify(serializers.Serializer):
+    email = serializers.EmailField()
+    emailProviderUid = serializers.CharField()
+
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
