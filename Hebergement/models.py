@@ -163,3 +163,17 @@ class Reservation(models.Model):
     est_validee_reserve = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+
+class AvisClients(models.Model):
+    hebergement = models.ForeignKey(
+        Hebergement, on_delete=models.CASCADE, related_name='avis_hotel')
+    client = models.ForeignKey(
+        Client, on_delete=models.CASCADE, related_name='avis_client')
+    commentaire = models.CharField(null=True, max_length=500)
+    note = models.FloatField(null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self) -> str:
+        return f"Note: {self.note} - Hebergement: {self.hebergement.nom_hebergement}"
