@@ -22,7 +22,7 @@ from django.contrib.auth.models import User
 from .serializers import ClientBanSerializer, InfoUserSerializer
 from rest_framework.decorators import api_view
 from .serializers import ClientUpdateSerializer
-from .models import Client
+from .models import Client, VerificationCode
 from rest_framework.status import HTTP_200_OK
 from .serializers import ResponsableEtablissementSerializer
 from .models import ResponsableEtablissement
@@ -293,7 +293,10 @@ def send_verification_code(request):
             verification_code = get_random_string(
                 length=6, allowed_chars='1234567890')
 
-            request.session['verification_code'] = verification_code
+            VerificationCode.objects.create(
+                user_email=email, code=verification_code)
+
+            print(f"Verification code generated: {verification_code}")
 
             send_mail(
                 'Your Verification Code',
@@ -304,6 +307,31 @@ def send_verification_code(request):
             )
 
             return JsonResponse({'message': 'Verification code sent successfully'}, status=200)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+@csrf_exempt
+def verify_code(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            email = data['email']
+            code = data['code']
+            print(email)
+
+            verification_code = VerificationCode.objects.filter(
+                user_email=email, code=code, used=False).first()
+
+            if verification_code and not verification_code.IsUsed():
+                verification_code.used = True
+                verification_code.save()
+                return JsonResponse({'message': 'Verification successful'}, status=200)
+            else:
+                return JsonResponse({'error': 'Invalid or expired verification code'}, status=400)
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse({'error': 'Invalid request method'}, status=405)

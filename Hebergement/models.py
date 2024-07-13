@@ -4,6 +4,8 @@ from django.db import models
 from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractUser
 from Accounts.models import *
+from django.contrib.auth.models import User
+from django.utils import timezone
 
 
 class TypeHebergement(models.Model):
