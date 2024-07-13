@@ -1,3 +1,4 @@
+from decouple import config
 from datetime import timedelta
 from pathlib import Path
 
@@ -7,12 +8,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 FrontHosts = ["http://localhost:3000",
               "http://127.0.0.1:3000",]
 
+DEBUG = config('DEBUG', default=False, cast=bool)
+# SECRET_KEY = config('SECRET_KEY')
 
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 SECRET_KEY = 'django-insecure-bny-#1=2sz=nsz&(m1fjw&kjy0=33p-i09nowjwf+n8wev-!z9'
 
-DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -102,6 +104,10 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+# DATABASES = {
+#     'default': config('DATABASE_URL', default='sqlite:///db.sqlite3')
+# }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -180,6 +186,19 @@ SOCIALACCOUNT_PROVIDERS = {
 # SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 # SECURE_SSL_REDIRECT = True
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+
+
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
 SIMPLE_JWT = {

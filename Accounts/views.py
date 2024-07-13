@@ -1,3 +1,10 @@
+import json
+from django.conf import settings
+from django.utils.crypto import get_random_string
+from django.core.mail import send_mail
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.views import APIView
+from django.views import View
 from rest_framework.decorators import api_view, permission_classes
 from .serializers import UserEmailSerializerVerify, UserSerializerVerify
 from rest_framework import status
@@ -272,6 +279,44 @@ def client_login(request):
             return Response({'email': ['Email incorrect ou n\'existe pas']}, status=status.HTTP_404_NOT_FOUND)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# accounts/views.py
+
+
+@csrf_exempt
+def send_verification_code(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            email = data['email']
+
+            verification_code = get_random_string(
+                length=6, allowed_chars='1234567890')
+
+            request.session['verification_code'] = verification_code
+
+            send_mail(
+                'Your Verification Code',
+                f'Your verification code is {verification_code}',
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+
+            return JsonResponse({'message': 'Verification code sent successfully'}, status=200)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+@permission_classes([AllowAny])
+class CheckEmailView(APIView):
+    def post(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        if email:
+            exists = Client.objects.filter(email=email).exists()
+            return Response({'exists': exists})
+        return Response({'error': 'Email is required'}, status=400)
 
 
 @api_view(['POST'])
