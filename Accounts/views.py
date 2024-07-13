@@ -24,7 +24,7 @@ from rest_framework.decorators import api_view
 from .serializers import ClientUpdateSerializer
 from .models import Client, VerificationCode
 from rest_framework.status import HTTP_200_OK
-from .serializers import ResponsableEtablissementSerializer
+from .serializers import *
 from .models import ResponsableEtablissement
 from rest_framework import generics
 from multiprocessing import AuthenticationError
@@ -258,6 +258,17 @@ def client_create_email_info(request):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_client_with_email(request):
+    if request.method == 'POST':
+        serializer = ClientWithEmailSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])

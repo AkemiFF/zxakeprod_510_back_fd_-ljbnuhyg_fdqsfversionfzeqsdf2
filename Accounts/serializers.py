@@ -6,47 +6,29 @@ from .models import Client
 from rest_framework import serializers
 from Accounts.models import *
 from rest_framework import serializers
+from django.contrib.auth.password_validation import validate_password
+
+
+class ClientWithEmailSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(
+        write_only=True, required=True, validators=[validate_password])
+
+    class Meta:
+        model = Client
+        fields = ('id', 'email', 'username', 'password')
+
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        instance = self.Meta.model(**validated_data)
+        if password is not None:
+            instance.set_password(password)
+        instance.save()
+        return instance
 
 
 class UserSerializerVerify(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField()
-
-
-User = get_user_model()
-
-
-class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    email = serializers.EmailField()
-
-    def validate(self, attrs):
-        email = attrs.get("email")
-        password = attrs.get("password")
-
-        if email and password:
-            try:
-                user = User.objects.get(email=email)
-            except User.DoesNotExist:
-                raise serializers.ValidationError(
-                    "No active account found with the given credentials"
-                )
-
-            if not user.check_password(password):
-                raise serializers.ValidationError(
-                    "No active account found with the given credentials"
-                )
-
-            attrs["username"] = user.username
-        else:
-            raise serializers.ValidationError(
-                "Must include 'email' and 'password'")
-
-        return super().validate(attrs)
-
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-        return token
 
 
 class UserEmailSerializerVerify(serializers.Serializer):

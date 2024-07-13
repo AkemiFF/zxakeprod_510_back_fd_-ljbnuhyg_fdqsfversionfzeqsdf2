@@ -7,7 +7,7 @@ from rest_framework.decorators import api_view, permission_classes
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.http import JsonResponse
 from rest_framework_simplejwt.views import TokenObtainPairView
-from Accounts.serializers import CustomTokenObtainPairSerializer
+from API.serializers import CustomTokenObtainPairSerializer
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
