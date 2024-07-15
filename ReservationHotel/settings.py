@@ -33,7 +33,6 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-    'ResponsableEtablissement',
     'corsheaders',
     'Accounts',
     'Artisanal',

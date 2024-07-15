@@ -382,23 +382,23 @@ def client_login_with_email(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST'])
-def client_login(request):
-    email = request.data.get('email')
-    password = request.data.get('password')
-    user = AuthenticationError(email=email, password=password)
+# @api_view(['POST'])
+# def client_login(request):
+#     email = request.data.get('email')
+#     password = request.data.get('password')
+#     user = AuthenticationError(email=email, password=password)
 
-    if user is not None:
-        refresh = RefreshToken.for_user(user)
-        return Response({
-            'access': str(refresh.access_token),
-            'refresh': str(refresh),
-        })
+#     if user is not None:
+#         refresh = RefreshToken.for_user(user)
+#         return Response({
+#             'access': str(refresh.access_token),
+#             'refresh': str(refresh),
+#         })
 
-    return Response({
-        'email': ['Email incorrect ou n\'existe pas.'],
-        'password': ['Mot de passe incorrect.'],
-    }, status=status.HTTP_400_BAD_REQUEST)
+#     return Response({
+#         'email': ['Email incorrect ou n\'existe pas.'],
+#         'password': ['Mot de passe incorrect.'],
+#     }, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['PUT'])
