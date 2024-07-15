@@ -1,16 +1,19 @@
+# serializers.py
+
 from rest_framework import serializers
+from .models import HebergementMessage, ArtisanatMessage, TourOperateurMessage
 
-from Hebergement.models import Hebergement
-from .models import Message, HebergementMessage
-
-class MessageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Message
-        fields = ['id', 'sender', 'subject', 'content', 'timestamp']
-
-class HebergementMessageSerializer(MessageSerializer):
-    receiver = serializers.PrimaryKeyRelatedField(queryset=Hebergement.objects.all())
-
+class HebergementMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = HebergementMessage
-        fields = MessageSerializer.Meta.fields + ['receiver']
+        fields = '__all__'
+
+class ArtisanatMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ArtisanatMessage
+        fields = '__all__'
+
+class TourOperateurMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TourOperateurMessage
+        fields = '__all__'
