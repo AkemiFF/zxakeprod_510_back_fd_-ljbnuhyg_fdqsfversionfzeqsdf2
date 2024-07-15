@@ -1,6 +1,9 @@
+from django.shortcuts import render
+from templated_email import send_templated_mail
 from django.core.exceptions import ObjectDoesNotExist
 from .models import Client  # Assurez-vous que c'est le bon modèle
 from django.contrib.auth.hashers import make_password
+from django.template.loader import render_to_string
 import json
 from django.conf import settings
 from django.utils.crypto import get_random_string
@@ -17,9 +20,6 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import views, status
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from rest_framework.exceptions import AuthenticationFailed
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from django.contrib.auth.models import User
 from .serializers import ClientBanSerializer, InfoUserSerializer
@@ -30,7 +30,6 @@ from rest_framework.status import HTTP_200_OK
 from .serializers import *
 from .models import ResponsableEtablissement
 from rest_framework import generics
-from multiprocessing import AuthenticationError
 from django.contrib.auth.hashers import check_password
 from imaplib import _Authenticator
 from django.http import JsonResponse
@@ -338,12 +337,63 @@ def send_verification_code(request):
 
             print(f"Verification code generated: {verification_code}")
 
+            context = {
+                'verification_code': verification_code,
+                'user_name': email,
+                'link_token': "aftrip.com",
+                'type_action': "signup to aftrip"
+            }
+
+            html_message = render_to_string(
+                'email/verification.html', context=context)
+
             send_mail(
                 'Your Verification Code',
-                f'Your verification code is {verification_code}',
+                '',
                 settings.DEFAULT_FROM_EMAIL,
                 [email],
                 fail_silently=False,
+                html_message=html_message
+            )
+
+            return JsonResponse({'message': 'Verification code sent successfully'}, status=200)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+@csrf_exempt
+def send_recovery_code(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            email = data['email']
+
+            verification_code = get_random_string(
+                length=6, allowed_chars='1234567890')
+
+            VerificationCode.objects.create(
+                user_email=email, code=verification_code)
+
+            print(f"Verification code generated: {verification_code}")
+
+            context = {
+                'verification_code': verification_code,
+                'user_name': email,
+                'link_token': "aftrip.com",
+                'type_action': "recover password"
+            }
+
+            html_message = render_to_string(
+                'email/verification.html', context=context)
+
+            send_mail(
+                'Your Verification Code',
+                '',
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+                html_message=html_message
             )
 
             return JsonResponse({'message': 'Verification code sent successfully'}, status=200)

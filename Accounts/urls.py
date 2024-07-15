@@ -61,10 +61,8 @@ urlpatterns = [
          name='check-admin-status'),
     path('send-verification-code/', views.send_verification_code,
          name='send_verification_code'),
+    path('send-recovery-code/', views.send_recovery_code,
+         name='send_recovery_code'),
     path('verify-code/', views.verify_code, name='verify_code'),
     path('reset-password/', views.reset_password, name='reset_password'),
-
-
-
-
 ]
