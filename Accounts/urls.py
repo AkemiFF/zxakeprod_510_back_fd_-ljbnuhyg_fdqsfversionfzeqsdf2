@@ -43,7 +43,7 @@ urlpatterns = [
     path('clients/', views.fetch_clients_detail, name='fecth_clients_detail'),
     path('client/create/', views.client_create, name='client_create'),
     path('client/create-with-username/',
-         views.client_create_email_info, name='client_create'),
+         views.create_client_with_email, name='client_create'),
     path('client/create/emailinfo/',
          views.client_create_email_info, name='client_create'),
     path('client/update/<int:pk>/', views.client_update, name='client_update'),
@@ -62,6 +62,8 @@ urlpatterns = [
     path('send-verification-code/', views.send_verification_code,
          name='send_verification_code'),
     path('verify-code/', views.verify_code, name='verify_code'),
+    path('/reset-password/', views.reset_password, name='reset_password'),
+
 
 
 

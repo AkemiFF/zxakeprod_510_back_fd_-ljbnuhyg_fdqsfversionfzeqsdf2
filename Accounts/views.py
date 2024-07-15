@@ -1,3 +1,6 @@
+from django.core.exceptions import ObjectDoesNotExist
+from .models import Client  # Assurez-vous que c'est le bon modèle
+from django.contrib.auth.hashers import make_password
 import json
 from django.conf import settings
 from django.utils.crypto import get_random_string
@@ -269,6 +272,31 @@ def create_client_with_email(request):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@csrf_exempt
+def reset_password(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            password = data.get('password')
+
+            if not email or not password:
+                return JsonResponse({'error': 'Email and password are required.'}, status=400)
+
+            try:
+                user = Client.objects.get(email=email)
+                user.password = make_password(password)
+                user.save()
+                return JsonResponse({'success': 'Password reset successfully.'}, status=200)
+            except ObjectDoesNotExist:
+                return JsonResponse({'error': 'User does not exist.'}, status=404)
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON.'}, status=400)
+
+    return JsonResponse({'error': 'Invalid request method.'}, status=405)
 
 
 @api_view(['POST'])
