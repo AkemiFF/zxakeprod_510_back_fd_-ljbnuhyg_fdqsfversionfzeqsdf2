@@ -328,8 +328,6 @@ def send_verification_code(request):
             VerificationCode.objects.create(
                 user_email=email, code=verification_code)
 
-            print(f"Verification code generated: {verification_code}")
-
             context = {
                 'verification_code': verification_code,
                 'user_name': email,
@@ -361,7 +359,6 @@ def welcome_mail(request):
         try:
             data = json.loads(request.body.decode('utf-8'))
             email = data['email']
-
             context = {
                 'user_name': email,
                 'link_token': "aftrip.com",
@@ -373,7 +370,7 @@ def welcome_mail(request):
                 'email/welcome.html', context=context)
 
             send_mail(
-                'Your Verification Code',
+                'Welcome to Aftrip',
                 '',
                 settings.DEFAULT_FROM_EMAIL,
                 [email],
@@ -399,8 +396,6 @@ def send_recovery_code(request):
 
             VerificationCode.objects.create(
                 user_email=email, code=verification_code)
-
-            print(f"Verification code generated: {verification_code}")
 
             context = {
                 'verification_code': verification_code,
@@ -434,7 +429,6 @@ def verify_code(request):
             data = json.loads(request.body.decode('utf-8'))
             email = data['email']
             code = data['code']
-            print(email)
 
             verification_code = VerificationCode.objects.filter(
                 user_email=email, code=code, used=False).first()

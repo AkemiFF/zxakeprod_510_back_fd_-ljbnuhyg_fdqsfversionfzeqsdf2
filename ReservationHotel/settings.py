@@ -2,6 +2,7 @@ from decouple import config
 from datetime import timedelta
 from pathlib import Path
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -10,6 +11,7 @@ FrontHosts = ["http://localhost:3000",
 FRONT_HOST = FrontHosts[0]
 DEBUG = config('DEBUG', default=False, cast=bool)
 # SECRET_KEY = config('SECRET_KEY')
+
 
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
@@ -192,10 +194,8 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-
+EMAIL_HOST_USER = config('EMAIL_HOST_NEW_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_NEW_PASSWORD')
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
