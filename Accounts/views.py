@@ -473,3 +473,6 @@ class AdminCheckAPIView(views.APIView):
         is_admin = user.is_superuser
 
         return Response({'is_admin': is_admin}, status=status.HTTP_200_OK)
+
+
+# Test
