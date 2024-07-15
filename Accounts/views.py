@@ -275,6 +275,7 @@ def create_client_with_email(request):
 
 
 @csrf_exempt
+@permission_classes([AllowAny])
 def reset_password(request):
     if request.method == 'POST':
         try:
