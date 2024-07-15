@@ -1,7 +1,6 @@
 from django.shortcuts import render
 from templated_email import send_templated_mail
 from django.core.exceptions import ObjectDoesNotExist
-from .models import Client  # Assurez-vous que c'est le bon modèle
 from django.contrib.auth.hashers import make_password
 from django.template.loader import render_to_string
 import json
@@ -22,28 +21,22 @@ from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from django.contrib.auth.models import User
-from .serializers import ClientBanSerializer, InfoUserSerializer
 from rest_framework.decorators import api_view
-from .serializers import ClientUpdateSerializer
-from .models import Client, VerificationCode
+from .models import Client, VerificationCode, ResponsableEtablissement
 from rest_framework.status import HTTP_200_OK
 from .serializers import *
-from .models import ResponsableEtablissement
 from rest_framework import generics
 from django.contrib.auth.hashers import check_password
 from imaplib import _Authenticator
 from django.http import JsonResponse
 from rest_framework.response import Response
 
-from .serializers import UserSerializer, TypeResponsableSerializer, ResponsableEtablissementSerializer, TypeCarteBancaireSerializer, ClientSerializer, UserSerializerVerify
 from Accounts.models import TypeResponsable, ResponsableEtablissement, TypeCarteBancaire, Client
 from rest_framework.permissions import *
 from .permissions import IsClientUser
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
-
-from .models import Client
 
 # class RegisterView(APIView):
 #     def post(self, request):
@@ -363,6 +356,38 @@ def send_verification_code(request):
 
 
 @csrf_exempt
+def welcome_mail(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            email = data['email']
+
+            context = {
+                'user_name': email,
+                'link_token': "aftrip.com",
+                'type_action': "signup to aftrip",
+                'host': settings.FRONT_HOST
+            }
+
+            html_message = render_to_string(
+                'email/welcome.html', context=context)
+
+            send_mail(
+                'Your Verification Code',
+                '',
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+                html_message=html_message
+            )
+
+            return JsonResponse({'message': 'Verification code sent successfully'}, status=200)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+@csrf_exempt
 def send_recovery_code(request):
     if request.method == 'POST':
         try:
@@ -552,6 +577,3 @@ class AdminCheckAPIView(views.APIView):
         is_admin = user.is_superuser
 
         return Response({'is_admin': is_admin}, status=status.HTTP_200_OK)
-
-
-# Test
