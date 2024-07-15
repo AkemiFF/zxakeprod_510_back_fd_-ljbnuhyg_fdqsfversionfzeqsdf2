@@ -16,4 +16,5 @@ urlpatterns = [
     path('token-with-email/', CustomTokenObtainPairView.as_view(),
          name='token_obtain_pair_email'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('message/', include('Message.urls'))
 ]
