@@ -10,6 +10,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import *
 
 # HebergementMessage Views
+
+
 @api_view(['GET', 'POST'])
 @permission_classes([IsAdminUser])
 def hebergement_message_list_create(request):
@@ -23,6 +25,7 @@ def hebergement_message_list_create(request):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 @permission_classes([IsAdminUser])
@@ -46,6 +49,8 @@ def hebergement_message_detail(request, pk):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 # ArtisanatMessage Views
+
+
 @api_view(['GET', 'POST'])
 @permission_classes([IsAdminUser])
 def artisanat_message_list_create(request):
@@ -59,6 +64,7 @@ def artisanat_message_list_create(request):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 @permission_classes([IsAdminUser])
@@ -82,6 +88,8 @@ def artisanat_message_detail(request, pk):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 # TourOperateurMessage Views
+
+
 @api_view(['GET', 'POST'])
 @permission_classes([IsAdminUser])
 def tour_operateur_message_list_create(request):
@@ -95,6 +103,7 @@ def tour_operateur_message_list_create(request):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 @permission_classes([IsAdminUser])
@@ -116,4 +125,3 @@ def tour_operateur_message_detail(request, pk):
     elif request.method == 'DELETE':
         message.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-

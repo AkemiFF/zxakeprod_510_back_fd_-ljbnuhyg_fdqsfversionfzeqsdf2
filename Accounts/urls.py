@@ -65,4 +65,5 @@ urlpatterns = [
          name='send_recovery_code'),
     path('verify-code/', views.verify_code, name='verify_code'),
     path('reset-password/', views.reset_password, name='reset_password'),
+    path('welcome-mail/', views.welcome_mail, name='welcome_mail'),
 ]
