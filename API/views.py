@@ -6,6 +6,12 @@ from rest_framework.permissions import *
 from rest_framework.decorators import api_view, permission_classes
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.http import JsonResponse
+from rest_framework_simplejwt.views import TokenObtainPairView
+from API.serializers import CustomTokenObtainPairSerializer
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
 
 @ensure_csrf_cookie

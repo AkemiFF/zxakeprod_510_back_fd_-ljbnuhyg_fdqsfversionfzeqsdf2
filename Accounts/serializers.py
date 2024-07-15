@@ -1,9 +1,29 @@
 # MyAccount/serialisers.py
+from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.models import User
 from .models import Client
 from rest_framework import serializers
 from Accounts.models import *
 from rest_framework import serializers
+from django.contrib.auth.password_validation import validate_password
+
+
+class ClientWithEmailSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(
+        write_only=True, required=True, validators=[validate_password])
+
+    class Meta:
+        model = Client
+        fields = ('id', 'email', 'username', 'password')
+
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        instance = self.Meta.model(**validated_data)
+        if password is not None:
+            instance.set_password(password)
+        instance.save()
+        return instance
 
 
 class UserSerializerVerify(serializers.Serializer):

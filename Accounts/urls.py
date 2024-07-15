@@ -42,6 +42,8 @@ urlpatterns = [
     # Urls pour obtenir tous les clients
     path('clients/', views.fetch_clients_detail, name='fecth_clients_detail'),
     path('client/create/', views.client_create, name='client_create'),
+    path('client/create-with-username/',
+         views.client_create_email_info, name='client_create'),
     path('client/create/emailinfo/',
          views.client_create_email_info, name='client_create'),
     path('client/update/<int:pk>/', views.client_update, name='client_update'),
@@ -49,6 +51,7 @@ urlpatterns = [
 
     # Registers
     path('client/login/', views.client_login, name='client_login'),
+    path('client/check-email/', views.CheckEmailView.as_view(), name='client_login'),
     path('client/loginwithemail/',
          views.client_login_with_email, name='client_login'),
     # path('registers/', views.RegisterView.as_view(), name='register'),
@@ -56,5 +59,10 @@ urlpatterns = [
          views.ResponsableEtablissementListByTypeView.as_view(), name='responsables-by-type'),
     path('check-admin/', views.AdminCheckAPIView.as_view(),
          name='check-admin-status'),
+    path('send-verification-code/', views.send_verification_code,
+         name='send_verification_code'),
+    path('verify-code/', views.verify_code, name='verify_code'),
+
+
 
 ]

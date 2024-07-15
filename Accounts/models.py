@@ -1,3 +1,4 @@
+from datetime import timezone
 from django.dispatch import receiver
 from django.db.models.signals import post_migrate
 from django.apps import apps
@@ -117,3 +118,16 @@ ResponsableEtablissement._meta.get_field('password').validators = [
             'Le mot de passe doit contenir au moins 8 caractères, une lettre et un chiffre.')
     )
 ]
+
+
+class VerificationCode(models.Model):
+    user_email = models.CharField(max_length=100, null=True)
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    used = models.BooleanField(default=False)
+
+    def IsUsed(self):
+        return self.used
+
+    def __str__(self):
+        return f"{self.user_email} : {self.code}"
