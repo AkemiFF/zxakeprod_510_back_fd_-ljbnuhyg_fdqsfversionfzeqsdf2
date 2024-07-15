@@ -28,9 +28,3 @@ def get_csrf_token_direct(request):
 @permission_classes([IsAuthenticated])
 def admin_endpoint(request):
     return Response({"message": "Vous êtes autorisé à accéder à l'endpoint admin."})
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def user_endpoint(request):
-    return Response({"message": "Vous êtes autorisé à accéder à l'endpoint utilisateur."})
