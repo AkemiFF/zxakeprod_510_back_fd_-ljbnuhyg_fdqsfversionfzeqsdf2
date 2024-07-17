@@ -6,7 +6,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from Hebergement.serializers import ChambreSerializer, HebergementAccessoireSerializer, HebergementSerializer, AccessoireHebergementSerializer, AccessoireChambreSerializer, ChambrePersonaliserSerializer
 from Hebergement.models import Chambre, Hebergement, HebergementAccessoire, AccessoireHebergement, AccessoireChambre, ChambrePersonaliser
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import *
+from django.db.models import Min
 
 # Nombre hebergement creer
 @api_view(['GET'])
@@ -19,16 +20,17 @@ def get_count(request):
     return Response({'count': number_hebergement}, status=status.HTTP_200_OK)
 
 # (Creer hebergement, visualiser hebergement tout les hebergement, modifier et supprimer hebergement)
+
+
 @api_view(['GET'])
-@permission_classes([IsAdminUser])
+@permission_classes([AllowAny])
 def get_all_hebergements(request):
     try:
-        all_hebergement = Hebergement.objects.all()
+        all_hebergement = Hebergement.objects.annotate(min_prix_nuit_chambre=Min('hebergementchambre__prix_nuit_chambre'))
     except Hebergement.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = HebergementSerializer(all_hebergement, many=True)
     return Response({'hebergements': serializer.data}, status=status.HTTP_200_OK)
-
 # Visualiser hebergement selon id
 
 
