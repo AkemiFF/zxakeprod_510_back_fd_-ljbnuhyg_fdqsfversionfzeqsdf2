@@ -1,9 +1,8 @@
-from Accounts.models import ResponsableEtablissement
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractUser
-from Accounts.models import *
+from Accounts.models import ResponsableEtablissement, Client
 from django.contrib.auth.models import User
 from django.utils import timezone
 
