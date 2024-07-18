@@ -9,6 +9,7 @@ from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 
 
+
 class TypeResponsable(models.Model):
     type_name = models.CharField(
         max_length=50, unique=True, null=True, blank=True,
@@ -92,6 +93,11 @@ class Client(AbstractUser):
 
     def __str__(self):
         return self.email
+    
+    # def has_reservation_with(self, hebergement):
+    #     # Logique pour vérifier si le client a une réservation avec l'hébergement donné
+    #     reservations = Reservation.objects.filter(client_reserve=self, hebergement=hebergement)
+    #     return reservations.exists()
 
     class Meta:
         verbose_name = _('client')
