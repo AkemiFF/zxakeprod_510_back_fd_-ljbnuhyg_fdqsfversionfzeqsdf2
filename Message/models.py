@@ -21,11 +21,14 @@ class Message(PolymorphicModel):
 class HebergementMessage(Message):
     receiver = models.ForeignKey(
         Hebergement, related_name='messages', on_delete=models.CASCADE)
-
+    def _str_(self):
+        return f"{self.sender} -> {self.receiver}: {self.subject}"
 
 class ArtisanatMessage(Message):
     artisanat = models.ForeignKey(
         Artisanat, related_name='messages', on_delete=models.CASCADE)
+    def _str_(self):
+        return f"{self.sender} -> {self.receiver}: {self.subject}"
 
 
 class TourOperateurMessage(Message):
