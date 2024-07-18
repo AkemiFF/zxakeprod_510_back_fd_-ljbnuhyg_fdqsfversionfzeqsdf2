@@ -368,6 +368,7 @@ def welcome_mail(request):
 
             html_message = render_to_string(
                 'email/welcome.html', context=context)
+            client = Client.objects.get(email=email)
 
             send_mail(
                 'Welcome to Aftrip',
@@ -378,7 +379,7 @@ def welcome_mail(request):
                 html_message=html_message
             )
 
-            return JsonResponse({'message': 'Verification code sent successfully'}, status=200)
+            return JsonResponse({'message': 'Verification code sent successfully', 'id': client.id}, status=200)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse({'error': 'Invalid request method'}, status=405)

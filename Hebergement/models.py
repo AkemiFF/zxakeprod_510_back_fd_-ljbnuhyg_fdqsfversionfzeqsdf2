@@ -41,6 +41,23 @@ class AccessoireHebergement(models.Model):
         return self.nom_accessoire
 
 
+class Chambre(models.Model):
+    type_chambre = models.CharField(max_length=100)
+    nombre_min_personnes = models.IntegerField(default=1)
+    nombre_max_personnes = models.IntegerField(default=1)
+
+    def __str__(self):
+        return self.type_chambre
+
+
+class ChambrePersonaliser(models.Model):
+    type_chambre = models.CharField(max_length=100)
+    nombre_personnes = models.IntegerField(default=1)
+
+    def __str__(self):
+        return self.type_chambre
+
+
 class Hebergement(models.Model):
     nom_hebergement = models.CharField(max_length=100)
     description_hebergement = models.TextField()
@@ -56,6 +73,20 @@ class Hebergement(models.Model):
     def __str__(self):
         return self.nom_hebergement
 
+
+class HebergementChambre(models.Model):
+    hebergement = models.ForeignKey(Hebergement, on_delete=models.CASCADE)
+    chambre = models.ForeignKey(
+        Chambre, on_delete=models.CASCADE, null=True, blank=True)
+    chambre_personaliser = models.ForeignKey(
+        ChambrePersonaliser, on_delete=models.CASCADE, null=True, blank=True)
+    prix_nuit_chambre = models.DecimalField(max_digits=8, decimal_places=2)
+    disponible_chambre = models.IntegerField(null=True)
+    accessoires = models.ManyToManyField(
+        'AccessoireChambre', through='HebergementChambreAccessoire')
+
+    def __str__(self):
+        return f'{self.hebergement} - {self.chambre} - {self.chambre_personaliser}'
 
 class Localisation(models.Model):
     adresse = models.CharField(max_length=200, null=True, blank=True)
@@ -89,37 +120,6 @@ class AccessoireChambre(models.Model):
     def __str__(self):
         return self.nom_accessoire
 
-
-class Chambre(models.Model):
-    type_chambre = models.CharField(max_length=100)
-    nombre_min_personnes = models.IntegerField(default=1)
-    nombre_max_personnes = models.IntegerField(default=1)
-
-    def __str__(self):
-        return self.type_chambre
-
-
-class ChambrePersonaliser(models.Model):
-    type_chambre = models.CharField(max_length=100)
-    nombre_personnes = models.IntegerField(default=1)
-
-    def __str__(self):
-        return self.type_chambre
-
-
-class HebergementChambre(models.Model):
-    hebergement = models.ForeignKey(Hebergement, on_delete=models.CASCADE)
-    chambre = models.ForeignKey(
-        Chambre, on_delete=models.CASCADE, null=True, blank=True)
-    chambre_personaliser = models.ForeignKey(
-        ChambrePersonaliser, on_delete=models.CASCADE, null=True, blank=True)
-    prix_nuit_chambre = models.DecimalField(max_digits=8, decimal_places=2)
-    disponible_chambre = models.IntegerField(null=True)
-    accessoires = models.ManyToManyField(
-        'AccessoireChambre', through='HebergementChambreAccessoire')
-
-    def __str__(self):
-        return f'{self.hebergement} - {self.chambre} - {self.chambre_personaliser}'
 
 
 class HebergementChambreAccessoire(models.Model):
