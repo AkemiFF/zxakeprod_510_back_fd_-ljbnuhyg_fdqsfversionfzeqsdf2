@@ -77,7 +77,7 @@ class Client(AbstractUser):
     emailProviderId = models.CharField(max_length=80, null=True)
     emailProviderUid = models.CharField(max_length=80, null=True)
     emailPhotoUrl = models.CharField(max_length=280, null=True)
-
+    profilPic = models.ImageField(upload_to='images/profil_user', null=True,blank=True)
     ban = models.BooleanField(default=False)
     email = models.EmailField(_('email address'), unique=True)
     numero_client = models.CharField(max_length=10, blank=True)

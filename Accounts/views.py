@@ -304,7 +304,7 @@ def client_login(request):
             client = Client.objects.get(email=email)
             if check_password(password, client.password):
                 refresh = RefreshToken.for_user(client)
-                return Response({'message': 'Login successful', 'refresh': str(refresh), 'access': str(refresh.access_token)})
+                return Response({'message': 'Login successful','id':client.id, 'username':client.username , "image":client.profilPic , 'refresh': str(refresh), 'access': str(refresh.access_token)})
             else:
                 return Response({'password': ['Mot de passe incorrect']}, status=status.HTTP_401_UNAUTHORIZED)
         except Client.DoesNotExist:
