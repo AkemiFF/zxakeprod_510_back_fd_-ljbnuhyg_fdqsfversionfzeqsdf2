@@ -36,12 +36,12 @@ def get_hebergement_details(request, hebergement_id):
 @permission_classes([AllowAny])
 def get_chambre_details(request, chambre_id):
     try:
-        chambre = Chambre.objects.get(id=chambre_id)
-        serializer = HebergementChambreSerializer(chambre)
+        hebergement_chambre = HebergementChambre.objects.get(chambre_id=chambre_id)
+        serializer = HebergementChambreSerializer(hebergement_chambre)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    except Hebergement.DoesNotExist:
+    except HebergementChambre.DoesNotExist:
         return Response(
-            {"error": "Chambre not found"}, status=status.HTTP_404_NOT_FOUND
+            {"error": "HebergementChambre not found"}, status=status.HTTP_404_NOT_FOUND
         )
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

@@ -103,10 +103,16 @@ class ChambrePersonaliserSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class AccessoireChambreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccessoireChambre
+        fields = "__all__"
+
+
 class HebergementChambreSerializer(serializers.ModelSerializer):
     chambre = ChambreSerializer()
     chambre_personaliser = ChambrePersonaliserSerializer()
-    accessoires = AccessoireHebergementSerializer(many=True)
+    accessoires = AccessoireChambreSerializer(many=True)
     images_chambre = ImageChambreSerializer(many=True, read_only=True)
 
     class Meta:
@@ -125,12 +131,6 @@ class HebergementAccessoireSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = HebergementAccessoire
-        fields = "__all__"
-
-
-class AccessoireChambreSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AccessoireChambre
         fields = "__all__"
 
 
