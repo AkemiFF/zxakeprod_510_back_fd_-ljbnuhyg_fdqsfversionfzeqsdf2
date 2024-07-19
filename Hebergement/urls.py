@@ -58,4 +58,5 @@ urlpatterns = [
     path('get-post-chambres/', views.get_post_chambres, name='get-post-chambres'),
     path('put-delete-chambre/<int:pk>/',
          views.put_delete_chambre, name='put-delete-chambre'),
+     path('avis-clients/', views.AvisClientsListView.as_view(), name='avis-clients-list'),
 ]

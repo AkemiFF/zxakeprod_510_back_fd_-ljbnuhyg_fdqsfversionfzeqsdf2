@@ -98,7 +98,7 @@ class ResponsableEtablissementSerializer(serializers.ModelSerializer):
         }
 
 # Pour TypeCarteBancaire
-
+ 
 
 class TypeCarteBancaireSerializer(serializers.ModelSerializer):
     class Meta:
@@ -112,7 +112,7 @@ class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = (
-            'id', 'username', 'ban', 'email', 'numero_client', 'numero_bancaire_client',
+            'id', 'username', 'ban', 'email', 'numero_client', 'numero_bancaire_client',"profilPic",
             'type_carte_bancaire', 'created_at', 'updated_at', 'first_name', 'last_name', 'email', 'is_staff', 'is_active'
         )
     extra_kwargs = {

@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from Hebergement.models import *
 from django.db.models import Min
+from Accounts.serializers import ClientSerializer
+
 
 class HebergementImageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -19,10 +21,10 @@ class HebergementSerializer(serializers.ModelSerializer):
         min_price = HebergementChambre.objects.filter(hebergement=instance).aggregate(Min('prix_nuit_chambre'))['prix_nuit_chambre__min']
         return min_price
 
-    def get_images(self, instance):
-        hebergement_images = HebergementImage.objects.filter(hebergement=instance)
-        serializer = HebergementImageSerializer(hebergement_images, many=True)
-        return serializer.data
+    def get_images(self, obj):
+        images = obj.images.all().order_by('-couverture', 'id')
+        return HebergementImageSerializer(images, many=True).data
+
 
     class Meta:
         model = Hebergement
@@ -46,10 +48,6 @@ class TypeHebergementSerializer(serializers.ModelSerializer):
         model = TypeHebergement
         fields = '__all__'
 
-class HebergementImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = HebergementImage
-        fields = '__all__'
 
 class AccessoireHebergementSerializer(serializers.ModelSerializer):
     class Meta:
@@ -115,16 +113,51 @@ class AvisClientsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class HebergementImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HebergementImage
+        fields = '__all__'
+
 
 class HebergementSerializerAll(serializers.ModelSerializer):
     type_hebergement = TypeHebergementSerializer()
-    images = HebergementImageSerializer(many=True)
+    images = serializers.SerializerMethodField()
     chambres = HebergementChambreSerializer(many=True, source='hebergementchambre_set')
-    localisation = LocalisationSerializer(source='hebergement')    
+    localisation = LocalisationSerializer(source='hebergement')
     accessoires = HebergementAccessoireSerializer(many=True, source='hebergementaccessoire_set')
-    reservations = ReservationSerializer(many=True)  # Assurez-vous du nom correct
+    reservations = ReservationSerializer(many=True)
     avis_hotel = AvisClientsSerializer(many=True)
 
     class Meta:
         model = Hebergement
         fields = '__all__'
+
+    def get_images(self, obj):
+        images = obj.images.all().order_by('-couverture', 'id')
+        return HebergementImageSerializer(images, many=True).data
+
+from rest_framework import serializers
+from .models import AvisClients, Client, Localisation
+
+
+class SecondLocalisationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Localisation
+        fields = ['adresse', 'ville']
+
+class HebergementWithLocalisationSerializer(serializers.ModelSerializer):
+    localisation = SecondLocalisationSerializer(source='hebergement')  # Utiliser le related_name
+
+    class Meta:
+        model = Hebergement
+        fields = ['nom_hebergement', 'localisation']
+
+
+
+class AllAvisClientsSerializer(serializers.ModelSerializer):
+    client = ClientSerializer()
+    hebergement = HebergementWithLocalisationSerializer()
+
+    class Meta:
+        model = AvisClients
+        fields = ['id', 'client', 'commentaire', 'note', 'created_at', 'updated_at', 'hebergement']
