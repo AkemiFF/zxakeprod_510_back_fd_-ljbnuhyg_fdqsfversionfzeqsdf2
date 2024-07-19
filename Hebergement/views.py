@@ -36,7 +36,7 @@ def get_hebergement_details(request, hebergement_id):
 @permission_classes([AllowAny])
 def get_chambre_details(request, chambre_id):
     try:
-        hebergement_chambre = HebergementChambre.objects.get(chambre_id=chambre_id)
+        hebergement_chambre = HebergementChambre.objects.get(id=chambre_id)
         serializer = HebergementChambreSerializer(hebergement_chambre)
         return Response(serializer.data, status=status.HTTP_200_OK)
     except HebergementChambre.DoesNotExist:
