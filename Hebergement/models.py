@@ -106,6 +106,8 @@ class HebergementChambre(models.Model):
     chambre_personaliser = models.ForeignKey(
         ChambrePersonaliser, on_delete=models.CASCADE, null=True, blank=True
     )
+    description = models.CharField(max_length=300, null=True, blank=True)
+    superficie = models.IntegerField(null=True, blank=True)
     prix_nuit_chambre = models.DecimalField(max_digits=8, decimal_places=2)
     disponible_chambre = models.IntegerField(null=True)
     accessoires = models.ManyToManyField(
@@ -157,7 +159,7 @@ class HebergementChambreAccessoire(models.Model):
 
 class ImageChambre(models.Model):
     hebergement_chambre = models.ForeignKey(
-        "HebergementChambre", on_delete=models.CASCADE, related_name="images_chambre"
+        HebergementChambre, on_delete=models.CASCADE, related_name="images_chambre"
     )
     images = models.ImageField(upload_to="images/images_chambre")
     couverture = models.BooleanField(default=False)
