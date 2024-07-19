@@ -78,7 +78,7 @@ class Client(AbstractUser):
     emailProviderId = models.CharField(max_length=80, null=True)
     emailProviderUid = models.CharField(max_length=80, null=True)
     emailPhotoUrl = models.CharField(max_length=280, null=True)
-    profilPic = models.ImageField(upload_to='images/profil_user', null=True,blank=True)
+    profilPic = models.ImageField(upload_to='images/profil_user', default="images/profil_user/default.jpg", null=True ,blank=True)
     ban = models.BooleanField(default=False)
     email = models.EmailField(_('email address'), unique=True)
     numero_client = models.CharField(max_length=10, blank=True)
@@ -94,11 +94,6 @@ class Client(AbstractUser):
     def __str__(self):
         return self.email
     
-    # def has_reservation_with(self, hebergement):
-    #     # Logique pour vérifier si le client a une réservation avec l'hébergement donné
-    #     reservations = Reservation.objects.filter(client_reserve=self, hebergement=hebergement)
-    #     return reservations.exists()
-
     class Meta:
         verbose_name = _('client')
         verbose_name_plural = _('clients')
