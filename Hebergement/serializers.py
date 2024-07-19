@@ -84,7 +84,15 @@ class AccessoireHebergementSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class ImageChambreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ImageChambre
+        fields = "__all__"
+
+
 class ChambreSerializer(serializers.ModelSerializer):
+    images_chambre = ImageChambreSerializer(many=True, read_only=True)
+
     class Meta:
         model = Chambre
         fields = "__all__"
@@ -131,12 +139,6 @@ class HebergementChambreAccessoireSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = HebergementChambreAccessoire
-        fields = "__all__"
-
-
-class ImageChambreSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ImageChambre
         fields = "__all__"
 
 
