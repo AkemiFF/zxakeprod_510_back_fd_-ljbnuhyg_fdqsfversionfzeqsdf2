@@ -9,17 +9,20 @@ from Hebergement.models import *
 from django.conf import settings
 
 
+from django.db import models
+from django.conf import settings
 
 class Message(models.Model):
     client = models.ForeignKey(
-        settings.AUTH_USER_MODEL, related_name='sent_messages', on_delete=models.CASCADE)  # Utilisation de settings.AUTH_USER_MODEL
+        settings.AUTH_USER_MODEL, related_name='sent_messages', on_delete=models.CASCADE)
     content = models.TextField()
-    subject = models.CharField(max_length=255, default='', null=True,blank=True)
+    subject = models.CharField(max_length=255, default='', null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     client_is_sender = models.BooleanField(default=False)
-    
+
     def __str__(self):
-        return f"{self.client} -> {self.get_receiver()}: {self.content}"
+        # On évite d'appeler get_receiver() directement ici
+        return f"{self.client}: {self.content}"
 
     def get_receiver(self):
         raise NotImplementedError("Subclasses of Message must provide a get_receiver() method.")

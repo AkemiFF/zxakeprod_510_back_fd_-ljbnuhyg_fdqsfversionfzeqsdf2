@@ -11,7 +11,7 @@ from Accounts.permissions import *
 
 # HebergementMessage Views
 @api_view(['GET'])
-@permission_classes([IsClientUser])
+@permission_classes([IsAuthenticated])
 def get_messages_client_hebergement(request):
         try:
             data = json.loads(request.body.decode('utf-8'))
@@ -22,17 +22,17 @@ def get_messages_client_hebergement(request):
             hebergement = Hebergement.objects.get(id=hebergement_id)
             
             messages = HebergementMessage.objects.filter(client=client,receiver=hebergement)
-            dic_mess = dict()
-            for i in messages:
-                mess = {"content":i.content, 
-                                           "client":i.client.id,
-                                           "hebergment": i.receiver.id, 
-                                           "client_is_sender": i.client_is_sender,
-                                           "timestamp": i.timestamp,
-                                           "subject": i.subject
-                                    }
-                dic_mess.setdefault(i.id,    mess)
-              
+            dic_mess = {
+            message.id: {
+                "content": message.content,
+                "client": message.client.id,
+                "hebergement": message.receiver.id,
+                "client_is_sender": message.client_is_sender,
+                "timestamp": message.timestamp,
+                "subject": message.subject
+            }
+            for message in messages
+        }
                 
             return JsonResponse({'messages': dic_mess}, status=200)
 

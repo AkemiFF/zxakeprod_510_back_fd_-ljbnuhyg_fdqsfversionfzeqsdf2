@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from Hebergement.models import Hebergement, HebergementImage, ChambrePersonaliser, AccessoireChambre, AccessoireHebergement, HebergementAccessoire, HebergementChambre, Chambre, HebergementChambreAccessoire
+from Hebergement.models import *
 from django.db.models import Min
 
 class HebergementImageSerializer(serializers.ModelSerializer):
@@ -37,30 +37,94 @@ class HebergementSerializer(serializers.ModelSerializer):
 
         return hebergement
 
+
+
+
+
+class TypeHebergementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TypeHebergement
+        fields = '__all__'
+
+class HebergementImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HebergementImage
+        fields = '__all__'
+
 class AccessoireHebergementSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccessoireHebergement
-        fields = ['nom_accessoire', 'description_accessoire']
-
-class HebergementAccessoireSerializer(serializers.ModelSerializer):
-    accessoire = AccessoireHebergementSerializer()
-    hebergement = HebergementSerializer()
-    
-    class Meta:
-        model = HebergementAccessoire
-        fields = ['hebergement', 'accessoire', 'hebergement', 'created_at', 'updated_at']
-
-class AccessoireChambreSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AccessoireChambre
-        fields = '__all__'
-        
-class ChambrePersonaliserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ChambrePersonaliser
         fields = '__all__'
 
 class ChambreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chambre
+        fields = '__all__'
+
+class ChambrePersonaliserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChambrePersonaliser
+        fields = '__all__'
+
+class HebergementChambreSerializer(serializers.ModelSerializer):
+    chambre = ChambreSerializer()
+    chambre_personaliser = ChambrePersonaliserSerializer()
+    accessoires = AccessoireHebergementSerializer(many=True)
+
+    class Meta:
+        model = HebergementChambre
+        fields = '__all__'
+
+class LocalisationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Localisation
+        fields = '__all__'
+
+class HebergementAccessoireSerializer(serializers.ModelSerializer):
+    accessoire = AccessoireHebergementSerializer()
+
+    class Meta:
+        model = HebergementAccessoire
+        fields = '__all__'
+
+class AccessoireChambreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccessoireChambre
+        fields = '__all__'
+
+class HebergementChambreAccessoireSerializer(serializers.ModelSerializer):
+    accessoire_chambre = AccessoireChambreSerializer()
+
+    class Meta:
+        model = HebergementChambreAccessoire
+        fields = '__all__'
+
+class ImageChambreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ImageChambre
+        fields = '__all__'
+
+class ReservationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reservation
+        fields = '__all__'
+
+class AvisClientsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AvisClients
+        fields = '__all__'
+
+
+
+class HebergementSerializerAll(serializers.ModelSerializer):
+    type_hebergement = TypeHebergementSerializer()
+    images = HebergementImageSerializer(many=True)
+    chambres = HebergementChambreSerializer(many=True, source='hebergementchambre_set')
+    localisation = LocalisationSerializer(source='hebergement')    
+    accessoires = HebergementAccessoireSerializer(many=True, source='hebergementaccessoire_set')
+    reservations = ReservationSerializer(many=True)  # Assurez-vous du nom correct
+    avis_hotel = AvisClientsSerializer(many=True)
+
+    class Meta:
+        model = Hebergement
         fields = '__all__'

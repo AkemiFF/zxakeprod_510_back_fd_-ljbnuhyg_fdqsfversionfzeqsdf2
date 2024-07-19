@@ -4,10 +4,22 @@ from .serializers import HebergementSerializer
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from Hebergement.serializers import ChambreSerializer, HebergementAccessoireSerializer, HebergementSerializer, AccessoireHebergementSerializer, AccessoireChambreSerializer, ChambrePersonaliserSerializer
+from Hebergement.serializers import *
 from Hebergement.models import Chambre, Hebergement, HebergementAccessoire, AccessoireHebergement, AccessoireChambre, ChambrePersonaliser
 from rest_framework.permissions import *
 from django.db.models import Min
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_hebergement_details(request, hebergement_id):
+    try:
+        hebergement = Hebergement.objects.get(id=hebergement_id)
+        serializer = HebergementSerializerAll(hebergement)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Hebergement.DoesNotExist:
+        return Response({'error': 'Hebergement not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 # Nombre hebergement creer
 @api_view(['GET'])
