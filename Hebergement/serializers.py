@@ -134,6 +134,12 @@ class HebergementAccessoireSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class HebergementAccessoireSerializerID(serializers.ModelSerializer):
+    class Meta:
+        model = HebergementAccessoire
+        fields = ["hebergement", "accessoire"]
+
+
 class HebergementChambreAccessoireSerializer(serializers.ModelSerializer):
     accessoire_chambre = AccessoireChambreSerializer()
 
@@ -179,13 +185,12 @@ class HebergementImageSerializer(serializers.ModelSerializer):
 
 
 class HebergementSerializerAll(serializers.ModelSerializer):
+
     type_hebergement = TypeHebergementSerializer()
     images = serializers.SerializerMethodField()
     chambres = HebergementChambreSerializer(many=True, source="hebergementchambre_set")
     localisation = LocalisationSerializer()
-    # accessoires = TypeAccessoireSerializer(
-    #     many=True, source="hebergementaccessoire_set"
-    # )
+    accessoires_haves = serializers.SerializerMethodField()
     accessoires = serializers.SerializerMethodField()
     reservations = ReservationSerializer(many=True)
     avis_hotel = AvisClientsSerializer(many=True)
@@ -209,6 +214,10 @@ class HebergementSerializerAll(serializers.ModelSerializer):
             accessoires = [acc for acc in item["accessoires"]]
             data[type_nom] = accessoires
         return data
+
+    def get_accessoires_haves(self, obj):
+        accessoires = HebergementAccessoire.objects.filter(hebergement_id=obj.id)
+        return HebergementAccessoireSerializerID(accessoires, many=True).data
 
     class Meta:
         model = Hebergement
