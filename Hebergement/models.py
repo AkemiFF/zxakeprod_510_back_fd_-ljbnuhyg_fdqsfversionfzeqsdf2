@@ -106,6 +106,8 @@ class HebergementChambre(models.Model):
     chambre_personaliser = models.ForeignKey(
         ChambrePersonaliser, on_delete=models.CASCADE, null=True, blank=True
     )
+    description = models.CharField(max_length=300, null=True, blank=True)
+    superficie = models.IntegerField(null=True, blank=True)
     prix_nuit_chambre = models.DecimalField(max_digits=8, decimal_places=2)
     disponible_chambre = models.IntegerField(null=True)
     accessoires = models.ManyToManyField(
