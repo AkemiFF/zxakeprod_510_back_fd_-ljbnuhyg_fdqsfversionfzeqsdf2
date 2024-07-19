@@ -95,7 +95,7 @@ class ChambreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Chambre
-        fields = "__all__"
+        fields = "images_chambre"
 
 
 class ChambrePersonaliserSerializer(serializers.ModelSerializer):
