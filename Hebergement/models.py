@@ -21,13 +21,13 @@ class HebergementImage(models.Model):
         'Hebergement', on_delete=models.CASCADE, related_name='images')
     couverture = models.BooleanField(default=False)
     legende_hebergement = models.CharField(max_length=200, blank=True)
-    images = models.ImageField(
+    image = models.ImageField(
         upload_to='images/images_Hebergement', null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.images.name
+        return self.image.name
 
 
 class AccessoireHebergement(models.Model):

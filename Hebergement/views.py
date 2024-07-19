@@ -21,7 +21,14 @@ def get_hebergement_details(request, hebergement_id):
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-# Nombre hebergement creer
+
+
+@permission_classes([AllowAny])
+class AvisClientsListView(generics.ListAPIView):
+    queryset = AvisClients.objects.all()
+    serializer_class = AllAvisClientsSerializer
+
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def get_count(request):
