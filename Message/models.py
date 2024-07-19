@@ -1,33 +1,83 @@
 from django.db import models
 from django.contrib.auth.models import User
-from Artisanal.models import *
-from Hebergement.models import *
-from TourOperateur.models import TourOperateur
 from polymorphic.models import PolymorphicModel
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
+from Artisanal.models import *
+from TourOperateur.models import *
+from Hebergement.models import *
+from django.conf import settings
 
 
-class Message(PolymorphicModel):
-    sender = models.ForeignKey(
-        Client, related_name='sent_messages', on_delete=models.CASCADE)
+from django.db import models
+from django.conf import settings
 
-    subject = models.CharField(max_length=255)
+class Message(models.Model):
+    client = models.ForeignKey(
+        settings.AUTH_USER_MODEL, related_name='sent_messages', on_delete=models.CASCADE)
     content = models.TextField()
+    subject = models.CharField(max_length=255, default='', null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+    client_is_sender = models.BooleanField(default=False)
 
-    def _str_(self):
-        return f"{self.sender} -> {self.receiver}: {self.subject}"
+    def __str__(self):
+        # On évite d'appeler get_receiver() directement ici
+        return f"{self.client}: {self.content}"
+
+    def get_receiver(self):
+        raise NotImplementedError("Subclasses of Message must provide a get_receiver() method.")
+
+    class Meta:
+        verbose_name = 'Message'
+        verbose_name_plural = 'Messages'
 
 
 class HebergementMessage(Message):
     receiver = models.ForeignKey(
         Hebergement, related_name='messages', on_delete=models.CASCADE)
+    
+    def __str__(self):
+        if self.client_is_sender:
+            return f"{self.client} -> {self.receiver}: {self.content}"
+        else:
+            return f"{self.receiver} -> {self.client}: {self.content}"
+
+    def get_receiver(self):
+        return self.receiver
 
 
 class ArtisanatMessage(Message):
-    artisanat = models.ForeignKey(
+    receiver = models.ForeignKey(
         Artisanat, related_name='messages', on_delete=models.CASCADE)
+
+    def __str__(self):
+        if self.client_is_sender:
+            return f"{self.client} -> {self.receiver}: {self.content}"
+        else:
+            return f"{self.receiver} -> {self.client}: {self.content}"
+
+    def get_receiver(self):
+        return self.receiver
 
 
 class TourOperateurMessage(Message):
-    tour_operateur = models.ForeignKey(
+    receiver = models.ForeignKey(
         TourOperateur, related_name='messages', on_delete=models.CASCADE)
+
+    def __str__(self):
+        if self.client_is_sender:
+            return f"{self.client} -> {self.receiver}: {self.content}"
+        else:
+            return f"{self.receiver} -> {self.client}: {self.content}"
+
+    def get_receiver(self):
+        return self.receiver
+
+
+@receiver(pre_save, sender=HebergementMessage)
+def check_reservation_before_save(sender, instance, **kwargs): 
+    client = instance.client
+    hebergement = instance.receiver
+
+    if not Reservation.objects.filter(client_reserve=client, hotel_reserve=hebergement).exists():
+        raise ValueError("Le client n'a pas effectué de réservation avec cet hébergement.")

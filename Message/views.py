@@ -1,6 +1,5 @@
-from django.shortcuts import render
-
-# Create your views here.
+import json
+from django.http import JsonResponse
 from rest_framework import generics
 from .models import *
 from .serializers import *
@@ -8,12 +7,46 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import *
+from Accounts.permissions import *
 
 # HebergementMessage Views
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_messages_client_hebergement(request):
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            client_id = data['client_id']
+            hebergement_id = data['hebergement_id']
+            
+            client = Client.objects.get(id=client_id)
+            hebergement = Hebergement.objects.get(id=hebergement_id)
+            
+            messages = HebergementMessage.objects.filter(client=client,receiver=hebergement)
+            dic_mess = {
+            message.id: {
+                "content": message.content,
+                "client": message.client.id,
+                "hebergement": message.receiver.id,
+                "client_is_sender": message.client_is_sender,
+                "timestamp": message.timestamp,
+                "subject": message.subject
+            }
+            for message in messages
+        }
+                
+            return JsonResponse({'messages': dic_mess}, status=200)
 
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    
+
+
+
+
+#####################################################
 
 @api_view(['GET', 'POST'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def hebergement_message_list_create(request):
     if request.method == 'GET':
         messages = HebergementMessage.objects.all()
@@ -27,8 +60,10 @@ def hebergement_message_list_create(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+
 @api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def hebergement_message_detail(request, pk):
     try:
         message = HebergementMessage.objects.get(pk=pk)
@@ -52,7 +87,7 @@ def hebergement_message_detail(request, pk):
 
 
 @api_view(['GET', 'POST'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def artisanat_message_list_create(request):
     if request.method == 'GET':
         messages = ArtisanatMessage.objects.all()
@@ -67,7 +102,7 @@ def artisanat_message_list_create(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def artisanat_message_detail(request, pk):
     try:
         message = ArtisanatMessage.objects.get(pk=pk)
@@ -90,8 +125,9 @@ def artisanat_message_detail(request, pk):
 # TourOperateurMessage Views
 
 
+
 @api_view(['GET', 'POST'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def tour_operateur_message_list_create(request):
     if request.method == 'GET':
         messages = TourOperateurMessage.objects.all()
@@ -106,7 +142,7 @@ def tour_operateur_message_list_create(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def tour_operateur_message_detail(request, pk):
     try:
         message = TourOperateurMessage.objects.get(pk=pk)

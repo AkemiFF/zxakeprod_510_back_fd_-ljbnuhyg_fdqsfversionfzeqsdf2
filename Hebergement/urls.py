@@ -11,7 +11,7 @@ urlpatterns = [
     # HEBERGEMENT (get tout les hebergements, visualiser selon id hebergement, post, modifier, et delete Hebergement)
     path('get-all-hebergement/', views.get_all_hebergements, name='hebergement-all'),
     path('get-id-hebergement/<int:hebergement_id>/',
-         views.get_id_hebergements, name='hebergement-id'),
+         views.get_hebergement_details, name='hebergement-id'),
 
     path('create-hebergement/', views.create_hebergement,
          name='hebergement-create'),
@@ -58,4 +58,5 @@ urlpatterns = [
     path('get-post-chambres/', views.get_post_chambres, name='get-post-chambres'),
     path('put-delete-chambre/<int:pk>/',
          views.put_delete_chambre, name='put-delete-chambre'),
+     path('avis-clients/', views.AvisClientsListView.as_view(), name='avis-clients-list'),
 ]

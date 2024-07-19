@@ -9,6 +9,7 @@ from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 
 
+
 class TypeResponsable(models.Model):
     type_name = models.CharField(
         max_length=50, unique=True, null=True, blank=True,
@@ -77,7 +78,7 @@ class Client(AbstractUser):
     emailProviderId = models.CharField(max_length=80, null=True)
     emailProviderUid = models.CharField(max_length=80, null=True)
     emailPhotoUrl = models.CharField(max_length=280, null=True)
-
+    profilPic = models.ImageField(upload_to='images/profil_user', default="images/profil_user/default.jpg", null=True ,blank=True)
     ban = models.BooleanField(default=False)
     email = models.EmailField(_('email address'), unique=True)
     numero_client = models.CharField(max_length=10, blank=True)
@@ -92,7 +93,7 @@ class Client(AbstractUser):
 
     def __str__(self):
         return self.email
-
+    
     class Meta:
         verbose_name = _('client')
         verbose_name_plural = _('clients')

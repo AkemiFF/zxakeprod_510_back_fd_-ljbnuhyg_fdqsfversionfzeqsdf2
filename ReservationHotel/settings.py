@@ -6,8 +6,13 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-FrontHosts = ["http://localhost:3000",
-              "http://127.0.0.1:3000",]
+FrontHosts = [
+    "http://localhost:3000",
+    "http://192.168.88.37:3000",
+    "http://192.168.88.37:3001",
+    "http://127.0.0.1:3000",]
+
+
 FRONT_HOST = FrontHosts[0]
 DEBUG = config('DEBUG', default=False, cast=bool)
 # SECRET_KEY = config('SECRET_KEY')
@@ -163,18 +168,6 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
-}
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': [
-            'profile',
-            'email',
-        ],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
-        },
-        'OAUTH_PKCE_ENABLED': True,
-    }
 }
 
 

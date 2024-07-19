@@ -4,13 +4,33 @@ from .serializers import HebergementSerializer
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from Hebergement.serializers import ChambreSerializer, HebergementAccessoireSerializer, HebergementSerializer, AccessoireHebergementSerializer, AccessoireChambreSerializer, ChambrePersonaliserSerializer
+from Hebergement.serializers import *
 from Hebergement.models import Chambre, Hebergement, HebergementAccessoire, AccessoireHebergement, AccessoireChambre, ChambrePersonaliser
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import *
+from django.db.models import Min
 
-# Nombre hebergement creer
 @api_view(['GET'])
-@permission_classes([IsAdminUser])
+@permission_classes([AllowAny])
+def get_hebergement_details(request, hebergement_id):
+    try:
+        hebergement = Hebergement.objects.get(id=hebergement_id)
+        serializer = HebergementSerializerAll(hebergement)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Hebergement.DoesNotExist:
+        return Response({'error': 'Hebergement not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+@permission_classes([AllowAny])
+class AvisClientsListView(generics.ListAPIView):
+    queryset = AvisClients.objects.all()
+    serializer_class = AllAvisClientsSerializer
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def get_count(request):
     try:
         number_hebergement = Hebergement.objects.count()
@@ -19,16 +39,17 @@ def get_count(request):
     return Response({'count': number_hebergement}, status=status.HTTP_200_OK)
 
 # (Creer hebergement, visualiser hebergement tout les hebergement, modifier et supprimer hebergement)
+
+
 @api_view(['GET'])
-@permission_classes([IsAdminUser])
+@permission_classes([AllowAny])
 def get_all_hebergements(request):
     try:
-        all_hebergement = Hebergement.objects.all()
+        all_hebergement = Hebergement.objects.annotate(min_prix_nuit_chambre=Min('hebergementchambre__prix_nuit_chambre'))
     except Hebergement.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = HebergementSerializer(all_hebergement, many=True)
     return Response({'hebergements': serializer.data}, status=status.HTTP_200_OK)
-
 # Visualiser hebergement selon id
 
 
