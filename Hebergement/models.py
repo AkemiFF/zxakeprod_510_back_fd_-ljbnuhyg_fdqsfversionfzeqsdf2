@@ -157,7 +157,7 @@ class HebergementChambreAccessoire(models.Model):
 
 class ImageChambre(models.Model):
     hebergement_chambre = models.ForeignKey(
-        "HebergementChambre", on_delete=models.CASCADE, related_name="images_chambre"
+        HebergementChambre, on_delete=models.CASCADE, related_name="images_chambre"
     )
     images = models.ImageField(upload_to="images/images_chambre")
     couverture = models.BooleanField(default=False)
