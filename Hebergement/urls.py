@@ -108,4 +108,9 @@ urlpatterns = [
     path(
         "avis-clients/", views.AvisClientsListView.as_view(), name="avis-clients-list"
     ),
+    path(
+        "generer-description/<int:hebergement_id>/",
+        views.generer_description_view,
+        name="generer_description",
+    ),
 ]

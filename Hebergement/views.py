@@ -15,6 +15,38 @@ from Hebergement.models import (
 )
 from rest_framework.permissions import *
 from django.db.models import Min
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
+from .models import Hebergement
+from Hebergement.utils import generer_description_hebergement  # type: ignore
+from django.conf import settings
+
+
+def generer_description_view(request, hebergement_id):
+    hebergement = get_object_or_404(Hebergement, id=hebergement_id)
+    localisation = (
+        f"{hebergement.localisation.ville}, {hebergement.localisation.adresse}"
+        if hebergement.localisation
+        else "Non spécifiée"
+    )
+    accessoires = [
+        accessoire.accessoire.nom_accessoire
+        for accessoire in hebergement.accessoires.all()
+    ]
+
+    hebergement_info = {
+        "nom_hebergement": hebergement.nom_hebergement,
+        "localisation": localisation,
+        "description_hebergement": hebergement.description_hebergement,
+        "nombre_etoile_hebergement": hebergement.nombre_etoile_hebergement,
+        "type_hebergement": hebergement.type_hebergement.type_name,
+        "accessoires": accessoires,
+    }
+
+    api_key = settings.OPENAI_API_KEY
+    description = generer_description_hebergement(api_key, hebergement_info)
+
+    return JsonResponse({"description": description})
 
 
 @api_view(["GET"])
