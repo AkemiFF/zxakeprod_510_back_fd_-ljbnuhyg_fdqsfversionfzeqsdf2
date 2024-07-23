@@ -111,6 +111,24 @@ def get_all_hebergements(request):
     return Response({"hebergements": serializer.data}, status=status.HTTP_200_OK)
 
 
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_suggestion_hebergements(request):
+    try:
+        all_hebergement = Hebergement.objects.annotate(
+            min_prix_nuit_chambre=Min("hebergementchambre__prix_nuit_chambre"),
+            note_moyenne=Avg("avis_hotel__note"),
+        ).order_by("-note_moyenne")[:3]
+    except Hebergement.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    serializer = SuggestionHebergementSerializer(
+        all_hebergement, many=True, context={"request": request}
+    )
+
+    return Response({"hebergements": serializer.data}, status=status.HTTP_200_OK)
+
+
 # Visualiser hebergement selon id
 
 

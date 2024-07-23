@@ -2,6 +2,48 @@ from rest_framework import serializers
 from Hebergement.models import *
 from django.db.models import Min
 from Accounts.serializers import ClientSerializer
+from django.db.models import Avg
+
+
+class SuggestionHebergementSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    ville = serializers.SerializerMethodField()
+    note_moyenne = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Hebergement
+        fields = [
+            "id",
+            "nom_hebergement",
+            "image",
+            "ville",
+            "description_hebergement",
+            "note_moyenne",
+        ]
+
+    def get_image(self, obj):
+        request = self.context.get("request")
+        couverture_image = obj.images.filter(couverture=True).first()
+        if couverture_image:
+            absolute_url = request.build_absolute_uri(couverture_image.image.url)
+            return absolute_url
+
+        return None
+
+    def get_ville(self, obj):
+        try:
+            localisation = obj.localisation
+            ville = f"{localisation.ville} , {localisation.adresse}"
+            return ville
+        except Localisation.DoesNotExist:
+            return None
+
+    def get_note_moyenne(self, obj):
+        avis = obj.avis_hotel.all()
+        if avis.exists():
+            moyenne = avis.aggregate(average_note=Avg("note"))["average_note"]
+            return moyenne if moyenne is not None else 0
+        return 0
 
 
 class HebergementImageSerializer(serializers.ModelSerializer):

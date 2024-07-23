@@ -13,6 +13,9 @@ urlpatterns = [
     # HEBERGEMENT (get tout les hebergements, visualiser selon id hebergement, post, modifier, et delete Hebergement)
     path("get-all-hebergement/", views.get_all_hebergements, name="hebergement-all"),
     path(
+        "suggestion/", views.get_suggestion_hebergements, name="hebergement-suggesion"
+    ),
+    path(
         "get-id-hebergement/<int:hebergement_id>/",
         views.get_hebergement_details,
         name="hebergement-id",
