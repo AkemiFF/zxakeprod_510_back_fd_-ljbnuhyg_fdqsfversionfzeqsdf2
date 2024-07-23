@@ -15,6 +15,38 @@ from Hebergement.models import (
 )
 from rest_framework.permissions import *
 from django.db.models import Min
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
+from .models import Hebergement
+from Hebergement.utils import generer_description_hebergement  # type: ignore
+from django.conf import settings
+
+
+def generer_description_view(request, hebergement_id):
+    hebergement = get_object_or_404(Hebergement, id=hebergement_id)
+    localisation = (
+        f"{hebergement.localisation.ville}, {hebergement.localisation.adresse}"
+        if hebergement.localisation
+        else "Non spécifiée"
+    )
+    accessoires = [
+        accessoire.accessoire.nom_accessoire
+        for accessoire in hebergement.accessoires.all()
+    ]
+
+    hebergement_info = {
+        "nom_hebergement": hebergement.nom_hebergement,
+        "localisation": localisation,
+        "description_hebergement": hebergement.description_hebergement,
+        "nombre_etoile_hebergement": hebergement.nombre_etoile_hebergement,
+        "type_hebergement": hebergement.type_hebergement.type_name,
+        "accessoires": accessoires,
+    }
+
+    api_key = settings.OPENAI_API_KEY
+    description = generer_description_hebergement(api_key, hebergement_info)
+
+    return JsonResponse({"description": description})
 
 
 @api_view(["GET"])
@@ -66,6 +98,60 @@ def get_count(request):
 # (Creer hebergement, visualiser hebergement tout les hebergement, modifier et supprimer hebergement)
 
 
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def like_hebergement(request, hebergement_id):
+    client = (
+        request.user
+    )  # Assurez-vous que le client est authentifié et que vous avez accès à l'utilisateur connecté
+
+    try:
+        hebergement = Hebergement.objects.get(id=hebergement_id)
+    except Hebergement.DoesNotExist:
+        return Response(
+            {"detail": "Hebergement not found."}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    # Vérifier si le client a déjà aimé cet hébergement
+    like, created = HebergementLike.objects.get_or_create(
+        hebergement=hebergement, client=client
+    )
+    if not created:
+        return Response(
+            {"detail": "You have already liked this hebergement."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    return Response(
+        {"detail": "Hebergement liked successfully."}, status=status.HTTP_201_CREATED
+    )
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def unlike_hebergement(request, hebergement_id):
+    client = (
+        request.user
+    )  # Assurez-vous que le client est authentifié et que vous avez accès à l'utilisateur connecté
+
+    try:
+        hebergement = Hebergement.objects.get(id=hebergement_id)
+    except Hebergement.DoesNotExist:
+        return Response(
+            {"detail": "Hebergement not found."}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    try:
+        like = HebergementLike.objects.get(hebergement=hebergement, client=client)
+        like.delete()
+    except HebergementLike.DoesNotExist:
+        return Response({"detail": "Like not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    return Response(
+        {"detail": "Hebergement unliked successfully."}, status=status.HTTP_200_OK
+    )
+
+
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def get_all_hebergements(request):
@@ -76,6 +162,24 @@ def get_all_hebergements(request):
     except Hebergement.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = HebergementSerializer(all_hebergement, many=True)
+    return Response({"hebergements": serializer.data}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_suggestion_hebergements(request):
+    try:
+        all_hebergement = Hebergement.objects.annotate(
+            min_prix_nuit_chambre=Min("hebergementchambre__prix_nuit_chambre"),
+            note_moyenne=Avg("avis_hotel__note"),
+        ).order_by("-note_moyenne")[:3]
+    except Hebergement.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    serializer = SuggestionHebergementSerializer(
+        all_hebergement, many=True, context={"request": request}
+    )
+
     return Response({"hebergements": serializer.data}, status=status.HTTP_200_OK)
 
 

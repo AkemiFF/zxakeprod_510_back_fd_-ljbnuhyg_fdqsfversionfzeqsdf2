@@ -1,10 +1,5 @@
-from django.core.exceptions import ValidationError
 from django.db import models
-from django.core.validators import RegexValidator
-from django.contrib.auth.models import AbstractUser
 from Accounts.models import ResponsableEtablissement, Client
-from django.contrib.auth.models import User
-from django.utils import timezone
 
 
 class TypeHebergement(models.Model):
@@ -89,7 +84,9 @@ class Hebergement(models.Model):
 
 
 class HebergementAccessoire(models.Model):
-    hebergement = models.ForeignKey(Hebergement, on_delete=models.CASCADE)
+    hebergement = models.ForeignKey(
+        Hebergement, on_delete=models.CASCADE, related_name="accessoires"
+    )
     accessoire = models.ForeignKey(AccessoireHebergement, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -208,3 +205,18 @@ class AvisClients(models.Model):
 
     def __str__(self) -> str:
         return f"Note: {self.note} - Hebergement: {self.hebergement.nom_hebergement}"
+
+
+class HebergementLike(models.Model):
+    hebergement = models.ForeignKey(
+        Hebergement, on_delete=models.CASCADE, related_name="likes"
+    )
+    client = models.ForeignKey(Client, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ("hebergement", "client")
+        verbose_name = "Hebergement Like"
+        verbose_name_plural = "Hebergement Likes"
+
+    def __str__(self):
+        return f"{self.client} likes {self.hebergement}"
