@@ -65,6 +65,7 @@ class HebergementSerializer(serializers.ModelSerializer):
     image_files = serializers.ListField(
         child=serializers.ImageField(write_only=True), write_only=True, required=False
     )
+    nombre_avis = serializers.SerializerMethodField()  # Ajouter ce champ
 
     def get_min_prix_nuit_chambre(self, instance):
         min_price = HebergementChambre.objects.filter(hebergement=instance).aggregate(
@@ -87,11 +88,15 @@ class HebergementSerializer(serializers.ModelSerializer):
             }
         return None
 
+    def get_nombre_avis(self, instance):
+        return instance.avis_hotel.count()  # Compter le nombre d'avis
+
     class Meta:
         model = Hebergement
         fields = [
             "id",
             "nom_hebergement",
+            "nombre_avis",
             "localisation",
             "description_hebergement",
             "min_prix_nuit_chambre",
@@ -102,6 +107,7 @@ class HebergementSerializer(serializers.ModelSerializer):
             "updated_at",
             "images",
             "image_files",
+            # Ajouter le champ nombre_avis
         ]
 
     def create(self, validated_data):
@@ -109,7 +115,7 @@ class HebergementSerializer(serializers.ModelSerializer):
         hebergement = Hebergement.objects.create(**validated_data)
 
         for image_file in image_files:
-            HebergementImage.objects.create(hebergement=hebergement, images=image_file)
+            HebergementImage.objects.create(hebergement=hebergement, image=image_file)
 
         return hebergement
 

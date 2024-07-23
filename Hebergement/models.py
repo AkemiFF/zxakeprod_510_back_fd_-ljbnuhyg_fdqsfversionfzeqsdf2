@@ -205,3 +205,18 @@ class AvisClients(models.Model):
 
     def __str__(self) -> str:
         return f"Note: {self.note} - Hebergement: {self.hebergement.nom_hebergement}"
+
+
+class HebergementLike(models.Model):
+    hebergement = models.ForeignKey(
+        Hebergement, on_delete=models.CASCADE, related_name="likes"
+    )
+    client = models.ForeignKey(Client, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ("hebergement", "client")
+        verbose_name = "Hebergement Like"
+        verbose_name_plural = "Hebergement Likes"
+
+    def __str__(self):
+        return f"{self.client} likes {self.hebergement}"

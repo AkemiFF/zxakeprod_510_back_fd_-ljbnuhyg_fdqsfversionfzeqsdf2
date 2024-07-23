@@ -116,4 +116,14 @@ urlpatterns = [
         views.generer_description_view,
         name="generer_description",
     ),
+    path(
+        "<int:hebergement_id>/like/",
+        views.like_hebergement,
+        name="like_hebergement",
+    ),
+    path(
+        "<int:hebergement_id>/unlike/",
+        views.unlike_hebergement,
+        name="unlike_hebergement",
+    ),
 ]
