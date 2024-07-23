@@ -114,6 +114,7 @@ class VoyageSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "nom_voyage",
+            "ville_depart",
             "description_voyage",
             "destination_voyage",
             "date_debut",

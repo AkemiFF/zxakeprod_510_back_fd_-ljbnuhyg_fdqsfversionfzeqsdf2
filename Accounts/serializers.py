@@ -11,14 +11,15 @@ from django.contrib.auth.password_validation import validate_password
 
 class ClientWithEmailSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
-        write_only=True, required=True, validators=[validate_password])
+        write_only=True, required=True, validators=[validate_password]
+    )
 
     class Meta:
         model = Client
-        fields = ('id', 'email', 'username', 'password')
+        fields = ("id", "email", "username", "password")
 
     def create(self, validated_data):
-        password = validated_data.pop('password', None)
+        password = validated_data.pop("password", None)
         instance = self.Meta.model(**validated_data)
         if password is not None:
             instance.set_password(password)
@@ -33,21 +34,17 @@ class UserSerializerVerify(serializers.Serializer):
 
 class UserEmailSerializerVerify(serializers.Serializer):
     email = serializers.EmailField()
-    emailProviderUid = serializers.CharField()
+    # emailProviderUid = serializers.CharField()
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
-        fields = ['email', 'password']
-        extra_kwargs = {
-            'password': {
-                'write_only': True
-            }
-        }
+        fields = ["email", "password"]
+        extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
-        password = validated_data.pop('password', None)
+        password = validated_data.pop("password", None)
         instance = self.Meta.model(**validated_data)
         if password is not None:
             instance.set_password(password)
@@ -58,22 +55,25 @@ class UserSerializer(serializers.ModelSerializer):
 class InfoUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
-        fields = ['username', 'email', 'password', 'emailProviderId',
-                  "numero_client",
-                  'emailProviderUid', 'emailPhotoUrl']
-        extra_kwargs = {
-            'password': {
-                'write_only': True
-            }
-        }
+        fields = [
+            "username",
+            "email",
+            "password",
+            "emailProviderId",
+            "numero_client",
+            "emailProviderUid",
+            "emailPhotoUrl",
+        ]
+        extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
-        password = validated_data.pop('password', None)
+        password = validated_data.pop("password", None)
         instance = self.Meta.model(**validated_data)
         if password is not None:
             instance.set_password(password)
         instance.save()
         return instance
+
 
 # Pour le TypeResponsable
 
@@ -81,7 +81,8 @@ class InfoUserSerializer(serializers.ModelSerializer):
 class TypeResponsableSerializer(serializers.ModelSerializer):
     class Meta:
         model = TypeResponsable
-        fields = '__all__'
+        fields = "__all__"
+
 
 # Pour ResponsableEtablissement
 
@@ -90,20 +91,29 @@ class ResponsableEtablissementSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResponsableEtablissement
         fields = (
-            'id', 'first_name', 'last_name', 'username', 'email',
-            'numero_responsable', 'created_at', 'updated_at', 'type_responsable'
+            "id",
+            "first_name",
+            "last_name",
+            "username",
+            "email",
+            "numero_responsable",
+            "created_at",
+            "updated_at",
+            "type_responsable",
         )
         extra_kwargs = {
-            'password_responsable': {'write_only': True},
+            "password_responsable": {"write_only": True},
         }
 
+
 # Pour TypeCarteBancaire
- 
+
 
 class TypeCarteBancaireSerializer(serializers.ModelSerializer):
     class Meta:
         model = TypeCarteBancaire
-        fields = ('name', 'regex_pattern')
+        fields = ("name", "regex_pattern")
+
 
 # Pour Client
 
@@ -112,24 +122,38 @@ class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = (
-            'id', 'username', 'ban', 'email', 'numero_client', 'numero_bancaire_client',"profilPic",
-            'type_carte_bancaire', 'created_at', 'updated_at', 'first_name', 'last_name', 'email', 'is_staff', 'is_active'
+            "id",
+            "username",
+            "ban",
+            "email",
+            "numero_client",
+            "numero_bancaire_client",
+            "profilPic",
+            "type_carte_bancaire",
+            "created_at",
+            "updated_at",
+            "first_name",
+            "last_name",
+            "email",
+            "is_staff",
+            "is_active",
         )
+
     extra_kwargs = {
-        'password': {'write_only': True},
+        "password": {"write_only": True},
     }
 
 
 class ClientUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
-        fields = ['ban']
+        fields = ["ban"]
 
 
 class ClientBanSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
-        fields = ['ban']
+        fields = ["ban"]
 
 
 class AdminCheckSerializer(serializers.ModelSerializer):
@@ -137,7 +161,7 @@ class AdminCheckSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['is_admin']
+        fields = ["is_admin"]
 
     def get_is_admin(self, obj):
         return obj.is_superuser
