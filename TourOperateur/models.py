@@ -80,8 +80,11 @@ class Voyage(models.Model):
     ville_depart = models.CharField(max_length=100, default="Antananarivo")
     destination_voyage = models.CharField(max_length=255)
     description_voyage = models.TextField()
+
     date_debut = models.DateField()
     date_fin = models.DateField()
+
+    distance = models.IntegerField(null=True)
 
     prix_voyage = models.DecimalField(max_digits=10, decimal_places=2)
     places_disponibles = models.PositiveIntegerField()
@@ -103,9 +106,25 @@ class Voyage(models.Model):
     def nb_like(self):
         return self.likes.count()
 
+    def get_couverture_images(self):
+        return self.images_voyage.filter(couverture=True)
+
     class Meta:
         verbose_name = "Voyage"
         verbose_name_plural = "Voyages"
+
+
+class TrajetVoyage(models.Model):
+    numero_trajet = models.IntegerField(null=True, blank=True)
+    voyage = models.ForeignKey(
+        Voyage, on_delete=models.CASCADE, related_name="voyage_trajet"
+    )
+    nom_ville = models.CharField(max_length=250, null=True)
+    date_trajet = models.DateField(null=True, blank=True)
+    description_trajet = models.CharField(max_length=1000, null=True, blank=True)
+
+    def __str__(self) -> str:
+        return f"{self.voyage.nom_voyage} - {self.numero_trajet}"
 
 
 class SatisfactionClient(models.Model):
@@ -218,14 +237,14 @@ class Reservation_voyage(models.Model):
         verbose_name_plural = "Reservations Voyage"
 
 
-class TrajetVoyage(models.Model):
-    numero_trajet = models.IntegerField(null=True, blank=True)
-    voyage = models.ForeignKey(
-        Voyage, on_delete=models.CASCADE, related_name="voyage_trajet"
-    )
-    nom_ville = models.CharField(max_length=250, null=True)
-    date_trajet = models.DateField(null=True, blank=True)
-    description_trajet = models.CharField(max_length=1000, null=True, blank=True)
+# class TrajetVoyage(models.Model):
+#     numero_trajet = models.IntegerField(null=True, blank=True)
+#     voyage = models.ForeignKey(
+#         Voyage, on_delete=models.CASCADE, related_name="voyage_trajet"
+#     )
+#     nom_ville = models.CharField(max_length=250, null=True)
+#     date_trajet = models.DateField(null=True, blank=True)
+#     description_trajet = models.CharField(max_length=1000, null=True, blank=True)
 
-    def __str__(self) -> str:
-        return f"{self.voyage.nom_voyage} - {self.numero_trajet}"
+#     def __str__(self) -> str:
+#         return f"{self.voyage.nom_voyage} - {self.numero_trajet}"

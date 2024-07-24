@@ -21,6 +21,81 @@ class VoyageSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class ImageVoyageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ImageVoyage
+        fields = ["image", "couverture"]
+
+
+class AllVoyageSerializer(serializers.ModelSerializer):
+    nom_tour_operateur = serializers.CharField(
+        source="tour_operateur.nom_operateur", read_only=True
+    )
+    nom_type_transport = serializers.CharField(
+        source="type_transport.nom_type", read_only=True
+    )
+    couverture_images = ImageVoyageSerializer(
+        source="get_couverture_images", many=True, read_only=True
+    )
+
+    class Meta:
+        model = Voyage
+        fields = [
+            "id",
+            "nom_voyage",
+            "ville_depart",
+            "destination_voyage",
+            "description_voyage",
+            "date_debut",
+            "date_fin",
+            "prix_voyage",
+            "places_disponibles",
+            "created_at",
+            "updated_at",
+            "tour_operateur",
+            "type_transport",
+            "nom_tour_operateur",
+            "nom_type_transport",
+            "distance",
+            "couverture_images",
+        ]
+
+
+class PopularVoyageSerializer(serializers.ModelSerializer):
+    nom_tour_operateur = serializers.CharField(
+        source="tour_operateur.nom_operateur", read_only=True
+    )
+    nom_type_transport = serializers.CharField(
+        source="type_transport.nom_type", read_only=True
+    )
+    couverture_images = ImageVoyageSerializer(
+        source="get_couverture_images", many=True, read_only=True
+    )
+    like_count = serializers.IntegerField(source="nb_like", read_only=True)
+
+    class Meta:
+        model = Voyage
+        fields = [
+            "id",
+            "nom_voyage",
+            "ville_depart",
+            "destination_voyage",
+            "description_voyage",
+            "date_debut",
+            "date_fin",
+            "prix_voyage",
+            "places_disponibles",
+            "created_at",
+            "updated_at",
+            "tour_operateur",
+            "type_transport",
+            "nom_tour_operateur",
+            "nom_type_transport",
+            "couverture_images",
+            "like_count",
+        ]
+
+
 class SatisfactionClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = SatisfactionClient
@@ -29,7 +104,7 @@ class SatisfactionClientSerializer(serializers.ModelSerializer):
 
 class TourOperateurSerializer(serializers.ModelSerializer):
     avis_tour_operateur = AvisTourOperateurSerializer(many=True, read_only=True)
-    images_tour = ImageTourSerializer(many=True, read_only=True)
+    images_tour = serializers.SerializerMethodField()
     voyages = VoyageSerializer(many=True, read_only=True)
     nombre_voyages = serializers.SerializerMethodField()
     nombre_satisfactions = serializers.SerializerMethodField()
@@ -63,6 +138,13 @@ class TourOperateurSerializer(serializers.ModelSerializer):
 
     def get_nombre_satisfactions(self, obj):
         return obj.tour_satisfaction.filter(est_satisfait=True).count()
+
+    def get_images_tour(self, obj):
+        images = obj.images_tour.all()
+
+        sorted_images = sorted(images, key=lambda img: not img.couverture)
+
+        return ImageTourSerializer(sorted_images, many=True).data
 
 
 class ImageVoyageSerializer(serializers.ModelSerializer):
