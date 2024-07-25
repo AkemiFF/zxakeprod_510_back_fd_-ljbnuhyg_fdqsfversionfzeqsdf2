@@ -9,15 +9,23 @@ from rest_framework.permissions import *
 from .serializers import *
 
 
-class TourOperateurDetailView(generics.RetrieveAPIView):
+class TourOperateurListCreateView(generics.ListCreateAPIView):
     queryset = TourOperateur.objects.all()
     serializer_class = TourOperateurSerializer
+    permission_classes = [AllowAny]
+
+class TourOperateurDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = TourOperateur.objects.all()
+    serializer_class = TourOperateurSerializer
+    permission_classes = [AllowAny]
 
 
 class VoyageDetailView(generics.RetrieveAPIView):
     queryset = Voyage.objects.all()
     serializer_class = VoyageSerializer
     permission_classes = [AllowAny]
+    
+
 
 
 @api_view(["GET"])
