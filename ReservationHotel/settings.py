@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "Accounts",
     "Artisanal",
+    "ChatBot",
     "Hebergement",
     "TourOperateur",
     "Message",
