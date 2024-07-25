@@ -5,8 +5,6 @@ from Hebergement.models import Hebergement
 
 api_key = settings.OPENAI_API_KEY
 
-client = OpenAI(api_key=api_key)
-
 
 def get_hebergement_data():
     hebergements = Hebergement.objects.all()
@@ -18,6 +16,7 @@ def get_hebergement_data():
 
 
 def Assistant():
+    client = OpenAI(api_key=api_key)
     assistant = client.beta.assistants.create(
         name="Travel Advisor",
         instructions=(
