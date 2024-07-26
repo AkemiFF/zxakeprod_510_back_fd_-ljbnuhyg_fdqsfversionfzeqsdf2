@@ -5,7 +5,7 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+N_RUN = 0
 FrontHosts = [
     "http://localhost:3000",
     "http://192.168.88.37:3000",

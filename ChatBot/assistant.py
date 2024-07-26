@@ -1,18 +1,10 @@
 from openai import OpenAI
 from django.conf import settings
 
+from ChatBot.helpers import get_model_structure
 from Hebergement.models import Hebergement
 
 api_key = settings.OPENAI_API_KEY
-
-
-def get_hebergement_data():
-    hebergements = Hebergement.objects.all()
-    data = ""
-    for hebergement in hebergements:
-        data += f"Nom: {hebergement.nom_hebergement}\nDescription: {hebergement.description_hebergement}\n"
-
-    return data
 
 
 def Assistant():
@@ -30,4 +22,21 @@ def Assistant():
     return assistant
 
 
-#
+def DatabaseAssistant():
+    table_structure = get_model_structure()
+
+    client = OpenAI(api_key=api_key)
+    instruction = f"""
+    You are a database assistant. Here is the simplified structure of the Django models for the database: {table_structure}
+    
+    Respond with the appropriate Django QuerySet expression to obtain the desired results. Do not provide any explanation, just the QuerySet code.
+    
+    Ensure that the query is valid and correctly uses the fields and relationships from the Django models.
+    """
+
+    assistant = client.beta.assistants.create(
+        name="Database Manager Assistant",
+        instructions=instruction,
+        model="gpt-3.5-turbo",
+    )
+    return assistant
