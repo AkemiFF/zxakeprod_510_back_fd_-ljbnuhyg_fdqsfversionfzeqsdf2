@@ -1,13 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import (
-    ArtisanatViewSet,
-    ProduitArtisanalDetailView,
-    ProduitArtisanalViewSet,
-    PanierViewSet,
-    ItemPanierViewSet,
-    CommandeViewSet,
-)
+from .views import *
 
 # Créez un routeur et enregistrez vos viewsets
 router = DefaultRouter()
@@ -24,4 +17,5 @@ urlpatterns = [
         ProduitArtisanalDetailView.as_view(),
         name="produit-artisanal-detail",
     ),
+    path("produit/<int:produit_id>/like/", like_produit, name="like_produit"),
 ]
