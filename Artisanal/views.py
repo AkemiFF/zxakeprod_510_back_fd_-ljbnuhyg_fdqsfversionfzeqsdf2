@@ -57,3 +57,26 @@ def like_produit(request, produit_id):
     else:
         produit.likes.add(user)
         return Response({"message": "Like ajouté"}, status=status.HTTP_200_OK)
+
+
+from rest_framework.decorators import api_view, permission_classes
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def filter_produits(request):
+    specifications = request.data.get("specifications", [])
+
+    if not specifications:
+        return Response(
+            {"error": "No specifications provided"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    spec_ids = [spec["id"] for spec in specifications if "id" in spec]
+
+    produits = ProduitArtisanal.objects.filter(
+        specifications__id__in=spec_ids
+    ).distinct()
+
+    serializer = ProduitArtisanalSerializer(produits, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)

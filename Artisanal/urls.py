@@ -18,4 +18,5 @@ urlpatterns = [
         name="produit-artisanal-detail",
     ),
     path("produit/<int:produit_id>/like/", like_produit, name="like_produit"),
+    path("produits/filter/", filter_produits, name="filter_produits"),
 ]
