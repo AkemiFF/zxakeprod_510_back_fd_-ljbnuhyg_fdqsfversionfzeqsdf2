@@ -47,9 +47,12 @@ def generate_django_query_with_gpt3(question, table_structure):
     return django_query
 
 
-print(settings.N_RUN)
-client = OpenAI(api_key=api_key)
-th = client.beta.threads.create()
+try:
+    client = OpenAI(api_key=api_key)
+    th = client.beta.threads.create()
+except:
+    client = None
+    th = None
 
 
 def generate_django_query_assistant(question, table_structure, thread):
@@ -66,7 +69,7 @@ def generate_django_query_assistant(question, table_structure, thread):
         if settings.N_RUN == 0:
 
             settings.N_RUN += 1
-            print(settings.N_RUN)
+
             contenue = f"""Voici la structure simplifiée des modèles Django pour la base de données : {table_structure}"""
 
             client.beta.threads.messages.create(
