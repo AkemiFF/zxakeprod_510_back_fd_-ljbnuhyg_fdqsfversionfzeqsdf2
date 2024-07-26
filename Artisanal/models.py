@@ -15,6 +15,7 @@ class Artisanat(models.Model):
         on_delete=models.CASCADE,
         related_name="responsable_artisanat",
     )
+
     description_artisanat = models.TextField(max_length=400, null=True, blank=True)
 
     def __str__(self):
@@ -58,8 +59,13 @@ class ProduitArtisanal(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    likes = models.ManyToManyField(Client, related_name="liked_produits", blank=True)
+
     def __str__(self):
         return f"({self.nom_produit_artisanal}) - {self.artisanat.responsable_artisanat.email}"
+
+    def total_likes(self):
+        return self.likes.count()
 
 
 class AvisClientProduitArtisanal(models.Model):
@@ -82,6 +88,7 @@ class ImageProduitArtisanal(models.Model):
         on_delete=models.CASCADE,
         related_name="images",
     )
+    couverture = models.BooleanField(default=False)
     image = models.ImageField(upload_to="images/artisanat_images", blank=True)
 
     def __str__(self):

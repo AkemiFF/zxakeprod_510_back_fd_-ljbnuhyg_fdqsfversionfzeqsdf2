@@ -1,18 +1,17 @@
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
-docker build --no-cache -t reservationhotel .
-docker image list
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAnpvGGD_L2VHEEC-JZ-FEtiT2UvdxQNeY",
+  authDomain: "impactful-post-428514-j8.firebaseapp.com",
+  projectId: "impactful-post-428514-j8",
+  storageBucket: "impactful-post-428514-j8.appspot.com",
+  messagingSenderId: "969165960731",
+  appId: "1:969165960731:web:42d864b27bd52927caeabe"
+};
 
-docker tag python:3.10 gcr.io/Aftrip/Aftrip-back
-
-docker image list
-
-gcloud auth configure-docker
-
-gcloud artifacts repositories create aftrip-docker-back --repository-format=docker \ --location=us-west2 --description="Aftrip Back-End"
-
-gcloud artifacts repositories list
-
-gcloud builds submit --region=us-west2 --tag us-west2-docker.pkg.dev/impactful-post-428514-j8/aftrip-docker-back/reservationhotel:latest
-
-Obtenez votre ID de projet Google Cloud en exécutant la commande suivante:
-gcloud config get-value project
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);

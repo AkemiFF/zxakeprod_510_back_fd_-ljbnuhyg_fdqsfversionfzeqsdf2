@@ -7,33 +7,21 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
-class LocalisationSerializer(serializers.ModelSerializer):
+class LocalisationArtisanatSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Localisation
-        fields = "__all__"  # Adjust fields as needed
+        model = LocalisationArtisanat
+        fields = [
+            "adresse",
+            "ville",
+            "latitude",
+            "longitude",
+        ]
 
 
 class ResponsableEtablissementSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResponsableEtablissement
         fields = "__all__"  # Adjust fields as needed
-
-
-class ArtisanatSerializer(serializers.ModelSerializer):
-    responsable_artisanat = ResponsableEtablissementSerializer()
-    localisation = LocalisationSerializer()
-
-    class Meta:
-        model = Artisanat
-        fields = "__all__"
-
-
-class ProduitArtisanalSerializer(serializers.ModelSerializer):
-    artisanat = ArtisanatSerializer()
-
-    class Meta:
-        model = ProduitArtisanal
-        fields = "__all__"
 
 
 class PanierSerializer(serializers.ModelSerializer):
@@ -47,6 +35,72 @@ class PanierSerializer(serializers.ModelSerializer):
     class Meta:
         model = Panier
         fields = "__all__"
+
+
+class ArtisanatDetailSerializer(serializers.ModelSerializer):
+    localisation_artisanat = LocalisationArtisanatSerializer(read_only=True)
+
+    class Meta:
+        model = Artisanat
+        fields = [
+            "nom_artisanat",
+            # "description_artisanat",
+            "responsable_artisanat",
+            "localisation_artisanat",
+        ]
+
+
+class ShortImageProduitArtisanalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ImageProduitArtisanal
+        fields = ["image", "couverture"]
+
+
+class ProduitArtisanalSerializer(serializers.ModelSerializer):
+    artisanat = ArtisanatDetailSerializer()
+    images = serializers.SerializerMethodField()
+    total_likes = serializers.ReadOnlyField()
+
+    class Meta:
+        model = ProduitArtisanal
+        fields = [
+            "id",
+            "artisanat",
+            "images",
+            "total_likes",
+            "nom_produit_artisanal",
+            "description_artisanat",
+            "prix_artisanat",
+            "disponible_artisanat",
+            "nb_produit_dispo",
+            "created_at",
+            "updated_at",
+            "specifications",
+            "likes",
+        ]
+
+    def get_images(self, obj):
+        images = obj.images.all()
+        sorted_images = sorted(images, key=lambda x: (not x.couverture, x.id))
+        return ShortImageProduitArtisanalSerializer(sorted_images, many=True).data
+
+
+"""[
+    
+ 
+        "artisanat",
+        "images",
+        "total_likes",
+        "nom_produit_artisanal",
+        "description_artisanat",
+        "prix_artisanat",
+        "disponible_artisanat",
+        "nb_produit_dispo",
+        "created_at",
+        "updated_at",
+        "specifications",
+        "likes",
+]"""
 
 
 class ItemPanierSerializer(serializers.ModelSerializer):
@@ -87,30 +141,6 @@ class ImageProduitArtisanalSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImageProduitArtisanal
         fields = ["image"]
-
-
-class LocalisationArtisanatSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = LocalisationArtisanat
-        fields = [
-            "adresse",
-            "ville",
-            "latitude",
-            "longitude",
-        ]
-
-
-class ArtisanatDetailSerializer(serializers.ModelSerializer):
-    localisation_artisanat = LocalisationArtisanatSerializer(read_only=True)
-
-    class Meta:
-        model = Artisanat
-        fields = [
-            "nom_artisanat",
-            # "description_artisanat",
-            "responsable_artisanat",
-            "localisation_artisanat",
-        ]
 
 
 class ProduitArtisanalDetailSerializer(serializers.ModelSerializer):
