@@ -13,7 +13,6 @@ from ChatBot.utils import get_data_by_request
 
 
 api_key = settings.OPENAI_API_KEY
-# assistant = Assistant()
 
 
 @api_view(["POST"])
