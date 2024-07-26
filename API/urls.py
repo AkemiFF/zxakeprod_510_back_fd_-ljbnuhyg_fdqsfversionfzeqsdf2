@@ -7,7 +7,7 @@ from API.views import CustomTokenObtainPairView
 urlpatterns = [
     path("hebergement/", include("Hebergement.urls")),
     path("accounts/", include("Accounts.urls")),
-    path("artisanal/", include("Artisanal.urls")),
+    path("artisanat/", include("Artisanal.urls")),
     path("chatbot/", include("ChatBot.urls")),
     path("tour/", include("TourOperateur.urls")),
     path("get-csrf-token/", views.get_csrf_token, name="get_csrf_token"),
