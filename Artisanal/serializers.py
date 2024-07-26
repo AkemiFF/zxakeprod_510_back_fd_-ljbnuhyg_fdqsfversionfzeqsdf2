@@ -9,12 +9,12 @@ User = get_user_model()
 class LocalisationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Localisation
-        fields = ['id', 'adresse']  # Adjust fields as needed
+        fields = "__all__" # Adjust fields as needed
 
 class ResponsableEtablissementSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResponsableEtablissement
-        fields = ['id', 'email']  # Adjust fields as needed
+        fields = "__all__"  # Adjust fields as needed
 
 class ArtisanatSerializer(serializers.ModelSerializer):
     responsable_artisanat = ResponsableEtablissementSerializer()
@@ -22,14 +22,14 @@ class ArtisanatSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Artisanat
-        fields = ['id', 'responsable_artisanat', 'localisation']
+        fields = "__all__"
 
 class ProduitArtisanalSerializer(serializers.ModelSerializer):
     artisanat = ArtisanatSerializer()
 
     class Meta:
         model = ProduitArtisanal
-        fields = ['id', 'nom_produit_artisanal', 'description_artisanat', 'prix_artisanat', 'disponible_artisanat', 'image_artisanat', 'artisanat', 'created_at', 'updated_at']
+        fields = "__all__"
 
 class PanierSerializer(serializers.ModelSerializer):
     client = serializers.StringRelatedField()  # or use ClientSerializer if you need detailed info
@@ -37,7 +37,7 @@ class PanierSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Panier
-        fields = ['id', 'client', 'produits', 'total']
+        fields = "__all__"
 
 class ItemPanierSerializer(serializers.ModelSerializer):
     panier = PanierSerializer()
@@ -45,7 +45,7 @@ class ItemPanierSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ItemPanier
-        fields = ['id', 'panier', 'produit', 'quantite']
+        fields = "__all__"
 
 class CommandeSerializer(serializers.ModelSerializer):
     client = serializers.StringRelatedField()  # or use ClientSerializer if you need detailed info
@@ -53,4 +53,4 @@ class CommandeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Commande
-        fields = ['id', 'client', 'panier', 'prix_total', 'date_commande', 'status']
+        fields = "__all__"
