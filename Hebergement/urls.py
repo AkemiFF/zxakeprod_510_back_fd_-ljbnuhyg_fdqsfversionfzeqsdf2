@@ -122,8 +122,8 @@ urlpatterns = [
         name="like_hebergement",
     ),
     path(
-        "<int:hebergement_id>/unlike/",
-        views.unlike_hebergement,
-        name="unlike_hebergement",
+        "<int:hebergement_id>/liked/",
+        views.check_if_client_liked_hebergement,
+        name="check_if_client_liked_hebergement",
     ),
 ]

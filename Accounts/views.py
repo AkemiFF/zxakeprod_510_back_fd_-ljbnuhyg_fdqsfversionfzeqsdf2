@@ -250,8 +250,19 @@ def get_count_client(request):
 def client_create(request):
     serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        user = serializer.save()
+
+        refresh = RefreshToken.for_user(user)
+        access_token = refresh.access_token
+
+        return Response(
+            {
+                "user": serializer.data,
+                "refresh": str(refresh),
+                "access": str(access_token),
+            },
+            status=status.HTTP_201_CREATED,
+        )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -262,15 +273,32 @@ def client_create_email_info(request):
         serializer = ClientWithEmailSerializer(data=request.data)
         if serializer.is_valid():
             client = serializer.save()
+
+            refresh = RefreshToken.for_user(client)
+            access_token = refresh.access_token
+
             return Response(
                 {
                     "id": client.id,
                     "username": client.username,
                     "email": client.email,
+                    "refresh": str(refresh),
+                    "access": str(access_token),
                 },
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# @api_view(["POST"])
+# @permission_classes([AllowAny])
+# def create_client_with_email(request):
+#     if request.method == "POST":
+#         serializer = ClientWithEmailSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
@@ -279,8 +307,19 @@ def create_client_with_email(request):
     if request.method == "POST":
         serializer = ClientWithEmailSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            user = serializer.save()
+
+            refresh = RefreshToken.for_user(user)
+            access_token = refresh.access_token
+
+            response_data = {
+                "user": serializer.data,
+                "refresh": str(refresh),
+                "access": str(access_token),
+                "emailPhotoUrl": user.emailPhotoUrl,
+            }
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

@@ -3,6 +3,10 @@ from .models import Artisanat, ProduitArtisanal, Panier, ItemPanier, Commande
 from .serializers import *
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.decorators import (
+    api_view,
+    permission_classes,
+)
 
 
 class ArtisanatViewSet(viewsets.ModelViewSet):
@@ -39,6 +43,23 @@ class ProduitArtisanalDetailView(generics.RetrieveAPIView):
     queryset = ProduitArtisanal.objects.all()
     serializer_class = ProduitArtisanalDetailSerializer
     permission_classes = [permissions.AllowAny]
+
+
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def check_if_client_liked_product(request, produit_id):
+    try:
+        produit = ProduitArtisanal.objects.get(id=produit_id)
+        client = request.user
+
+        if produit.likes.filter(id=client.id).exists():
+            return Response({"liked": True}, status=status.HTTP_200_OK)
+        else:
+            return Response({"liked": False}, status=status.HTTP_200_OK)
+    except ProduitArtisanal.DoesNotExist:
+        return Response(
+            {"error": "Produit not found"}, status=status.HTTP_404_NOT_FOUND
+        )
 
 
 @api_view(["POST"])

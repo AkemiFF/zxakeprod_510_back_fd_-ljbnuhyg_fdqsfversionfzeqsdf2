@@ -17,6 +17,11 @@ urlpatterns = [
         ProduitArtisanalDetailView.as_view(),
         name="produit-artisanal-detail",
     ),
+    path(
+        "produits/<int:produit_id>/liked/",
+        check_if_client_liked_product,
+        name="check_if_client_liked_product",
+    ),
     path("produit/<int:produit_id>/like/", like_produit, name="like_produit"),
     path("produits/filter/", filter_produits, name="filter_produits"),
 ]

@@ -109,57 +109,38 @@ def get_count(request):
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
 def like_hebergement(request, hebergement_id):
-    client = (
-        request.user
-    )  # Assurez-vous que le client est authentifié et que vous avez accès à l'utilisateur connecté
-
     try:
         hebergement = Hebergement.objects.get(id=hebergement_id)
     except Hebergement.DoesNotExist:
         return Response(
-            {"detail": "Hebergement not found."}, status=status.HTTP_404_NOT_FOUND
+            {"error": "Hébergement non trouvé"}, status=status.HTTP_404_NOT_FOUND
         )
 
-    # Vérifier si le client a déjà aimé cet hébergement
-    like, created = HebergementLike.objects.get_or_create(
-        hebergement=hebergement, client=client
-    )
-    if not created:
-        return Response(
-            {"detail": "You have already liked this hebergement."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    return Response(
-        {"detail": "Hebergement liked successfully."}, status=status.HTTP_201_CREATED
-    )
+    user = request.user
+    if user in hebergement.likes.all():
+        hebergement.likes.remove(user)
+        return Response({"message": "Like retiré"}, status=status.HTTP_200_OK)
+    else:
+        hebergement.likes.add(user)
+        return Response({"message": "Like ajouté"}, status=status.HTTP_200_OK)
 
 
-@api_view(["DELETE"])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def unlike_hebergement(request, hebergement_id):
-    client = (
-        request.user
-    )  # Assurez-vous que le client est authentifié et que vous avez accès à l'utilisateur connecté
-
+def check_if_client_liked_hebergement(request, hebergement_id):
     try:
         hebergement = Hebergement.objects.get(id=hebergement_id)
+        client = request.user
+
+        if hebergement.likes.filter(id=client.id).exists():
+            return Response({"liked": True}, status=status.HTTP_200_OK)
+        else:
+            return Response({"liked": False}, status=status.HTTP_200_OK)
     except Hebergement.DoesNotExist:
         return Response(
-            {"detail": "Hebergement not found."}, status=status.HTTP_404_NOT_FOUND
+            {"error": "Hébergement non trouvé"}, status=status.HTTP_404_NOT_FOUND
         )
-
-    try:
-        like = HebergementLike.objects.get(hebergement=hebergement, client=client)
-        like.delete()
-    except HebergementLike.DoesNotExist:
-        return Response({"detail": "Like not found."}, status=status.HTTP_404_NOT_FOUND)
-
-    return Response(
-        {"detail": "Hebergement unliked successfully."}, status=status.HTTP_200_OK
-    )
 
 
 @api_view(["GET"])

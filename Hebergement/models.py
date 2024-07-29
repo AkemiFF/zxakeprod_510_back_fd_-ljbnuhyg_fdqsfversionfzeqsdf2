@@ -78,6 +78,7 @@ class Hebergement(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    likes = models.ManyToManyField(Client, related_name="liked_hebergement", blank=True)
 
     def __str__(self):
         return self.nom_hebergement
@@ -207,16 +208,16 @@ class AvisClients(models.Model):
         return f"Note: {self.note} - Hebergement: {self.hebergement.nom_hebergement}"
 
 
-class HebergementLike(models.Model):
-    hebergement = models.ForeignKey(
-        Hebergement, on_delete=models.CASCADE, related_name="likes"
-    )
-    client = models.ForeignKey(Client, on_delete=models.CASCADE)
+# class HebergementLike(models.Model):
+#     hebergement = models.ForeignKey(
+#         Hebergement, on_delete=models.CASCADE, related_name="likes"
+#     )
+#     client = models.ForeignKey(Client, on_delete=models.CASCADE)
 
-    class Meta:
-        unique_together = ("hebergement", "client")
-        verbose_name = "Hebergement Like"
-        verbose_name_plural = "Hebergement Likes"
+#     class Meta:
+#         unique_together = ("hebergement", "client")
+#         verbose_name = "Hebergement Like"
+#         verbose_name_plural = "Hebergement Likes"
 
-    def __str__(self):
-        return f"{self.client} likes {self.hebergement}"
+#     def __str__(self):
+#         return f"{self.client} likes {self.hebergement}"
