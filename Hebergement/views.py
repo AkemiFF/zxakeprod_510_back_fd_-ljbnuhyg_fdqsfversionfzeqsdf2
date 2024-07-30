@@ -13,6 +13,8 @@ from Hebergement.models import (
     AccessoireChambre,
     ChambrePersonaliser,
 )
+from django.http import FileResponse
+
 from rest_framework.permissions import *
 from django.db.models import Min
 from django.shortcuts import get_object_or_404
@@ -64,6 +66,79 @@ def delete_hebergement_chambre(request, id):
         return Response(status=status.HTTP_204_NO_CONTENT)
     except HebergementChambre.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+import base64
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_hebergement_chambre(request, pk):
+    try:
+        hebergement_chambre = HebergementChambre.objects.get(pk=pk)
+    except HebergementChambre.DoesNotExist:
+        return Response(
+            {"error": "Hebergement chambre not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    serializer = GetChambreSerializer(hebergement_chambre)
+    response_data = serializer.data
+
+    images = ImageChambre.objects.filter(hebergement_chambre=hebergement_chambre)
+    images_data = []
+    for image in images:
+        with image.images.open() as img_file:
+            image_data = {
+                "name": image.images.name,
+                "content": base64.b64encode(img_file.read()).decode("utf-8"),
+            }
+        images_data.append(image_data)
+
+    response_data["images"] = images_data
+    return JsonResponse(response_data)
+
+
+@api_view(["PUT"])
+@permission_classes([AllowAny])
+def edit_hebergement_chambre(request, pk):
+    try:
+        hebergement_chambre = HebergementChambre.objects.get(pk=pk)
+    except HebergementChambre.DoesNotExist:
+        return Response(
+            {"error": "Hebergement chambre not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    if request.method == "PUT":
+        files = request.FILES
+
+        accessories = []
+        for key in request.data:
+            if key.startswith("accessories"):
+                accessories.append(int(request.data[key]))
+
+        images_list = []
+        for key, value in files.lists():
+            images_list.extend(value)
+
+        serializer_data = {
+            key: request.data[key]
+            for key in request.data
+            if key not in ["images_chambre", "images", "accessoires"]
+        }
+
+        serializer_data["images_chambre"] = images_list
+        serializer_data["accessoires"] = accessories
+
+        serializer = EditChambreSerializer(
+            hebergement_chambre, data=serializer_data, partial=True
+        )
+
+        if serializer.is_valid():
+            hebergement_chambre = serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])

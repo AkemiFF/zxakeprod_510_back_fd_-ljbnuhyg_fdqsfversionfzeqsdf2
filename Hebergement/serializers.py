@@ -306,6 +306,66 @@ class AllAvisClientsSerializer(serializers.ModelSerializer):
         ]
 
 
+class GetChambreSerializer(serializers.ModelSerializer):
+    images_chambre = serializers.ListField(
+        child=serializers.ImageField(), required=False, write_only=True
+    )
+    accessoires = serializers.ListField(
+        child=serializers.IntegerField(), required=False, write_only=True
+    )
+    images = ImageChambreSerializer(many=True, read_only=True)
+    accessoires_list = HebergementChambreAccessoireSerializer(
+        many=True, read_only=True, source="hebergementchambreaccessoire_set"
+    )
+
+    class Meta:
+        model = HebergementChambre
+        fields = "__all__"
+
+
+class EditChambreSerializer(serializers.ModelSerializer):
+    images_chambre = serializers.ListField(
+        child=serializers.ImageField(), required=False, write_only=True
+    )
+    accessoires = serializers.ListField(
+        child=serializers.IntegerField(), required=False, write_only=True
+    )
+    images = ImageChambreSerializer(many=True, read_only=True)
+    accessoires_list = HebergementChambreAccessoireSerializer(
+        many=True, read_only=True, source="hebergementchambreaccessoire_set"
+    )
+
+    class Meta:
+        model = HebergementChambre
+        fields = "__all__"
+
+    def update(self, instance, validated_data):
+        images_data = validated_data.pop("images_chambre", [])
+        accessoires_data = validated_data.pop("accessoires", [])
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+
+        if images_data:
+            instance.images.all().delete()  # Delete existing images if new ones are provided
+            for image_data in images_data:
+                ImageChambre.objects.create(
+                    hebergement_chambre=instance, images=image_data
+                )
+
+        if accessoires_data:
+            instance.hebergementchambreaccessoire_set.all().delete()  # Delete existing accessories if new ones are provided
+            for i in accessoires_data:
+                accessoire = AccessoireChambre.objects.get(id=i)
+                HebergementChambreAccessoire.objects.create(
+                    hebergement_chambre=instance, accessoire_chambre=accessoire
+                )
+
+        return instance
+
+
 class ImageChambreSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImageChambre

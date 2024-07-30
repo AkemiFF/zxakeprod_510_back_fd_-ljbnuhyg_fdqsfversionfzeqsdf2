@@ -137,6 +137,16 @@ urlpatterns = [
         name="add-hebergement-chambre",
     ),
     path(
+        "edit-hebergement-chambre/<int:pk>/",
+        views.edit_hebergement_chambre,
+        name="edit-hebergement-chambre",
+    ),
+    path(
+        "get-hebergement-chambre/<int:pk>/",
+        views.get_hebergement_chambre,
+        name="get-hebergement-chambre",
+    ),
+    path(
         "delete-hebergement-chambre/<int:id>/",
         views.delete_hebergement_chambre,
         name="delete-hebergement-chambre",
