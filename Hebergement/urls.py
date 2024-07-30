@@ -126,4 +126,20 @@ urlpatterns = [
         views.check_if_client_liked_hebergement,
         name="check_if_client_liked_hebergement",
     ),
+    path(
+        "<int:hebergement_id>/chambres/",
+        views.list_chambres_by_hotel,
+        name="list_chambres_by_hotel",
+    ),
+    path(
+        "add-hebergement-chambre/",
+        views.add_hebergement_chambre,
+        name="add-hebergement-chambre",
+    ),
+    path(
+        "delete-hebergement-chambre/<int:id>/",
+        views.delete_hebergement_chambre,
+        name="delete-hebergement-chambre",
+    ),
+    path("type-chambres/", views.ChambreListView.as_view(), name="chambre-list"),
 ]

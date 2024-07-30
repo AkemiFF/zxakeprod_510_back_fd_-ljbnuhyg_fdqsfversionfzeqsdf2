@@ -28,6 +28,68 @@ from django.conf import settings
 from .utils import generer_description_hebergement
 
 
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def list_chambres_by_hotel(request, hebergement_id):
+    try:
+        hebergement = Hebergement.objects.get(id=hebergement_id)
+    except Hebergement.DoesNotExist:
+        return Response(
+            {"error": "Hebergement not found"}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    chambres = HebergementChambre.objects.filter(hebergement=hebergement)
+    serializer = HebergementChambreSerializer(chambres, many=True)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["DELETE"])
+@permission_classes([AllowAny])
+def delete_hebergement_chambre(request, id):
+    try:
+        hebergement_chambre = HebergementChambre.objects.get(id=id)
+        hebergement_chambre.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except HebergementChambre.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def add_hebergement_chambre(request):
+    if request.method == "POST":
+        # Extract files and accessories from the request
+        files = request.FILES
+
+        accessories = []
+        for key in request.data:
+            if key.startswith("accessories"):
+                accessories.append(int(request.data[key]))
+
+        images_list = []
+        for key, value in files.lists():
+            images_list.extend(value)
+
+        serializer_data = {
+            key: request.data[key]
+            for key in request.data
+            if key not in ["images_chambre", "images", "accessoires"]
+        }
+
+        serializer_data["images_chambre"] = images_list
+        serializer_data["accessoires"] = accessories
+
+        # Logging instead of print statements
+
+        serializer = AjoutChambreSerializer(data=serializer_data)
+
+        if serializer.is_valid():
+            hebergement_chambre = serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 def generer_description_view(request, hebergement_id):
     hebergement = get_object_or_404(Hebergement, id=hebergement_id)
     localisation = (
@@ -304,6 +366,7 @@ def delete_accessoire_hebergement(request, pk):
 
 
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def get_accessoire_chambre(request):
     accessoires = AccessoireChambre.objects.all()
     serializer = AccessoireChambreSerializer(accessoires, many=True)
@@ -422,3 +485,9 @@ class HebergementListByResponsableView(generics.ListAPIView):
     def get_queryset(self):
         responsable_id = self.kwargs["responsable_id"]
         return Hebergement.objects.filter(responsable_hebergement__id=responsable_id)
+
+
+class ChambreListView(generics.ListAPIView):
+    queryset = Chambre.objects.all()
+    serializer_class = ChambreSerializer
+    permission_classes = [AllowAny]
