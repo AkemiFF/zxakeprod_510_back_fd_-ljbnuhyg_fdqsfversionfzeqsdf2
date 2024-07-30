@@ -1,16 +1,17 @@
 from decouple import config
 from datetime import timedelta
 from pathlib import Path
+import os
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+N_RUN = 0
 FrontHosts = [
     "http://localhost:3000",
-    "http://192.168.88.37:3000",
+    "http://192.168.88.13:3000",
+    "http://192.168.88.23:3000",
     "http://192.168.88.93:3000",
-    "http://192.168.88.37:3001",
     "http://127.0.0.1:3000",
 ]
 
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "Accounts",
     "Artisanal",
+    "ChatBot",
     "Hebergement",
     "TourOperateur",
     "Message",
@@ -152,6 +154,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -191,6 +199,7 @@ EMAIL_USE_TLS = True
 
 EMAIL_HOST_USER = config("EMAIL_HOST_NEW_USER")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_NEW_PASSWORD")
+OPENAI_API_KEY = config("GPT_API_KEY")
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 

@@ -15,6 +15,121 @@ from Hebergement.models import (
 )
 from rest_framework.permissions import *
 from django.db.models import Min
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
+from .models import Hebergement
+from Hebergement.utils import generer_description_hebergement  # type: ignore
+from django.conf import settings
+
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from .models import Hebergement
+from django.conf import settings
+from .utils import generer_description_hebergement
+import os
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def list_chambres_by_hotel(request, hebergement_id):
+    try:
+        hebergement = Hebergement.objects.get(id=hebergement_id)
+    except Hebergement.DoesNotExist:
+        return Response(
+            {"error": "Hebergement not found"}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    chambres = HebergementChambre.objects.filter(hebergement=hebergement)
+    serializer = HebergementChambreSerializer(chambres, many=True)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["DELETE"])
+@permission_classes([AllowAny])
+def delete_hebergement_chambre(request, id):
+    try:
+        hebergement_chambre = HebergementChambre.objects.get(id=id)
+        images_chambre = ImageChambre.objects.filter(
+            hebergement_chambre=hebergement_chambre
+        )
+
+        # Delete all related images
+        for image in images_chambre:
+            image.images.delete()  # This will delete the image file from storage
+            image.delete()  # This will delete the image instance from the database
+
+        # Now delete the hebergement_chambre instance
+        hebergement_chambre.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except HebergementChambre.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def add_hebergement_chambre(request):
+    if request.method == "POST":
+        # Extract files and accessories from the request
+        files = request.FILES
+
+        accessories = []
+        for key in request.data:
+            if key.startswith("accessories"):
+                accessories.append(int(request.data[key]))
+
+        images_list = []
+        for key, value in files.lists():
+            images_list.extend(value)
+
+        serializer_data = {
+            key: request.data[key]
+            for key in request.data
+            if key not in ["images_chambre", "images", "accessoires"]
+        }
+
+        serializer_data["images_chambre"] = images_list
+        serializer_data["accessoires"] = accessories
+
+        # Logging instead of print statements
+
+        serializer = AjoutChambreSerializer(data=serializer_data)
+
+        if serializer.is_valid():
+            hebergement_chambre = serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def generer_description_view(request, hebergement_id):
+    hebergement = get_object_or_404(Hebergement, id=hebergement_id)
+    localisation = (
+        f"{hebergement.localisation.ville}, {hebergement.localisation.adresse}"
+        if hebergement.localisation
+        else "Non spécifiée"
+    )
+    accessoires = [
+        accessoire.accessoire.nom_accessoire
+        for accessoire in hebergement.accessoires.all()
+    ]
+
+    hebergement_info = {
+        "nom_hebergement": hebergement.nom_hebergement,
+        "localisation": localisation,
+        "description_hebergement": hebergement.description_hebergement,
+        "nombre_etoile_hebergement": hebergement.nombre_etoile_hebergement,
+        "type_hebergement": (
+            hebergement.type_hebergement.type_name
+            if hebergement.type_hebergement
+            else "Non spécifié"
+        ),
+        "accessoires": accessoires,
+    }
+
+    api_key = settings.OPENAI_API_KEY
+    description = generer_description_hebergement(api_key, hebergement_info)
+    print(description)
+    return JsonResponse({"description": description})
 
 
 @api_view(["GET"])
@@ -66,6 +181,41 @@ def get_count(request):
 # (Creer hebergement, visualiser hebergement tout les hebergement, modifier et supprimer hebergement)
 
 
+@api_view(["POST"])
+def like_hebergement(request, hebergement_id):
+    try:
+        hebergement = Hebergement.objects.get(id=hebergement_id)
+    except Hebergement.DoesNotExist:
+        return Response(
+            {"error": "Hébergement non trouvé"}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    user = request.user
+    if user in hebergement.likes.all():
+        hebergement.likes.remove(user)
+        return Response({"message": "Like retiré"}, status=status.HTTP_200_OK)
+    else:
+        hebergement.likes.add(user)
+        return Response({"message": "Like ajouté"}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def check_if_client_liked_hebergement(request, hebergement_id):
+    try:
+        hebergement = Hebergement.objects.get(id=hebergement_id)
+        client = request.user
+
+        if hebergement.likes.filter(id=client.id).exists():
+            return Response({"liked": True}, status=status.HTTP_200_OK)
+        else:
+            return Response({"liked": False}, status=status.HTTP_200_OK)
+    except Hebergement.DoesNotExist:
+        return Response(
+            {"error": "Hébergement non trouvé"}, status=status.HTTP_404_NOT_FOUND
+        )
+
+
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def get_all_hebergements(request):
@@ -76,6 +226,24 @@ def get_all_hebergements(request):
     except Hebergement.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = HebergementSerializer(all_hebergement, many=True)
+    return Response({"hebergements": serializer.data}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_suggestion_hebergements(request):
+    try:
+        all_hebergement = Hebergement.objects.annotate(
+            min_prix_nuit_chambre=Min("hebergementchambre__prix_nuit_chambre"),
+            note_moyenne=Avg("avis_hotel__note"),
+        ).order_by("-note_moyenne")[:3]
+    except Hebergement.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    serializer = SuggestionHebergementSerializer(
+        all_hebergement, many=True, context={"request": request}
+    )
+
     return Response({"hebergements": serializer.data}, status=status.HTTP_200_OK)
 
 
@@ -209,6 +377,7 @@ def delete_accessoire_hebergement(request, pk):
 
 
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def get_accessoire_chambre(request):
     accessoires = AccessoireChambre.objects.all()
     serializer = AccessoireChambreSerializer(accessoires, many=True)
@@ -327,3 +496,9 @@ class HebergementListByResponsableView(generics.ListAPIView):
     def get_queryset(self):
         responsable_id = self.kwargs["responsable_id"]
         return Hebergement.objects.filter(responsable_hebergement__id=responsable_id)
+
+
+class ChambreListView(generics.ListAPIView):
+    queryset = Chambre.objects.all()
+    serializer_class = ChambreSerializer
+    permission_classes = [AllowAny]

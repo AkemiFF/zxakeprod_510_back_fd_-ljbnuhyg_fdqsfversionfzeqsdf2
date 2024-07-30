@@ -1,10 +1,5 @@
-from django.core.exceptions import ValidationError
 from django.db import models
-from django.core.validators import RegexValidator
-from django.contrib.auth.models import AbstractUser
 from Accounts.models import ResponsableEtablissement, Client
-from django.contrib.auth.models import User
-from django.utils import timezone
 
 
 class TypeHebergement(models.Model):
@@ -83,13 +78,16 @@ class Hebergement(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    likes = models.ManyToManyField(Client, related_name="liked_hebergement", blank=True)
 
     def __str__(self):
         return self.nom_hebergement
 
 
 class HebergementAccessoire(models.Model):
-    hebergement = models.ForeignKey(Hebergement, on_delete=models.CASCADE)
+    hebergement = models.ForeignKey(
+        Hebergement, on_delete=models.CASCADE, related_name="accessoires"
+    )
     accessoire = models.ForeignKey(AccessoireHebergement, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -99,6 +97,7 @@ class HebergementAccessoire(models.Model):
 
 
 class HebergementChambre(models.Model):
+    nom_chambre = models.CharField(default=0, max_length=120)
     hebergement = models.ForeignKey(Hebergement, on_delete=models.CASCADE)
     chambre = models.ForeignKey(
         Chambre, on_delete=models.CASCADE, null=True, blank=True
@@ -106,10 +105,12 @@ class HebergementChambre(models.Model):
     chambre_personaliser = models.ForeignKey(
         ChambrePersonaliser, on_delete=models.CASCADE, null=True, blank=True
     )
-    description = models.CharField(max_length=300, null=True, blank=True)
+    description = models.CharField(max_length=2000, null=True, blank=True)
     superficie = models.IntegerField(null=True, blank=True)
     prix_nuit_chambre = models.DecimalField(max_digits=8, decimal_places=2)
     disponible_chambre = models.IntegerField(null=True)
+    capacite = models.IntegerField(null=True)
+    status = models.IntegerField(null=True, blank=True)
     accessoires = models.ManyToManyField(
         "AccessoireChambre", through="HebergementChambreAccessoire"
     )
@@ -177,13 +178,15 @@ class ImageChambre(models.Model):
 
 class Reservation(models.Model):
     hotel_reserve = models.ForeignKey(
-        Hebergement, on_delete=models.CASCADE, related_name="reservations"
+        Hebergement, on_delete=models.CASCADE, related_name="reservations_hotel"
     )
     chambre_reserve = models.ForeignKey(
-        HebergementChambre, on_delete=models.CASCADE, related_name="reservations"
+        HebergementChambre,
+        on_delete=models.CASCADE,
+        related_name="reservations_chambre",
     )
     client_reserve = models.ForeignKey(
-        Client, on_delete=models.CASCADE, related_name="reservations"
+        Client, on_delete=models.CASCADE, related_name="reservations_client"
     )
     date_debut_reserve = models.DateField()
     date_fin_reserve = models.DateField()
@@ -192,6 +195,11 @@ class Reservation(models.Model):
     est_validee_reserve = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self) -> str:
+        return (
+            f"{self.client_reserve} + {self.hotel_reserve} + {self.est_validee_reserve}"
+        )
 
 
 class AvisClients(models.Model):
@@ -208,3 +216,18 @@ class AvisClients(models.Model):
 
     def __str__(self) -> str:
         return f"Note: {self.note} - Hebergement: {self.hebergement.nom_hebergement}"
+
+
+# class HebergementLike(models.Model):
+#     hebergement = models.ForeignKey(
+#         Hebergement, on_delete=models.CASCADE, related_name="likes"
+#     )
+#     client = models.ForeignKey(Client, on_delete=models.CASCADE)
+
+#     class Meta:
+#         unique_together = ("hebergement", "client")
+#         verbose_name = "Hebergement Like"
+#         verbose_name_plural = "Hebergement Likes"
+
+#     def __str__(self):
+#         return f"{self.client} likes {self.hebergement}"
