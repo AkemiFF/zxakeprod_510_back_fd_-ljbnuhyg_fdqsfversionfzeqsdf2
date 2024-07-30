@@ -8,7 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 N_RUN = 0
 FrontHosts = [
     "http://localhost:3000",
-    "http://192.168.88.37:3000",
+    "http://192.168.88.13:3000",
     "http://192.168.88.23:3000",
     "http://192.168.88.93:3000",
     "http://127.0.0.1:3000",

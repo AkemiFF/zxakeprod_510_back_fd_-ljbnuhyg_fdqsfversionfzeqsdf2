@@ -240,7 +240,6 @@ class HebergementSerializerAll(serializers.ModelSerializer):
     localisation = LocalisationSerializer()
     accessoires_haves = serializers.SerializerMethodField()
     accessoires = serializers.SerializerMethodField()
-    reservations = ReservationSerializer(many=True)
     avis_hotel = AvisClientsSerializer(many=True)
 
     def get_min_prix_nuit_chambre(self, instance):
@@ -305,3 +304,44 @@ class AllAvisClientsSerializer(serializers.ModelSerializer):
             "updated_at",
             "hebergement",
         ]
+
+
+class ImageChambreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ImageChambre
+        fields = ["id", "images"]
+
+
+class AjoutChambreSerializer(serializers.ModelSerializer):
+    images_chambre = serializers.ListField(
+        child=serializers.ImageField(), required=False, write_only=True
+    )
+    accessoires = serializers.ListField(
+        child=serializers.IntegerField(), required=False, write_only=True
+    )
+    images = ImageChambreSerializer(many=True, read_only=True)
+    accessoires_list = HebergementChambreAccessoireSerializer(
+        many=True, read_only=True, source="hebergementchambreaccessoire_set"
+    )
+
+    class Meta:
+        model = HebergementChambre
+        fields = "__all__"
+
+    def create(self, validated_data):
+        images_data = validated_data.pop("images_chambre", [])
+        accessoires_data = validated_data.pop("accessoires", [])
+
+        hebergement_chambre = HebergementChambre.objects.create(**validated_data)
+        for image_data in images_data:
+            creation = ImageChambre.objects.create(
+                hebergement_chambre=hebergement_chambre, images=image_data
+            )
+
+        for i in accessoires_data:
+            accessoire = AccessoireChambre.objects.get(id=i)
+            HebergementChambreAccessoire.objects.create(
+                hebergement_chambre=hebergement_chambre, accessoire_chambre=accessoire
+            )
+
+        return hebergement_chambre

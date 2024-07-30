@@ -56,10 +56,13 @@ class ShortImageProduitArtisanalSerializer(serializers.ModelSerializer):
         fields = ["image", "couverture"]
 
 
+from rest_framework import serializers
+
+
 class ProduitArtisanalSerializer(serializers.ModelSerializer):
     artisanat = ArtisanatDetailSerializer()
     images = serializers.SerializerMethodField()
-    total_likes = serializers.ReadOnlyField()
+    total_likes = serializers.ReadOnlyField()  # Champ readonly pour le nombre de likes
 
     class Meta:
         model = ProduitArtisanal
@@ -67,7 +70,7 @@ class ProduitArtisanalSerializer(serializers.ModelSerializer):
             "id",
             "artisanat",
             "images",
-            "total_likes",
+            "total_likes",  # Inclure le champ total_likes
             "nom_produit_artisanal",
             "description_artisanat",
             "prix_artisanat",
@@ -83,6 +86,12 @@ class ProduitArtisanalSerializer(serializers.ModelSerializer):
         images = obj.images.all()
         sorted_images = sorted(images, key=lambda x: (not x.couverture, x.id))
         return ShortImageProduitArtisanalSerializer(sorted_images, many=True).data
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        # Ajoute le nombre de likes au dictionnaire de représentation
+        representation["total_likes"] = instance.total_likes()
+        return representation
 
 
 """[
