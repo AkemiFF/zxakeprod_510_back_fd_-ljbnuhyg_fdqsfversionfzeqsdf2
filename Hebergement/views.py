@@ -26,6 +26,7 @@ from django.shortcuts import get_object_or_404
 from .models import Hebergement
 from django.conf import settings
 from .utils import generer_description_hebergement
+import os
 
 
 @api_view(["GET"])
@@ -49,6 +50,16 @@ def list_chambres_by_hotel(request, hebergement_id):
 def delete_hebergement_chambre(request, id):
     try:
         hebergement_chambre = HebergementChambre.objects.get(id=id)
+        images_chambre = ImageChambre.objects.filter(
+            hebergement_chambre=hebergement_chambre
+        )
+
+        # Delete all related images
+        for image in images_chambre:
+            image.images.delete()  # This will delete the image file from storage
+            image.delete()  # This will delete the image instance from the database
+
+        # Now delete the hebergement_chambre instance
         hebergement_chambre.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     except HebergementChambre.DoesNotExist:
