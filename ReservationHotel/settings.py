@@ -9,10 +9,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 N_RUN = 0
 FrontHosts = [
     "http://localhost:3000",
-    "http://192.168.88.13:3000",
-    "http://192.168.88.23:3000",
+     "http://192.168.88.23:3000",
     "http://192.168.88.43:3000",
     "http://127.0.0.1:3000",
+    "http://34.16.111.40/",
+    "http://35.184.115.101/",
+    "https://www.craft-aftrip.com",
+    "https://craft-aftrip.com",
 ]
 
 
@@ -110,8 +113,12 @@ LOGIN_REDIRECT_URL = "/"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "aftrip",
+        "USER": "postgres",
+        "PASSWORD": "H{S[jcJ7(x50LD2N",
+        "HOST": "34.122.112.53",
+        "PORT": "5432",
     }
 }
 
@@ -225,7 +232,7 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = FrontHosts
 CSRF_TRUSTED_ORIGINS = FrontHosts
 CSRF_COOKIE_SECURE = False
-CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = "Lax"
 
 
