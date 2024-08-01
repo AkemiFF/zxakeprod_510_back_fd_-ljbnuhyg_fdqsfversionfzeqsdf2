@@ -93,7 +93,7 @@ class HebergementSerializer(serializers.ModelSerializer):
         return None
 
     def get_nombre_avis(self, instance):
-        return instance.avis_hotel.count()  # Compter le nombre d'avis
+        return instance.avis_hotel.count()
 
     class Meta:
         model = Hebergement
@@ -112,7 +112,6 @@ class HebergementSerializer(serializers.ModelSerializer):
             "images",
             "image_files",
             "accessoires",
-            # Ajouter le champ nombre_avis
         ]
 
     def create(self, validated_data):
@@ -162,17 +161,6 @@ class AccessoireChambreSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class HebergementChambreSerializer(serializers.ModelSerializer):
-    chambre = ChambreSerializer()
-    chambre_personaliser = ChambrePersonaliserSerializer()
-    accessoires = AccessoireChambreSerializer(many=True)
-    images_chambre = ImageChambreSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = HebergementChambre
-        fields = "__all__"
-
-
 class LocalisationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Localisation
@@ -207,18 +195,6 @@ class ReservationSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class TypeAccessoireSerializer(serializers.ModelSerializer):
-    accessoires = serializers.SerializerMethodField()
-
-    class Meta:
-        model = TypeAccessoire
-        fields = ["nom_type", "accessoires"]
-
-    def get_accessoires(self, obj):
-        accessoires = AccessoireHebergement.objects.filter(type_accessoire=obj)
-        return AccessoireHebergementSerializer(accessoires, many=True).data
-
-
 class AvisClientsSerializer(serializers.ModelSerializer):
     class Meta:
         model = AvisClients
@@ -235,6 +211,114 @@ class HebergementImageSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = TypeAccessoire
 #         fields = ["nom_type"]
+
+from rest_framework import serializers
+from .models import HebergementChambre, Reservation
+from .serializers import (
+    ChambreSerializer,
+    ChambrePersonaliserSerializer,
+    AccessoireChambreSerializer,
+    ImageChambreSerializer,
+    ReservationSerializer,
+)
+
+
+class HebergementChambreSerializer(serializers.ModelSerializer):
+    chambre = ChambreSerializer()
+    chambre_personaliser = ChambrePersonaliserSerializer()
+    accessoires = AccessoireChambreSerializer(many=True)
+    images_chambre = ImageChambreSerializer(many=True, read_only=True)
+    reservation = serializers.SerializerMethodField()
+
+    class Meta:
+        model = HebergementChambre
+        fields = "__all__"
+
+    def get_reservation(self, obj):
+        # Assurez-vous que 'chambre_reserve' est la bonne relation dans le modèle Reservation
+        reservation = Reservation.objects.filter(chambre_reserve=obj)
+        serializer = ReservationSerializer(reservation, many=True)
+        return serializer.data
+
+
+class TypeAccessoireSerializer(serializers.ModelSerializer):
+    accessoires = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TypeAccessoire
+        fields = ["nom_type", "accessoires"]
+
+    def get_accessoires(self, obj):
+        accessoires = AccessoireHebergement.objects.filter(type_accessoire=obj)
+        return AccessoireHebergementSerializer(accessoires, many=True).data
+
+
+class AccessoireSerializer(serializers.ModelSerializer):
+    type_accessoire_nom = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AccessoireHebergement
+        fields = "__all__"
+        extra_kwargs = {
+            "type_accessoire": {"write_only": True},
+        }
+
+    def get_type_accessoire_nom(self, obj):
+        if obj.type_accessoire:
+            return obj.type_accessoire.nom_type
+        return None
+
+
+class TypeAccessoireSerializer(serializers.ModelSerializer):
+    accessoires = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TypeAccessoire
+        fields = ["nom_type", "accessoires"]
+
+    def get_accessoires(self, obj):
+        accessoires = AccessoireHebergement.objects.filter(type_accessoire=obj)
+        return AccessoireHebergementSerializer(accessoires, many=True).data
+
+
+class TypeAccessoireSerializer2(serializers.ModelSerializer):
+    accessoires = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TypeAccessoire
+        fields = "__all__"
+
+    def get_accessoires(self, obj):
+        hebergement_id = self.context.get("hebergement_id")
+
+        if hebergement_id:
+            hebergement_accessoires = HebergementAccessoire.objects.filter(
+                hebergement_id=hebergement_id
+            )
+            accessoires = AccessoireHebergement.objects.filter(
+                hebergementaccessoire__in=hebergement_accessoires
+            )
+
+        return AccessoireSerializer(accessoires, many=True).data
+
+
+class OwnAccessoireHebergementSerializer(serializers.ModelSerializer):
+    type_accessoire_nom = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AccessoireHebergement
+        fields = "__all__"
+        # Ajoutez 'type_accessoire_nom' si vous souhaitez qu'il apparaisse
+        extra_kwargs = {
+            "type_accessoire": {
+                "write_only": True
+            },  # Masquer le champ `type_accessoire` si nécessaire
+        }
+
+    def get_type_accessoire_nom(self, obj):
+        if obj.type_accessoire:
+            return obj.type_accessoire.nom_type
+        return None
 
 
 class HebergementSerializerAll(serializers.ModelSerializer):
@@ -268,8 +352,18 @@ class HebergementSerializerAll(serializers.ModelSerializer):
         return data
 
     def get_accessoires_haves(self, obj):
-        accessoires = HebergementAccessoire.objects.filter(hebergement_id=obj.id)
-        return HebergementAccessoireSerializerID(accessoires, many=True).data
+        hebergement_accessoires = HebergementAccessoire.objects.filter(
+            hebergement=obj.id
+        )
+        accessoires = AccessoireHebergement.objects.filter(
+            hebergementaccessoire__in=hebergement_accessoires
+        )
+
+        serializer = OwnAccessoireHebergementSerializer(
+            accessoires, many=True, context={"hebergement_id": obj.id}
+        )
+
+        return serializer.data
 
     class Meta:
         model = Hebergement

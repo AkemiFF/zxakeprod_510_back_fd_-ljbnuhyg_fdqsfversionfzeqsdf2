@@ -10,7 +10,7 @@ from django.http import FileResponse
 
 from rest_framework.permissions import *
 from django.db.models import Min
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.http import JsonResponse
 from .models import Hebergement
 from Hebergement.utils import generer_description_hebergement  # type: ignore
@@ -22,6 +22,15 @@ from .models import Hebergement
 from django.conf import settings
 from .utils import generer_description_hebergement
 import os
+
+
+class HebergementReservationsListView(generics.ListAPIView):
+    serializer_class = ReservationSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        hebergement_id = self.kwargs["hebergement_id"]
+        return Reservation.objects.filter(hotel_reserve_id=hebergement_id)
 
 
 @api_view(["GET"])
@@ -310,11 +319,8 @@ def get_all_hebergements(request):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def get_all_accessoire(request):
-    try:
-        all_accessoires = AccessoireHebergement.objects.all()
+    all_accessoires = AccessoireHebergement.objects.all()
 
-    except Hebergement.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = AccessoireHebergementSerializer(all_accessoires, many=True)
     return Response({"hebergements": serializer.data}, status=status.HTTP_200_OK)
 
