@@ -73,6 +73,10 @@ class HebergementSerializer(serializers.ModelSerializer):
         )["prix_nuit_chambre__min"]
         return min_price
 
+    def get_accessoires(self, instance):
+        accessoires = HebergementAccessoire.objects.filter(hebergement=instance)
+        return accessoires
+
     def get_images(self, obj):
         images = obj.images.all().order_by("-couverture", "id")
         return HebergementImageSerializer(images, many=True).data
@@ -107,6 +111,7 @@ class HebergementSerializer(serializers.ModelSerializer):
             "updated_at",
             "images",
             "image_files",
+            "accessoires",
             # Ajouter le champ nombre_avis
         ]
 
@@ -304,6 +309,71 @@ class AllAvisClientsSerializer(serializers.ModelSerializer):
             "updated_at",
             "hebergement",
         ]
+
+
+class GetChambreSerializer(serializers.ModelSerializer):
+    images_chambre = serializers.ListField(
+        child=serializers.ImageField(), required=False, write_only=True
+    )
+    accessoires = serializers.ListField(
+        child=serializers.IntegerField(), required=False, write_only=True
+    )
+    images = ImageChambreSerializer(many=True, read_only=True)
+    accessoires_list = HebergementChambreAccessoireSerializer(
+        many=True, read_only=True, source="hebergementchambreaccessoire_set"
+    )
+
+    class Meta:
+        model = HebergementChambre
+        fields = "__all__"
+
+
+class EditChambreSerializer(serializers.ModelSerializer):
+    images_chambre = serializers.ListField(
+        child=serializers.ImageField(), required=False, write_only=True
+    )
+    accessoires = serializers.ListField(
+        child=serializers.IntegerField(), required=False, write_only=True
+    )
+    images = ImageChambreSerializer(many=True, read_only=True)
+    accessoires_list = HebergementChambreAccessoireSerializer(
+        many=True, read_only=True, source="hebergementchambreaccessoire_set"
+    )
+
+    class Meta:
+        model = HebergementChambre
+        fields = "__all__"
+
+    def update(self, instance, validated_data):
+        images_data = validated_data.pop("images_chambre", [])
+        accessoires_data = validated_data.pop("accessoires", [])
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+
+        if images_data:
+            instance.images.all().delete()  # Delete existing images if new ones are provided
+            for image_data in images_data:
+                ImageChambre.objects.create(
+                    hebergement_chambre=instance, images=image_data
+                )
+
+        if accessoires_data:
+            instance.hebergementchambreaccessoire_set.all().delete()  # Delete existing accessories if new ones are provided
+            for i in accessoires_data:
+                try:
+                    accessoire = AccessoireChambre.objects.get(id=i)
+                    HebergementChambreAccessoire.objects.create(
+                        hebergement_chambre=instance, accessoire_chambre=accessoire
+                    )
+                except AccessoireChambre.DoesNotExist:
+                    raise serializers.ValidationError(
+                        f"AccessoireChambre with id {i} does not exist."
+                    )
+
+        return instance
 
 
 class ImageChambreSerializer(serializers.ModelSerializer):
