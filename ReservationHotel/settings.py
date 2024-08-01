@@ -1,6 +1,7 @@
 from decouple import config
 from datetime import timedelta
 from pathlib import Path
+import os
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -10,7 +11,7 @@ FrontHosts = [
     "http://localhost:3000",
     "http://192.168.88.13:3000",
     "http://192.168.88.23:3000",
-    "http://192.168.88.93:3000",
+    "http://192.168.88.43:3000",
     "http://127.0.0.1:3000",
 ]
 
@@ -97,13 +98,13 @@ LOGIN_REDIRECT_URL = "/"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 # DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'aftrip',
-#         'USER': 'postgres',
-#         'PASSWORD': 'H{S[jcJ7(x50LD2N',
-#         'HOST': '34.122.112.53',
-#         'PORT': '5432',
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql_psycopg2",
+#         "NAME": "aftrip",
+#         "USER": "postgres",
+#         "PASSWORD": "H{S[jcJ7(x50LD2N",
+#         "HOST": "/cloudsql/impactful-post-428514-j8:us-central1:aftrip-db",
+#         "PORT": "5432",
 #     }
 # }
 
@@ -113,10 +114,6 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
-# DATABASES = {
-#     'default': config('DATABASE_URL', default='sqlite:///db.sqlite3')
-# }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -153,6 +150,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "images"),
+]
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

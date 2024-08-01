@@ -15,10 +15,16 @@ urlpatterns = [
     path(
         "suggestion/", views.get_suggestion_hebergements, name="hebergement-suggesion"
     ),
+    path("get-all-amenities/", views.get_all_accessoire, name="get-all-accessoire"),
     path(
         "get-id-hebergement/<int:hebergement_id>/",
         views.get_hebergement_details,
         name="hebergement-id",
+    ),
+    path(
+        "<int:hebergement_id>/reservations/",
+        views.HebergementReservationsListView.as_view(),
+        name="hebergement-reservations",
     ),
     path(
         "get-id-chambre/<int:chambre_id>/",
@@ -135,6 +141,16 @@ urlpatterns = [
         "add-hebergement-chambre/",
         views.add_hebergement_chambre,
         name="add-hebergement-chambre",
+    ),
+    path(
+        "edit-hebergement-chambre/<int:pk>/",
+        views.edit_hebergement_chambre,
+        name="edit-hebergement-chambre",
+    ),
+    path(
+        "get-hebergement-chambre/<int:pk>/",
+        views.get_hebergement_chambre,
+        name="get-hebergement-chambre",
     ),
     path(
         "delete-hebergement-chambre/<int:id>/",

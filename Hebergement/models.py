@@ -75,7 +75,7 @@ class Hebergement(models.Model):
     type_hebergement = models.ForeignKey(
         TypeHebergement, null=True, on_delete=models.DO_NOTHING
     )
-
+    autorisation = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     likes = models.ManyToManyField(Client, related_name="liked_hebergement", blank=True)

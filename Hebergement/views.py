@@ -5,17 +5,12 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from Hebergement.serializers import *
-from Hebergement.models import (
-    Chambre,
-    Hebergement,
-    HebergementAccessoire,
-    AccessoireHebergement,
-    AccessoireChambre,
-    ChambrePersonaliser,
-)
+from Hebergement.models import *
+from django.http import FileResponse
+
 from rest_framework.permissions import *
 from django.db.models import Min
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.http import JsonResponse
 from .models import Hebergement
 from Hebergement.utils import generer_description_hebergement  # type: ignore
@@ -26,6 +21,49 @@ from django.shortcuts import get_object_or_404
 from .models import Hebergement
 from django.conf import settings
 from .utils import generer_description_hebergement
+import os
+
+
+class HebergementReservationsListView(generics.ListAPIView):
+    serializer_class = ReservationSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        hebergement_id = self.kwargs["hebergement_id"]
+        return Reservation.objects.filter(hotel_reserve_id=hebergement_id)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_hebergement_chambre(request, pk):
+    try:
+        hebergement_chambre = HebergementChambre.objects.get(pk=pk)
+        chambre = Chambre.objects.get(id=hebergement_chambre.chambre.pk)
+
+    except HebergementChambre.DoesNotExist:
+        return Response(
+            {"error": "Hebergement chambre not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    serializer = GetChambreSerializer(hebergement_chambre)
+    response_data = serializer.data
+
+    images = ImageChambre.objects.filter(hebergement_chambre=hebergement_chambre)
+    images_data = []
+
+    for image in images:
+        with image.images.open() as img_file:
+            image_data = {
+                "name": image.images.name,
+                "content": base64.b64encode(img_file.read()).decode("utf-8"),
+            }
+        images_data.append(image_data)
+
+    response_data["type_chambre"] = chambre.type_chambre
+
+    response_data["images"] = images_data
+    return JsonResponse(response_data)
 
 
 @api_view(["GET"])
@@ -49,10 +87,70 @@ def list_chambres_by_hotel(request, hebergement_id):
 def delete_hebergement_chambre(request, id):
     try:
         hebergement_chambre = HebergementChambre.objects.get(id=id)
+        images_chambre = ImageChambre.objects.filter(
+            hebergement_chambre=hebergement_chambre
+        )
+
+        # Delete all related images
+        for image in images_chambre:
+            image.images.delete()  # This will delete the image file from storage
+            image.delete()  # This will delete the image instance from the database
+
+        # Now delete the hebergement_chambre instance
         hebergement_chambre.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     except HebergementChambre.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+import base64
+from django.core.files.base import ContentFile
+
+
+@api_view(["PUT"])
+@permission_classes([AllowAny])
+def edit_hebergement_chambre(request, pk):
+    print(request.data)
+    try:
+        hebergement_chambre = HebergementChambre.objects.get(pk=pk)
+    except HebergementChambre.DoesNotExist:
+        return Response(
+            {"error": "Hebergement chambre not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    if request.method == "PUT":
+        accessories = []
+        for key in request.data:
+            if key.startswith("accessories"):
+                accessories.append(int(request.data[key]))
+
+        images_list = []
+        for key, value in request.data.items():
+            if key.startswith("images_chambre"):
+                # Assuming the front sends base64 encoded images
+                format, imgstr = value.split(";base64,")
+                ext = format.split("/")[-1]
+                img_data = ContentFile(base64.b64decode(imgstr), name=f"temp.{ext}")
+                images_list.append(img_data)
+
+        serializer_data = {
+            key: request.data[key]
+            for key in request.data
+            if key not in ["images_chambre", "images", "accessoires"]
+        }
+
+        serializer_data["images_chambre"] = images_list
+        serializer_data["accessoires"] = accessories
+
+        serializer = EditChambreSerializer(
+            hebergement_chambre, data=serializer_data, partial=True
+        )
+
+        if serializer.is_valid():
+            hebergement_chambre = serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
@@ -215,6 +313,15 @@ def get_all_hebergements(request):
     except Hebergement.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = HebergementSerializer(all_hebergement, many=True)
+    return Response({"hebergements": serializer.data}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_all_accessoire(request):
+    all_accessoires = AccessoireHebergement.objects.all()
+
+    serializer = AccessoireHebergementSerializer(all_accessoires, many=True)
     return Response({"hebergements": serializer.data}, status=status.HTTP_200_OK)
 
 

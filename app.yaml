@@ -6,3 +6,12 @@ handlers:
 
 - url: /.*
   script: auto
+
+entrypoint: gunicorn -b :$PORT ReservationHotel.wsgi
+
+env_variables:
+  DJANGO_SETTINGS_MODULE: "ReservationHotel.settings"
+  DB_NAME: "aftrip"
+  DB_USER: "postgres"
+  DB_PASSWORD: "H{S[jcJ7(x50LD2N"
+  DB_HOST: "/cloudsql/impactful-post-428514-j8:us-central1:aftrip-db"
