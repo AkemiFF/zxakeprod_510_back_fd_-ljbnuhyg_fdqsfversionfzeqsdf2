@@ -73,6 +73,10 @@ class HebergementSerializer(serializers.ModelSerializer):
         )["prix_nuit_chambre__min"]
         return min_price
 
+    def get_accessoires(self, instance):
+        accessoires = HebergementAccessoire.objects.filter(hebergement=instance)
+        return accessoires
+
     def get_images(self, obj):
         images = obj.images.all().order_by("-couverture", "id")
         return HebergementImageSerializer(images, many=True).data
@@ -107,6 +111,7 @@ class HebergementSerializer(serializers.ModelSerializer):
             "updated_at",
             "images",
             "image_files",
+            "accessoires",
             # Ajouter le champ nombre_avis
         ]
 
@@ -358,10 +363,15 @@ class EditChambreSerializer(serializers.ModelSerializer):
         if accessoires_data:
             instance.hebergementchambreaccessoire_set.all().delete()  # Delete existing accessories if new ones are provided
             for i in accessoires_data:
-                accessoire = AccessoireChambre.objects.get(id=i)
-                HebergementChambreAccessoire.objects.create(
-                    hebergement_chambre=instance, accessoire_chambre=accessoire
-                )
+                try:
+                    accessoire = AccessoireChambre.objects.get(id=i)
+                    HebergementChambreAccessoire.objects.create(
+                        hebergement_chambre=instance, accessoire_chambre=accessoire
+                    )
+                except AccessoireChambre.DoesNotExist:
+                    raise serializers.ValidationError(
+                        f"AccessoireChambre with id {i} does not exist."
+                    )
 
         return instance
 

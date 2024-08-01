@@ -15,6 +15,7 @@ urlpatterns = [
     path(
         "suggestion/", views.get_suggestion_hebergements, name="hebergement-suggesion"
     ),
+    path("get-all-amenities/", views.get_all_accessoire, name="get-all-accessoire"),
     path(
         "get-id-hebergement/<int:hebergement_id>/",
         views.get_hebergement_details,

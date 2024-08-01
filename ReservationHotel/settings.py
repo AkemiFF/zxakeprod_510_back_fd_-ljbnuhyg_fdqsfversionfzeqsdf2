@@ -11,7 +11,7 @@ FrontHosts = [
     "http://localhost:3000",
     "http://192.168.88.13:3000",
     "http://192.168.88.23:3000",
-    "http://192.168.88.93:3000",
+    "http://192.168.88.43:3000",
     "http://127.0.0.1:3000",
 ]
 
@@ -99,11 +99,11 @@ LOGIN_REDIRECT_URL = "/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 # DATABASES = {
 #     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
+#         "ENGINE": "django.db.backends.postgresql_psycopg2",
 #         "NAME": "aftrip",
 #         "USER": "postgres",
 #         "PASSWORD": "H{S[jcJ7(x50LD2N",
-#         "HOST": "34.122.112.53",
+#         "HOST": "/cloudsql/impactful-post-428514-j8:us-central1:aftrip-db",
 #         "PORT": "5432",
 #     }
 # }
