@@ -22,6 +22,11 @@ urlpatterns = [
         name="hebergement-id",
     ),
     path(
+        "<int:hebergement_id>/reservations/",
+        views.HebergementReservationsListView.as_view(),
+        name="hebergement-reservations",
+    ),
+    path(
         "get-id-chambre/<int:chambre_id>/",
         views.get_chambre_details,
         name="chambre-id",
