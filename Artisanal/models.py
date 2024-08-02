@@ -122,7 +122,7 @@ class ItemPanier(models.Model):
         return self.produit.prix_artisanat * self.quantite
 
     def __str__(self):
-        return f"{self.quantite} x {self.produit.nom_artisanat} dans le panier de {self.panier.client.username}"
+        return f"{self.quantite} x {self.produit.artisanat.nom_artisanat} dans le panier de {self.panier.client.username}"
 
 
 class Commande(models.Model):
