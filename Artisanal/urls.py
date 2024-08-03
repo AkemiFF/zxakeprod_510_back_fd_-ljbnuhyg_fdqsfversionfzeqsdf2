@@ -22,6 +22,7 @@ urlpatterns = [
         check_if_client_liked_product,
         name="check_if_client_liked_product",
     ),
+    path("panier/ajouter/", add_to_cart, name="add-to-cart"),
     path("produit/<int:produit_id>/like/", like_produit, name="like_produit"),
     path("produits/filter/", filter_produits, name="filter_produits"),
 ]
