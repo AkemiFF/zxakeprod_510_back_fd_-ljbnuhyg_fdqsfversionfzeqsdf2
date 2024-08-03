@@ -38,6 +38,7 @@ media
 
 # C extensions
 *.so
+setting.py
 
 # Distribution / packaging
 .Python
