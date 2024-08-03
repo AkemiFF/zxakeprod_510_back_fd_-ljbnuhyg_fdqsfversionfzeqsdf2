@@ -45,6 +45,37 @@ class ProduitArtisanalDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
 
 
+@api_view(["POST"])
+@permission_classes([permissions.IsAuthenticated])
+def add_to_cart(request):
+    user = request.user
+    produit_id = request.data.get("produit_id")
+    quantite = request.data.get("quantite", 1)
+
+    try:
+        produit = ProduitArtisanal.objects.get(id=produit_id)
+    except ProduitArtisanal.DoesNotExist:
+        return Response(
+            {"error": "Produit non trouvé."}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    panier, created = Panier.objects.get_or_create(client=user)
+
+    item, item_created = ItemPanier.objects.get_or_create(
+        panier=panier, produit=produit
+    )
+
+    if not item_created:
+        item.quantite += quantite
+    else:
+        item.quantite = quantite
+
+    item.save()
+
+    serializer = ItemPanierSerializer(item)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])
 def check_if_client_liked_product(request, produit_id):

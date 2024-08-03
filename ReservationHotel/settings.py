@@ -10,12 +10,12 @@ N_RUN = 0
 FrontHosts = [
     "http://localhost:3000",
     "http://192.168.88.23:3000",
-    "http://192.168.88.43:3000", 
-    "http://127.0.0.1:3000", 
-    "http://34.16.111.40/", 
-    "http://172.10.191.26",
-    "http://35.184.115.101/", 
-    "https://www.craft-aftrip.com", 
+    "http://192.168.88.43:3000",
+    "http://127.0.0.1:3000",
+    "http://34.16.111.40",
+    "http://172.10.191.26:3000",
+    "http://35.184.115.101",
+    "https://www.craft-aftrip.com",
     "https://craft-aftrip.com",
 ]
 
@@ -122,6 +122,12 @@ DATABASES = {
         "PORT": "5432",
     }
 }
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators

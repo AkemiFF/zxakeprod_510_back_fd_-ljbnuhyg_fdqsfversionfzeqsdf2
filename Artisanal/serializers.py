@@ -161,6 +161,7 @@ class ProduitArtisanalDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProduitArtisanal
         fields = [
+            "id",
             "nom_produit_artisanal",
             "description_artisanat",
             "prix_artisanat",
