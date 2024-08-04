@@ -216,6 +216,18 @@ def client_detail(request, pk):
     return Response(serializer.data)
 
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def profil_client(request):
+    try:
+        client = request.user
+    except Client.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    serializer = ClientSerializer(client)
+    return Response(serializer.data)
+
+
 # Get all customer lists
 
 
@@ -655,3 +667,21 @@ class AdminCheckAPIView(views.APIView):
         is_admin = user.is_superuser
 
         return Response({"is_admin": is_admin}, status=status.HTTP_200_OK)
+
+
+class EditClientView(generics.UpdateAPIView):
+    queryset = Client.objects.all()
+    serializer_class = EditClientSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return Client.objects.get(id=self.request.user.id)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
