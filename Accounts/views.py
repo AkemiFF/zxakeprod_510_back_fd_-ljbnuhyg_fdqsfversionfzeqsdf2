@@ -564,6 +564,8 @@ def client_login_with_email(request):
                     "refresh": str(refresh),
                     "access": str(refresh.access_token),
                     "id": client.id,
+                    "profilPic": (client.profilPic.url if client.profilPic else None),
+                    "username": client.username,
                 }
             )
 
