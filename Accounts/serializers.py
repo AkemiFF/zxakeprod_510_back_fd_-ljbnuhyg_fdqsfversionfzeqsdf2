@@ -115,7 +115,25 @@ class TypeCarteBancaireSerializer(serializers.ModelSerializer):
         fields = ("name", "regex_pattern")
 
 
-# Pour Client
+class EditClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        fields = [
+            "username",
+            "email",
+            "numero_client",
+            "biographie",
+            "adresse",
+            "first_name",
+            "last_name",
+        ]
+
+    # def validate_numero_client(self, value):
+    #     if len(value) != 10:
+    #         raise serializers.ValidationError(
+    #             "Le numéro de téléphone doit contenir 10 chiffres."
+    #         )
+    #     return value
 
 
 class ClientSerializer(serializers.ModelSerializer):
@@ -137,6 +155,8 @@ class ClientSerializer(serializers.ModelSerializer):
             "email",
             "is_staff",
             "is_active",
+            "adresse",
+            "biographie",
         )
 
     extra_kwargs = {

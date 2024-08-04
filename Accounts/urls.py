@@ -71,10 +71,8 @@ urlpatterns = [
         name="type_carte_bancaire_delete",
     ),
     # URLs pour Client
-    path(
-        "client/<int:pk>/", views.client_detail, name="client_detail"
-    ),  # Urls pour obtenir un Client
-    # Urls pour obtenir tous les clients
+    path("client/<int:pk>/", views.client_detail, name="client_detail"),
+    path("profil-client/", views.profil_client, name="profil_client"),
     path("clients/", views.fetch_clients_detail, name="fecth_clients_detail"),
     path("client/create/", views.client_create, name="client_create"),
     path(
@@ -107,4 +105,5 @@ urlpatterns = [
     path("verify-code/", views.verify_code, name="verify_code"),
     path("reset-password/", views.reset_password, name="reset_password"),
     path("welcome-mail/", views.welcome_mail, name="welcome_mail"),
+    path("edit-client/", views.EditClientView.as_view(), name="edit-client"),
 ]
