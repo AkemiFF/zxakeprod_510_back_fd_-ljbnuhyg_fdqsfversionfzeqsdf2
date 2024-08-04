@@ -126,14 +126,25 @@ class EditClientSerializer(serializers.ModelSerializer):
             "adresse",
             "first_name",
             "last_name",
+            "profilPic",
         ]
 
-    # def validate_numero_client(self, value):
-    #     if len(value) != 10:
-    #         raise serializers.ValidationError(
-    #             "Le numéro de téléphone doit contenir 10 chiffres."
-    #         )
-    #     return value
+    def update(self, instance, validated_data):
+        first_name = validated_data.get("first_name", instance.first_name.upper())
+        last_name = validated_data.get("last_name", instance.last_name)
+        instance.username = f"{first_name.upper()} {last_name}"
+
+        instance.email = validated_data.get("email", instance.email)
+        instance.numero_client = validated_data.get(
+            "numero_client", instance.numero_client
+        )
+        instance.biographie = validated_data.get("biographie", instance.biographie)
+        instance.adresse = validated_data.get("adresse", instance.adresse)
+        instance.profilPic = validated_data.get("profilPic", instance.profilPic)
+
+        # Enregistrer les modifications
+        instance.save()
+        return instance
 
 
 class ClientSerializer(serializers.ModelSerializer):
