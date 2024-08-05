@@ -122,7 +122,7 @@ class EditClientSerializer(serializers.ModelSerializer):
             "username",
             "email",
             "numero_client",
-            "biographie",
+            "ville",
             "adresse",
             "first_name",
             "last_name",
@@ -133,12 +133,13 @@ class EditClientSerializer(serializers.ModelSerializer):
         first_name = validated_data.get("first_name", instance.first_name.upper())
         last_name = validated_data.get("last_name", instance.last_name)
         instance.username = f"{first_name.upper()} {last_name}"
-
+        instance.first_name = first_name
+        instance.last_name = last_name
         instance.email = validated_data.get("email", instance.email)
         instance.numero_client = validated_data.get(
             "numero_client", instance.numero_client
         )
-        instance.biographie = validated_data.get("biographie", instance.biographie)
+        instance.ville = validated_data.get("ville", instance.ville)
         instance.adresse = validated_data.get("adresse", instance.adresse)
         instance.profilPic = validated_data.get("profilPic", instance.profilPic)
 
@@ -167,7 +168,7 @@ class ClientSerializer(serializers.ModelSerializer):
             "is_staff",
             "is_active",
             "adresse",
-            "biographie",
+            "ville",
         )
 
     extra_kwargs = {
