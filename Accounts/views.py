@@ -338,19 +338,29 @@ def reset_password(request):
             data = json.loads(request.body)
             email = data.get("email")
             password = data.get("password")
+            code = data.get("code")
 
             if not email or not password:
                 return JsonResponse(
                     {"error": "Email and password are required."}, status=400
                 )
+            verification_code = VerificationCode.objects.filter(
+                user_email=email, code=code
+            ).first()
 
             try:
-                user = Client.objects.get(email=email)
-                user.password = make_password(password)
-                user.save()
-                return JsonResponse(
-                    {"success": "Password reset successfully."}, status=200
-                )
+                if verification_code:
+                    user = Client.objects.get(email=email)
+                    user.password = make_password(password)
+                    user.save()
+
+                    verification_code.delete()
+
+                    return JsonResponse(
+                        {"success": "Password reset successfully."}, status=200
+                    )
+                else:
+                    JsonResponse({"error": "Please try again"}, status=401)
             except ObjectDoesNotExist:
                 return JsonResponse({"error": "User does not exist."}, status=404)
 
@@ -497,7 +507,7 @@ def send_recovery_code(request):
 
             html_message = render_to_string("email/verification.html", context=context)
 
-            send_mail(
+            x = send_mail(
                 "Your Verification Code",
                 "",
                 settings.DEFAULT_FROM_EMAIL,
@@ -505,7 +515,7 @@ def send_recovery_code(request):
                 fail_silently=False,
                 html_message=html_message,
             )
-
+            print(x)
             return JsonResponse(
                 {"message": "Verification code sent successfully"}, status=200
             )
@@ -522,8 +532,14 @@ def verify_code(request):
             email = data["email"]
             code = data["code"]
 
+
+            if not email or not code:
+                return JsonResponse(
+                    {"error": "Email and code are required"}, status=400
+                )
+
             verification_code = VerificationCode.objects.filter(
-                user_email=email, code=code, used=False
+                user_email=email, code=code
             ).first()
 
             if verification_code and not verification_code.IsUsed():
