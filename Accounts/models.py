@@ -104,11 +104,7 @@ class Client(AbstractUser):
             )
         ],
     )
-    biographie = models.CharField(
-        max_length=1000,
-        null=True,
-        default="Welcome to your profile! As a travel enthusiast, this space is yours to share your experiences and unforgettable memories. Whether you're an adventurous explorer or a relaxation lover, our platform is designed to help you discover the best destinations and stay deals. Feel free to customize your profile and explore reviews and recommendations from our community to enrich your future travels. Safe travels and enjoy every moment!",
-    )
+    ville = models.CharField(max_length=150, null=True, blank=True)
     type_carte_bancaire = models.ForeignKey(
         TypeCarteBancaire, on_delete=models.SET_NULL, null=True, blank=True
     )
