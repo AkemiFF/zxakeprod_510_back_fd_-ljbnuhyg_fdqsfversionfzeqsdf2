@@ -9,22 +9,16 @@ class SuggestionHebergementSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     ville = serializers.SerializerMethodField()
     note_moyenne = serializers.SerializerMethodField()
+    total_likes = serializers.ReadOnlyField()
 
     class Meta:
         model = Hebergement
-        fields = [
-            "id",
-            "nom_hebergement",
-            "image",
-            "ville",
-            "description_hebergement",
-            "note_moyenne",
-        ]
+        fields = "__all__"
 
     def get_image(self, obj):
         request = self.context.get("request")
         couverture_image = obj.images.filter(couverture=True).first()
-        if couverture_image:
+        if couverture_image:    
             absolute_url = request.build_absolute_uri(couverture_image.image.url)
             return absolute_url
 
@@ -65,7 +59,8 @@ class HebergementSerializer(serializers.ModelSerializer):
     image_files = serializers.ListField(
         child=serializers.ImageField(write_only=True), write_only=True, required=False
     )
-    nombre_avis = serializers.SerializerMethodField()  # Ajouter ce champ
+    nombre_avis = serializers.SerializerMethodField()
+    total_likes = serializers.ReadOnlyField()
 
     def get_min_prix_nuit_chambre(self, instance):
         min_price = HebergementChambre.objects.filter(hebergement=instance).aggregate(
@@ -99,6 +94,7 @@ class HebergementSerializer(serializers.ModelSerializer):
         model = Hebergement
         fields = [
             "id",
+            "total_likes",
             "nom_hebergement",
             "nombre_avis",
             "localisation",

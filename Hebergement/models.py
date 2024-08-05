@@ -83,6 +83,9 @@ class Hebergement(models.Model):
     def __str__(self):
         return self.nom_hebergement
 
+    def total_likes(self):
+        return self.likes.count()
+
 
 class HebergementAccessoire(models.Model):
     hebergement = models.ForeignKey(

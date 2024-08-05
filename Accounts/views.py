@@ -216,6 +216,18 @@ def client_detail(request, pk):
     return Response(serializer.data)
 
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def profil_client(request):
+    try:
+        client = request.user
+    except Client.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    serializer = ClientSerializer(client)
+    return Response(serializer.data)
+
+
 # Get all customer lists
 
 
@@ -326,19 +338,29 @@ def reset_password(request):
             data = json.loads(request.body)
             email = data.get("email")
             password = data.get("password")
+            code = data.get("code")
 
             if not email or not password:
                 return JsonResponse(
                     {"error": "Email and password are required."}, status=400
                 )
+            verification_code = VerificationCode.objects.filter(
+                user_email=email, code=code
+            ).first()
 
             try:
-                user = Client.objects.get(email=email)
-                user.password = make_password(password)
-                user.save()
-                return JsonResponse(
-                    {"success": "Password reset successfully."}, status=200
-                )
+                if verification_code:
+                    user = Client.objects.get(email=email)
+                    user.password = make_password(password)
+                    user.save()
+
+                    verification_code.delete()
+
+                    return JsonResponse(
+                        {"success": "Password reset successfully."}, status=200
+                    )
+                else:
+                    JsonResponse({"error": "Please try again"}, status=401)
             except ObjectDoesNotExist:
                 return JsonResponse({"error": "User does not exist."}, status=404)
 
@@ -485,7 +507,7 @@ def send_recovery_code(request):
 
             html_message = render_to_string("email/verification.html", context=context)
 
-            send_mail(
+            x = send_mail(
                 "Your Verification Code",
                 "",
                 settings.DEFAULT_FROM_EMAIL,
@@ -493,7 +515,7 @@ def send_recovery_code(request):
                 fail_silently=False,
                 html_message=html_message,
             )
-
+            print(x)
             return JsonResponse(
                 {"message": "Verification code sent successfully"}, status=200
             )
@@ -510,8 +532,14 @@ def verify_code(request):
             email = data["email"]
             code = data["code"]
 
+
+            if not email or not code:
+                return JsonResponse(
+                    {"error": "Email and code are required"}, status=400
+                )
+
             verification_code = VerificationCode.objects.filter(
-                user_email=email, code=code, used=False
+                user_email=email, code=code
             ).first()
 
             if verification_code and not verification_code.IsUsed():
@@ -552,6 +580,8 @@ def client_login_with_email(request):
                     "refresh": str(refresh),
                     "access": str(refresh.access_token),
                     "id": client.id,
+                    "profilPic": (client.profilPic.url if client.profilPic else None),
+                    "username": client.username,
                 }
             )
 
@@ -655,3 +685,21 @@ class AdminCheckAPIView(views.APIView):
         is_admin = user.is_superuser
 
         return Response({"is_admin": is_admin}, status=status.HTTP_200_OK)
+
+
+class EditClientView(generics.UpdateAPIView):
+    queryset = Client.objects.all()
+    serializer_class = EditClientSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return Client.objects.get(id=self.request.user.id)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
