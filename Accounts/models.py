@@ -78,9 +78,12 @@ class TypeCarteBancaire(models.Model):
 
 
 class Client(AbstractUser):
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["username"]
     username = models.CharField(
-        _("username"), max_length=150, unique=True, null=True, blank=True
+        _("username"), max_length=150, unique=False, null=True, blank=True
     )
+
     emailProviderId = models.CharField(max_length=80, null=True)
     emailProviderUid = models.CharField(max_length=80, null=True)
     emailPhotoUrl = models.CharField(max_length=280, null=True)
