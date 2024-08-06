@@ -24,6 +24,23 @@ class TourOperateur(models.Model):
         verbose_name_plural = "Tour Operateurs"
 
 
+class LocalisationTour(models.Model):
+    adresse = models.CharField(max_length=200, null=True, blank=True)
+    ville = models.CharField(max_length=100, null=True, blank=True)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    tour_id = models.OneToOneField(
+        TourOperateur,
+        on_delete=models.CASCADE,
+        related_name="localisation_tour",
+        null=True,
+        blank=True,
+    )
+
+    def __str__(self):
+        return self.adresse
+
+
 class AvisTourOperateur(models.Model):
     tour_operateur = models.ForeignKey(
         TourOperateur, on_delete=models.CASCADE, related_name="avis_tour_operateur"

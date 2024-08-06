@@ -182,8 +182,18 @@ class TypeInclusionSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class LocalisationTourSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = LocalisationTour
+        fields = "__all__"
+
+
 class MiniTourOperateurSerializer(serializers.ModelSerializer):
     images_tour = serializers.SerializerMethodField()
+    localisation = LocalisationTourSerializer(
+        read_only=True, source="localisation_tour"
+    )
 
     class Meta:
         model = TourOperateur
@@ -191,6 +201,7 @@ class MiniTourOperateurSerializer(serializers.ModelSerializer):
             "id",
             "nom_operateur",
             "adresse_operateur",
+            "localisation",
             "email_operateur",
             "description_operateur",
             "images_tour",
