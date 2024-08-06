@@ -594,6 +594,12 @@ class HebergementListByResponsableView(generics.ListAPIView):
         return Hebergement.objects.filter(responsable_hebergement__id=responsable_id)
 
 
+class TypeHebergementListView(generics.ListAPIView):
+    queryset = TypeHebergement.objects.all()
+    serializer_class = TypeHebergementSerializer
+    permission_classes = [AllowAny]
+
+
 class ChambreListView(generics.ListAPIView):
     queryset = Chambre.objects.all()
     serializer_class = ChambreSerializer
