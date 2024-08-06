@@ -182,6 +182,28 @@ class TypeInclusionSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class MiniTourOperateurSerializer(serializers.ModelSerializer):
+    images_tour = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TourOperateur
+        fields = fields = [
+            "id",
+            "nom_operateur",
+            "adresse_operateur",
+            "email_operateur",
+            "description_operateur",
+            "images_tour",
+        ]
+
+    def get_images_tour(self, obj):
+        images = obj.images_tour.all()
+
+        sorted_images = sorted(images, key=lambda img: not img.couverture)
+
+        return ImageTourSerializer(sorted_images, many=True).data
+
+
 class VoyageSerializer(serializers.ModelSerializer):
     images_voyage = ImageVoyageSerializer(many=True, read_only=True)
     likes = VoyageLikeSerializer(many=True, read_only=True)
@@ -190,6 +212,7 @@ class VoyageSerializer(serializers.ModelSerializer):
     )
     trajets = TrajetVoyageSerializer(many=True, read_only=True, source="voyage_trajet")
     all_inclusions = serializers.SerializerMethodField()
+    tour_operateur = MiniTourOperateurSerializer(read_only=True)
 
     class Meta:
         model = Voyage
@@ -212,6 +235,7 @@ class VoyageSerializer(serializers.ModelSerializer):
             "trajets",
             "nb_like",
             "all_inclusions",
+            "tour_operateur",
         ]
 
     def get_all_inclusions(self, obj):

@@ -78,9 +78,12 @@ class TypeCarteBancaire(models.Model):
 
 
 class Client(AbstractUser):
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["username"]
     username = models.CharField(
-        _("username"), max_length=150, unique=True, null=True, blank=True
+        _("username"), max_length=150, unique=False, null=True, blank=True
     )
+
     emailProviderId = models.CharField(max_length=80, null=True)
     emailProviderUid = models.CharField(max_length=80, null=True)
     emailPhotoUrl = models.CharField(max_length=280, null=True)
@@ -104,11 +107,7 @@ class Client(AbstractUser):
             )
         ],
     )
-    biographie = models.CharField(
-        max_length=1000,
-        null=True,
-        default="Welcome to your profile! As a travel enthusiast, this space is yours to share your experiences and unforgettable memories. Whether you're an adventurous explorer or a relaxation lover, our platform is designed to help you discover the best destinations and stay deals. Feel free to customize your profile and explore reviews and recommendations from our community to enrich your future travels. Safe travels and enjoy every moment!",
-    )
+    ville = models.CharField(max_length=150, null=True, blank=True)
     type_carte_bancaire = models.ForeignKey(
         TypeCarteBancaire, on_delete=models.SET_NULL, null=True, blank=True
     )
