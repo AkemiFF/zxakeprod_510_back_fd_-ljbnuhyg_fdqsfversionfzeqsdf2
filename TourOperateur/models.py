@@ -232,7 +232,7 @@ class ImageVoyage(models.Model):
         verbose_name_plural = "Images Voyage"
 
 
-class Reservation_voyage(models.Model):
+class ReservationVoyage(models.Model):
     voyage = models.ForeignKey(
         Voyage, on_delete=models.CASCADE, related_name="reservations"
     )
