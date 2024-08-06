@@ -3,7 +3,11 @@ from Hebergement import views
 
 
 urlpatterns = [
-    # Nombre hebergement creer
+    path(
+        "type-hebergement/",
+        views.TypeHebergementListView.as_view(),
+        name="type-hebergement-list",
+    ),
     path("get-count-hebergement/", views.get_count, name="hebergement-count"),
     path(
         "responsable/<int:responsable_id>/",

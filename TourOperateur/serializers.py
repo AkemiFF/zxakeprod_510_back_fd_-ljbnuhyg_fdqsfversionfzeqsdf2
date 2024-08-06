@@ -1,9 +1,16 @@
-# serializers.py
 from rest_framework import serializers
 from .models import *
 
 
+class ClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        fields = ["id", "username", "numero_client", "adresse"]
+
+
 class AvisTourOperateurSerializer(serializers.ModelSerializer):
+    client = ClientSerializer(read_only=True)
+
     class Meta:
         model = AvisTourOperateur
         fields = ["id", "client", "note", "commentaire", "date_avis"]
@@ -15,16 +22,65 @@ class ImageTourSerializer(serializers.ModelSerializer):
         fields = ["id", "image", "couverture"]
 
 
-class VoyageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Voyage
-        fields = "__all__"
-
-
 class ImageVoyageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImageVoyage
         fields = ["image", "couverture"]
+
+
+class VoyageSerializer(serializers.ModelSerializer):
+    images_voyage = ImageVoyageSerializer(many=True, read_only=True)
+    likes = serializers.SerializerMethodField()
+    inclusions = serializers.SerializerMethodField()
+    trajets = serializers.SerializerMethodField()
+    all_inclusions = serializers.SerializerMethodField()
+    tour_operateur = serializers.SerializerMethodField()
+    clients = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Voyage
+        fields = [
+            "id",
+            "nom_voyage",
+            "ville_depart",
+            "description_voyage",
+            "destination_voyage",
+            "date_debut",
+            "date_fin",
+            "prix_voyage",
+            "places_disponibles",
+            "created_at",
+            "updated_at",
+            "type_transport",
+            "images_voyage",
+            "likes",
+            "inclusions",
+            "trajets",
+            "nb_like",
+            "all_inclusions",
+            "tour_operateur",
+            "clients",
+        ]
+
+    def get_likes(self, obj):
+        return VoyageLikeSerializer(obj.likes.all(), many=True).data
+
+    def get_inclusions(self, obj):
+        return InclusionVoyageSerializer(obj.voyage_part.all(), many=True).data
+
+    def get_trajets(self, obj):
+        return TrajetVoyageSerializer(obj.voyage_trajet.all(), many=True).data
+
+    def get_all_inclusions(self, obj):
+        all_inclusions = TypeInclusion.objects.all()
+        return TypeInclusionSerializer(all_inclusions, many=True).data
+
+    def get_tour_operateur(self, obj):
+        return MiniTourOperateurSerializer(obj.tour_operateur).data
+
+    def get_clients(self, obj):
+        reservations = ReservationVoyage.objects.filter(voyage=obj)
+        return ReservationVoyageSerializer(reservations, many=True).data
 
 
 class AllVoyageSerializer(serializers.ModelSerializer):
@@ -97,6 +153,8 @@ class PopularVoyageSerializer(serializers.ModelSerializer):
 
 
 class SatisfactionClientSerializer(serializers.ModelSerializer):
+    client = ClientSerializer(read_only=True)
+
     class Meta:
         model = SatisfactionClient
         fields = ["client", "est_satisfait"]
@@ -141,19 +199,13 @@ class TourOperateurSerializer(serializers.ModelSerializer):
 
     def get_images_tour(self, obj):
         images = obj.images_tour.all()
-
         sorted_images = sorted(images, key=lambda img: not img.couverture)
-
         return ImageTourSerializer(sorted_images, many=True).data
 
 
-class ImageVoyageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ImageVoyage
-        fields = ["image", "couverture"]
-
-
 class VoyageLikeSerializer(serializers.ModelSerializer):
+    client = ClientSerializer(read_only=True)
+
     class Meta:
         model = VoyageLike
         fields = ["client"]
@@ -183,10 +235,15 @@ class TypeInclusionSerializer(serializers.ModelSerializer):
 
 
 class LocalisationTourSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = LocalisationTour
         fields = "__all__"
+
+
+class ClientListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        fields = ["id", "username", "numero_client", "adresse"]
 
 
 class MiniTourOperateurSerializer(serializers.ModelSerializer):
@@ -197,7 +254,7 @@ class MiniTourOperateurSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TourOperateur
-        fields = fields = [
+        fields = [
             "id",
             "nom_operateur",
             "adresse_operateur",
@@ -209,46 +266,40 @@ class MiniTourOperateurSerializer(serializers.ModelSerializer):
 
     def get_images_tour(self, obj):
         images = obj.images_tour.all()
-
         sorted_images = sorted(images, key=lambda img: not img.couverture)
-
         return ImageTourSerializer(sorted_images, many=True).data
 
 
-class VoyageSerializer(serializers.ModelSerializer):
+class VoyageListSerializer(serializers.ModelSerializer):
     images_voyage = ImageVoyageSerializer(many=True, read_only=True)
-    likes = VoyageLikeSerializer(many=True, read_only=True)
-    inclusions = InclusionVoyageSerializer(
-        many=True, read_only=True, source="voyage_part"
-    )
-    trajets = TrajetVoyageSerializer(many=True, read_only=True, source="voyage_trajet")
-    all_inclusions = serializers.SerializerMethodField()
-    tour_operateur = MiniTourOperateurSerializer(read_only=True)
+    list_travelers = serializers.SerializerMethodField()
 
     class Meta:
         model = Voyage
-        fields = [
-            "id",
-            "nom_voyage",
-            "ville_depart",
-            "description_voyage",
-            "destination_voyage",
-            "date_debut",
-            "date_fin",
-            "prix_voyage",
-            "places_disponibles",
-            "created_at",
-            "updated_at",
-            "type_transport",
-            "images_voyage",
-            "likes",
-            "inclusions",
-            "trajets",
-            "nb_like",
-            "all_inclusions",
-            "tour_operateur",
-        ]
+        fields = "__all__"
 
-    def get_all_inclusions(self, obj):
-        all_inclusions = TypeInclusion.objects.all()
-        return TypeInclusionSerializer(all_inclusions, many=True).data
+    def get_list_travelers(self, obj):
+        reservations = ReservationVoyage.objects.filter(voyage=obj)
+        return ReservationVoyageSerializer(reservations, many=True).data
+
+
+class ReservationVoyageSerializer(serializers.ModelSerializer):
+    client = ClientListSerializer(read_only=True)
+
+    class Meta:
+        model = ReservationVoyage
+        fields = ["voyage", "client", "date_reservation_voyage", "status"]
+
+    def get_clients_list(self, obj):
+        client_list = Client.objects.filter(id=obj)
+        return ClientListSerializer(client_list, many=True).data
+
+
+class ClientListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        fields = ["id", "username", "numero_client", "adresse"]
+
+    def get_list_client(self, obj):
+        list_client = Client.objects.filter(voyage=obj)
+        return ReservationVoyageSerializer(list_client, many=True).data
