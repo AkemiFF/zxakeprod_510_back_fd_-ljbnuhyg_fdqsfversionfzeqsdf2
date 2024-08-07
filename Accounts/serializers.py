@@ -106,6 +106,48 @@ class ResponsableEtablissementSerializer(serializers.ModelSerializer):
         }
 
 
+class AddResponsableEtablissementSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(max_length=30)
+    last_name = serializers.CharField(max_length=30)
+    adresse = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    ville = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    email = serializers.EmailField()
+
+    class Meta:
+        model = ResponsableEtablissement
+        fields = [
+            "first_name",
+            "last_name",
+            "username",
+            "adresse",
+            "ville",
+            "password",
+            "numero_responsable",
+            "type_responsable",
+            "email",
+        ]
+
+    def create(self, validated_data):
+        print(validated_data)
+        first_name = validated_data.pop("first_name")
+        last_name = validated_data.pop("last_name")
+        password = validated_data.pop("password")
+
+        user = ResponsableEtablissement.objects.create_user(
+            username=f"{first_name}.{last_name}".lower(),
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            numero_responsable=validated_data.get("numero_responsable", ""),
+            type_responsable=validated_data.get("type_responsable", None),
+            adresse=validated_data.get("adresse", ""),
+            ville=validated_data.get("ville", ""),
+            email=validated_data.get("email", ""),
+        )
+
+        return user
+
+
 # Pour TypeCarteBancaire
 
 

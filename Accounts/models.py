@@ -22,21 +22,20 @@ class TypeResponsable(models.Model):
 
 
 class ResponsableEtablissement(AbstractUser):
-    numero_responsable = models.CharField(
-        max_length=10,
-        validators=[
-            RegexValidator(
-                regex=r"^(032|033|034|038)\d{7}$",
-                message="Le numéro doit commencer par 032, 033, 034 ou 038 et contenir 7 chiffres supplémentaires.",
-            )
-        ],
+    numero_responsable = models.CharField(max_length=30, null=True, blank=True)
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["username"]
+    username = models.CharField(
+        _("username"), max_length=150, unique=False, null=True, blank=True
     )
-
+    email = models.EmailField(_("email address"), blank=True, unique=True)
     type_responsable = models.ForeignKey(
         TypeResponsable, null=True, on_delete=models.DO_NOTHING
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    adresse = models.CharField(max_length=150, null=True, blank=True)
+    ville = models.CharField(max_length=150, null=True, blank=True)
 
     groups = models.ManyToManyField(
         "auth.Group",

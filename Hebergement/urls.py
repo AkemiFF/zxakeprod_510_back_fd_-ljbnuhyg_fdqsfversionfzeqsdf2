@@ -35,7 +35,9 @@ urlpatterns = [
         views.get_chambre_details,
         name="chambre-id",
     ),
-    path("create-hebergement/", views.create_hebergement, name="hebergement-create"),
+    path(
+        "create-hebergement/", views.create_new_hebergement, name="hebergement-create"
+    ),
     path(
         "update-hebergement/<int:hebergement_id>/",
         views.update_hebergement,
