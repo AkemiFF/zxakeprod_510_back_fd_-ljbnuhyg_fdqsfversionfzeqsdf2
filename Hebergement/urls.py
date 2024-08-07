@@ -4,6 +4,11 @@ from Hebergement import views
 
 urlpatterns = [
     path(
+        "add-hebergement-image/",
+        views.AddHebergementImageView.as_view(),
+        name="add-hebergement-image",
+    ),
+    path(
         "type-hebergement/",
         views.TypeHebergementListView.as_view(),
         name="type-hebergement-list",

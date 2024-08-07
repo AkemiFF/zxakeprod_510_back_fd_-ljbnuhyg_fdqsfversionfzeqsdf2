@@ -135,7 +135,7 @@ class AddResponsableEtablissementSerializer(serializers.ModelSerializer):
         password = validated_data.pop("password")
 
         user = ResponsableEtablissement.objects.create_user(
-            username=f"{first_name}.{last_name}".lower(),
+            username=f"{first_name} {last_name}",
             password=password,
             first_name=first_name,
             last_name=last_name,
