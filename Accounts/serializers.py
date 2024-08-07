@@ -116,6 +116,7 @@ class AddResponsableEtablissementSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResponsableEtablissement
         fields = [
+            "id",
             "first_name",
             "last_name",
             "username",
