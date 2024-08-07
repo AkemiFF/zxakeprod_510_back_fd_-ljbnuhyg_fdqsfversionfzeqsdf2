@@ -59,7 +59,7 @@ class SocialLinkSerializer(serializers.ModelSerializer):
 
 
 class NewHebergementSerializer(serializers.ModelSerializer):
-    social_link = SocialLinkSerializer(many=True)
+    # social_link = SocialLinkSerializer(many=True)
     responsable_hebergement = serializers.PrimaryKeyRelatedField(
         queryset=ResponsableEtablissement.objects.all()
     )
@@ -70,6 +70,7 @@ class NewHebergementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Hebergement
         fields = [
+            "id",
             "nom_hebergement",
             "description_hebergement",
             "nombre_etoile_hebergement",
@@ -78,9 +79,8 @@ class NewHebergementSerializer(serializers.ModelSerializer):
             "nif",
             "stat",
             "autorisation",
-            "social_link",
+            # "social_link",
         ]
-
 
 
 class HebergementSerializer(serializers.ModelSerializer):

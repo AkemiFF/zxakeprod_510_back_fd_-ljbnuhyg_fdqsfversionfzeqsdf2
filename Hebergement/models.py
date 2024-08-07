@@ -67,8 +67,8 @@ class AccessoireHebergement(models.Model):
 
 class Hebergement(models.Model):
     nom_hebergement = models.CharField(max_length=100)
-    description_hebergement = models.TextField()
-    nombre_etoile_hebergement = models.IntegerField()
+    description_hebergement = models.TextField(null=True, blank=True)
+    nombre_etoile_hebergement = models.IntegerField(null=True, blank=True)
     responsable_hebergement = models.ForeignKey(
         ResponsableEtablissement, on_delete=models.CASCADE, related_name="hebergements"
     )

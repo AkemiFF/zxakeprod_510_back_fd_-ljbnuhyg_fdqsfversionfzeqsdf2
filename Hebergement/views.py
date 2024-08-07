@@ -408,50 +408,52 @@ def update_hebergement(request, hebergement_id):
 def create_new_hebergement(request):
     hebergement_data = {
         "nom_hebergement": request.data.get("name"),
-        "description_hebergement": request.data.get("description", ""),
+        "description_hebergement": "",
         "nombre_etoile_hebergement": request.data.get("rate"),
         "responsable_hebergement": request.data.get("responsable_id"),
         "type_hebergement": request.data.get("accommodationType"),
         "nif": request.data.get("nif"),
         "stat": request.data.get("stat"),
-        "autorisation": request.data.get("autorisation", False),
-        "social_link": request.data.get("socialLink", []),
+        "autorisation": False,
     }
+    print(hebergement_data)
 
     localisation_data = {
         "adresse": request.data.get("address"),
         "ville": request.data.get("city"),
-        "latitude": request.data.get("latitude", None),
-        "longitude": request.data.get("longitude", None),
+        "latitude": None,
+        "longitude": None,
     }
 
     hebergement_serializer = NewHebergementSerializer(data=hebergement_data)
-    localisation_serializer = LocalisationSerializer(data=localisation_data)
 
-    if hebergement_serializer.is_valid() and localisation_serializer.is_valid():
+    if hebergement_serializer.is_valid():
         hebergement = hebergement_serializer.save()
+        print(request.data)
 
-        # Set the hebergement for the localisation
-        localisation = localisation_serializer.save(hebergement_id=hebergement)
+        localisation_data["hebergement_id"] = hebergement.id
+        localisation_serializer = LocalisationSerializer(data=localisation_data)
 
-        # Save social links
-        social_links_data = hebergement_data.get("social_link", [])
-        for social_link_data in social_links_data:
-            SocialLink.objects.create(hebergement=hebergement, **social_link_data)
+        if localisation_serializer.is_valid():
+            localisation_serializer.save()
 
+            return Response(
+                {
+                    "hebergement": hebergement_serializer.data,
+                    "localisation": localisation_serializer.data,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        else:
+            return Response(
+                {"localisation_errors": localisation_serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+    else:
         return Response(
-            {
-                "hebergement": hebergement_serializer.data,
-                "localisation": localisation_serializer.data,
-            },
-            status=status.HTTP_201_CREATED,
+            {"hebergement_errors": hebergement_serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST,
         )
-
-    errors = {
-        "hebergement_errors": hebergement_serializer.errors,
-        "localisation_errors": localisation_serializer.errors,
-    }
-    return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["DELETE"])
