@@ -19,6 +19,11 @@ urlpatterns = [
         name="type_responsable_create",
     ),
     path(
+        "responsables/create/",
+        views.ResponsableEtablissementCreateView.as_view(),
+        name="responsable-create",
+    ),
+    path(
         "type-responsable/update/<int:pk>/",
         views.type_responsable_update,
         name="type_responsable_update",
@@ -95,6 +100,11 @@ urlpatterns = [
         views.ResponsableEtablissementListByTypeView.as_view(),
         name="responsables-by-type",
     ),
+    path(
+        "detail-responsable/<int:responsable_id>/",
+        views.ResponsableEtablissementDetailView.as_view(),
+        name="responsable-detail",
+    ),
     path("check-admin/", views.AdminCheckAPIView.as_view(), name="check-admin-status"),
     path(
         "send-verification-code/",
@@ -106,4 +116,9 @@ urlpatterns = [
     path("reset-password/", views.reset_password, name="reset_password"),
     path("welcome-mail/", views.welcome_mail, name="welcome_mail"),
     path("edit-client/", views.EditClientView.as_view(), name="edit-client"),
+    path(
+        "responsable/login/",
+        views.ResponsableLoginView.as_view(),
+        name="responsable_login",
+    ),
 ]

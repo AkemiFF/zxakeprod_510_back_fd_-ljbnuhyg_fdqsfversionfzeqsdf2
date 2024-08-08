@@ -15,13 +15,34 @@ from django.http import JsonResponse
 from .models import Hebergement
 from Hebergement.utils import generer_description_hebergement  # type: ignore
 from django.conf import settings
-
+from rest_framework.views import APIView
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from .models import Hebergement
 from django.conf import settings
 from .utils import generer_description_hebergement
 import os
+from Accounts.permissions import IsResponsableEtablissement
+from Accounts.serializers import ResponsableEtablissementSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import authenticate
+
+
+
+class ClientsAndChambresByHebergementView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, hebergement_id):
+        try:
+            hebergement = Hebergement.objects.get(id=hebergement_id)
+        except Hebergement.DoesNotExist:
+            return Response(
+                {"error": "Hébergement non trouvé"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        reservations = Reservation.objects.filter(hotel_reserve=hebergement)
+        serializer = ReservationWithClientAndChambreSerializer(reservations, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class HebergementReservationsListView(generics.ListAPIView):
@@ -31,6 +52,22 @@ class HebergementReservationsListView(generics.ListAPIView):
     def get_queryset(self):
         hebergement_id = self.kwargs["hebergement_id"]
         return Reservation.objects.filter(hotel_reserve_id=hebergement_id)
+
+
+class ReservationsByHebergementView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, hebergement_id):
+        try:
+            hebergement = Hebergement.objects.get(id=hebergement_id)
+        except Hebergement.DoesNotExist:
+            return Response(
+                {"error": "Hébergement non trouvé"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        reservations = Reservation.objects.filter(hotel_reserve=hebergement)
+        serializer = ReservationSerializer(reservations, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
@@ -403,6 +440,105 @@ def update_hebergement(request, hebergement_id):
 # Delete hebergement
 
 
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def create_new_hebergement(request):
+    hebergement_data = {
+        "nom_hebergement": request.data.get("name"),
+        "description_hebergement": "",
+        "nombre_etoile_hebergement": request.data.get("rate"),
+        "responsable_hebergement": request.data.get("responsable_id"),
+        "type_hebergement": request.data.get("accommodationType"),
+        "nif": request.data.get("nif"),
+        "stat": request.data.get("stat"),
+        "autorisation": False,
+    }
+    print(hebergement_data)
+
+    localisation_data = {
+        "adresse": request.data.get("address"),
+        "ville": request.data.get("city"),
+        "latitude": None,
+        "longitude": None,
+    }
+
+    hebergement_serializer = NewHebergementSerializer(data=hebergement_data)
+
+    if hebergement_serializer.is_valid():
+        hebergement = hebergement_serializer.save()
+        print(request.data)
+
+        localisation_data["hebergement_id"] = hebergement.id
+        localisation_serializer = LocalisationSerializer(data=localisation_data)
+
+        if localisation_serializer.is_valid():
+            localisation_serializer.save()
+
+            return Response(
+                {
+                    "hebergement": hebergement_serializer.data,
+                    "localisation": localisation_serializer.data,
+                    "id_hebergement": hebergement.id,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        else:
+            return Response(
+                {"localisation_errors": localisation_serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+    else:
+        return Response(
+            {"hebergement_errors": hebergement_serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+from rest_framework.views import APIView
+
+
+class AddImageChambreView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = ImageChambreSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AddHebergementImageView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        hebergement_id = request.data.get("hebergement")
+
+        if hebergement_id == "undefined" or not hebergement_id:
+            return Response(
+                {"error": "Invalid or missing hebergement ID"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        hebergement = Hebergement.objects.get(id=hebergement_id)
+        image_list = []
+
+        # Parcourir toutes les clés pour récupérer les fichiers
+        for key, image in request.FILES.items():
+            if key.startswith("image_"):
+                image_instance = HebergementImage(
+                    hebergement=hebergement,
+                    image=image,
+                )
+                image_instance.save()
+                image_list.append(image_instance)
+
+        serializer = HebergementImageSerializer(image_list, many=True)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
 @api_view(["DELETE"])
 def delete_hebergement(request, pk):
     try:
@@ -604,3 +740,34 @@ class ChambreListView(generics.ListAPIView):
     queryset = Chambre.objects.all()
     serializer_class = ChambreSerializer
     permission_classes = [AllowAny]
+
+
+class MinHebergementDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, hebergement_id, *args, **kwargs):
+        hebergement = get_object_or_404(Hebergement, id=hebergement_id)
+        serializer = MinHebergementSerializer(hebergement)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, hebergement_id, *args, **kwargs):
+        hebergement = get_object_or_404(Hebergement, id=hebergement_id)
+        serializer = MinHebergementSerializer(hebergement, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, hebergement_id, *args, **kwargs):
+        hebergement = get_object_or_404(Hebergement, id=hebergement_id)
+        serializer = MinHebergementSerializer(
+            hebergement, data=request.data, partial=True
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
