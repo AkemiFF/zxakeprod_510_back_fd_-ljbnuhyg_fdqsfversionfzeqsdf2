@@ -24,6 +24,12 @@ from rest_framework.decorators import (
     authentication_classes,
     permission_classes,
 )
+from Hebergement.models import Hebergement
+from Artisanal.models import Artisanat
+from Hebergement.serializers import MinHebergementSerializer
+from TourOperateur.models import TourOperateur
+from TourOperateur.serializers import TourOperateurSerializer
+from Artisanal.serializers import ArtisanatSerializer
 from django.contrib.auth.models import User
 from rest_framework.decorators import api_view
 from .models import Client, VerificationCode, ResponsableEtablissement
@@ -50,7 +56,7 @@ from django.contrib.auth import authenticate
 
 
 class ResponsableLoginView(APIView):
-    permission_classes = []
+    permission_classes = [AllowAny]
 
     def post(self, request):
         email = request.data.get("email")
@@ -67,25 +73,40 @@ class ResponsableLoginView(APIView):
         except ResponsableEtablissement.DoesNotExist:
             return Response(
                 {"error": "Identifiants invalides ou utilisateur non autorisé"},
-                status=status.HTTP_401_UNAUTHORIZED,
+                status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Vérifier le mot de passe
         if not user.check_password(password):
             return Response(
                 {"error": "Identifiants invalides ou utilisateur non autorisé"},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+        info_user = ResponsableEtablissementSerializer(user).data
 
-        # Générer les tokens
         refresh = RefreshToken.for_user(user)
         access = refresh.access_token
-
+        type_etablissement = info_user["type_responsable"]
+        if type_etablissement == 1:
+            hebergements = Hebergement.objects.get(responsable_hebergement=user)
+            etablissement_info = MinHebergementSerializer(hebergements)
+        elif type_etablissement == 2:
+            artisanat = Artisanat.objects.get(responsable_hebergement=user)
+            etablissement_info = ArtisanatSerializer(artisanat)
+        elif type_etablissement == 3:
+            tour = TourOperateur.objects.get(responsable_hebergement=user)
+            etablissement_info = TourOperateurSerializer(tour)
+        else:
+            return Response(
+                {"error": "Vouns n'avez aucun établissement en votre nom"},
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
         return Response(
             {
                 "refresh": str(refresh),
                 "access": str(access),
-                "user": ResponsableEtablissementSerializer(user).data,
+                "user": info_user,
+                "type_etablissement": type_etablissement,
+                "etablissement_info": etablissement_info.data,
             },
             status=status.HTTP_200_OK,
         )
