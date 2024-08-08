@@ -151,6 +151,27 @@ class HebergementSerializer(serializers.ModelSerializer):
         return hebergement
 
 
+class MinHebergementSerializer(serializers.ModelSerializer):
+    localisation = LocalisationSerializer()
+
+    class Meta:
+        model = Hebergement
+        fields = [
+            "id",
+            "nom_hebergement",
+            "description_hebergement",
+            "nombre_etoile_hebergement",
+            "responsable_hebergement",
+            "type_hebergement",
+            "nif",
+            "stat",
+            "autorisation",
+            "created_at",
+            "updated_at",
+            "localisation",
+        ]
+
+
 class TypeHebergementSerializer(serializers.ModelSerializer):
     class Meta:
         model = TypeHebergement
@@ -202,6 +223,34 @@ class HebergementAccessoireSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class MinClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        fields = ["id", "username", "email", "numero_client"]
+
+
+class MinChambreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HebergementChambre
+        fields = ["id", "nom_chambre", "description", "superficie", "prix_nuit_chambre"]
+
+
+class ReservationWithClientAndChambreSerializer(serializers.ModelSerializer):
+    client_reserve = MinClientSerializer()
+    chambre_reserve = MinChambreSerializer()
+
+    class Meta:
+        model = Reservation
+        fields = [
+            "id",
+            "client_reserve",
+            "chambre_reserve",
+            "date_debut_reserve",
+            "date_fin_reserve",
+            "nombre_personnes_reserve",
+        ]
+
+
 class HebergementAccessoireSerializerID(serializers.ModelSerializer):
     class Meta:
         model = HebergementAccessoire
@@ -217,6 +266,8 @@ class HebergementChambreAccessoireSerializer(serializers.ModelSerializer):
 
 
 class ReservationSerializer(serializers.ModelSerializer):
+    client_reserve = ClientSerializer()
+
     class Meta:
         model = Reservation
         fields = "__all__"
