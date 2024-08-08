@@ -46,6 +46,82 @@ from .permissions import IsClientUser
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
+from django.contrib.auth import authenticate
+
+
+class ResponsableLoginView(APIView):
+    permission_classes = []
+
+    def post(self, request):
+        email = request.data.get("email")
+        password = request.data.get("password")
+
+        if not email or not password:
+            return Response(
+                {"error": "Email et mot de passe sont requis"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            user = ResponsableEtablissement.objects.get(email=email)
+        except ResponsableEtablissement.DoesNotExist:
+            return Response(
+                {"error": "Identifiants invalides ou utilisateur non autorisé"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        # Vérifier le mot de passe
+        if not user.check_password(password):
+            return Response(
+                {"error": "Identifiants invalides ou utilisateur non autorisé"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        # Générer les tokens
+        refresh = RefreshToken.for_user(user)
+        access = refresh.access_token
+
+        return Response(
+            {
+                "refresh": str(refresh),
+                "access": str(access),
+                "user": ResponsableEtablissementSerializer(user).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class ResponsableEtablissementDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, responsable_id):
+        try:
+            responsable = ResponsableEtablissement.objects.get(id=responsable_id)
+        except ResponsableEtablissement.DoesNotExist:
+            return Response(
+                {"error": "Responsable non trouvé"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = ResponsableEtablissementSerializer(responsable)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request, responsable_id):
+        try:
+            responsable = ResponsableEtablissement.objects.get(id=responsable_id)
+        except ResponsableEtablissement.DoesNotExist:
+            return Response(
+                {"error": "Responsable non trouvé"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = ResponsableEtablissementSerializer(
+            responsable, data=request.data, partial=True
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 def custom_404_view(request, exception=None):
