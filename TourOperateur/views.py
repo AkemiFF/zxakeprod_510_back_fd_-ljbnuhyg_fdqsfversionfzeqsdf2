@@ -7,6 +7,8 @@ from rest_framework.response import Response
 from .models import *
 from rest_framework.permissions import *
 from .serializers import *
+from .models import Voyage
+from .serializers import VoyageSerializer
 
 
 class TourOperateurListCreateView(generics.ListCreateAPIView):
@@ -25,6 +27,12 @@ class VoyageDetailView(generics.RetrieveAPIView):
     serializer_class = VoyageSerializer
     permission_classes = [AllowAny]
     
+
+class VoyageListView(generics.ListAPIView):
+    queryset = Voyage.objects.all()
+    serializer_class = VoyageListSerializer
+    permission_classes = [AllowAny]
+
 
 
 

@@ -67,14 +67,17 @@ class AccessoireHebergement(models.Model):
 
 class Hebergement(models.Model):
     nom_hebergement = models.CharField(max_length=100)
-    description_hebergement = models.TextField()
-    nombre_etoile_hebergement = models.IntegerField()
+    description_hebergement = models.TextField(null=True, blank=True)
+    nombre_etoile_hebergement = models.IntegerField(null=True, blank=True)
     responsable_hebergement = models.ForeignKey(
         ResponsableEtablissement, on_delete=models.CASCADE, related_name="hebergements"
     )
     type_hebergement = models.ForeignKey(
         TypeHebergement, null=True, on_delete=models.DO_NOTHING
     )
+    nif = models.CharField(max_length=100, null=True, blank=True)
+    stat = models.CharField(max_length=100, null=True, blank=True)
+
     autorisation = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -85,6 +88,29 @@ class Hebergement(models.Model):
 
     def total_likes(self):
         return self.likes.count()
+
+
+class Localisation(models.Model):
+    adresse = models.CharField(max_length=200, null=True, blank=True)
+    ville = models.CharField(max_length=100, null=True, blank=True)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    hebergement_id = models.OneToOneField(
+        Hebergement,
+        on_delete=models.CASCADE,
+        related_name="localisation",
+        null=True,
+        blank=True,
+    )
+
+    def __str__(self):
+        return self.adresse
+
+
+class SocialLink(models.Model):
+    hebergement = models.ForeignKey(
+        Hebergement, on_delete=models.CASCADE, related_name="social_link"
+    )
 
 
 class HebergementAccessoire(models.Model):
@@ -120,23 +146,6 @@ class HebergementChambre(models.Model):
 
     def __str__(self):
         return f"{self.hebergement} - {self.chambre} - {self.chambre_personaliser}"
-
-
-class Localisation(models.Model):
-    adresse = models.CharField(max_length=200, null=True, blank=True)
-    ville = models.CharField(max_length=100, null=True, blank=True)
-    latitude = models.FloatField(null=True, blank=True)
-    longitude = models.FloatField(null=True, blank=True)
-    hebergement_id = models.OneToOneField(
-        Hebergement,
-        on_delete=models.CASCADE,
-        related_name="localisation",
-        null=True,
-        blank=True,
-    )
-
-    def __str__(self):
-        return self.adresse
 
 
 class AccessoireChambre(models.Model):

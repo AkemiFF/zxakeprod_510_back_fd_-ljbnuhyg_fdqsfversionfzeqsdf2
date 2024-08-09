@@ -18,7 +18,7 @@ class SuggestionHebergementSerializer(serializers.ModelSerializer):
     def get_image(self, obj):
         request = self.context.get("request")
         couverture_image = obj.images.filter(couverture=True).first()
-        if couverture_image:    
+        if couverture_image:
             absolute_url = request.build_absolute_uri(couverture_image.image.url)
             return absolute_url
 
@@ -50,6 +50,37 @@ class LocalisationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Localisation
         fields = "__all__"
+
+
+class SocialLinkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SocialLink
+        fields = ["icon", "label", "visible"]
+
+
+class NewHebergementSerializer(serializers.ModelSerializer):
+    # social_link = SocialLinkSerializer(many=True)
+    responsable_hebergement = serializers.PrimaryKeyRelatedField(
+        queryset=ResponsableEtablissement.objects.all()
+    )
+    type_hebergement = serializers.PrimaryKeyRelatedField(
+        queryset=TypeHebergement.objects.all()
+    )
+
+    class Meta:
+        model = Hebergement
+        fields = [
+            "id",
+            "nom_hebergement",
+            "description_hebergement",
+            "nombre_etoile_hebergement",
+            "responsable_hebergement",
+            "type_hebergement",
+            "nif",
+            "stat",
+            "autorisation",
+            # "social_link",
+        ]
 
 
 class HebergementSerializer(serializers.ModelSerializer):
