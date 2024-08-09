@@ -15,13 +15,34 @@ from django.http import JsonResponse
 from .models import Hebergement
 from Hebergement.utils import generer_description_hebergement  # type: ignore
 from django.conf import settings
-
+from rest_framework.views import APIView
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from .models import Hebergement
 from django.conf import settings
 from .utils import generer_description_hebergement
 import os
+from Accounts.permissions import IsResponsableEtablissement
+from Accounts.serializers import ResponsableEtablissementSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import authenticate
+
+
+
+class ClientsAndChambresByHebergementView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, hebergement_id):
+        try:
+            hebergement = Hebergement.objects.get(id=hebergement_id)
+        except Hebergement.DoesNotExist:
+            return Response(
+                {"error": "Hébergement non trouvé"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        reservations = Reservation.objects.filter(hotel_reserve=hebergement)
+        serializer = ReservationWithClientAndChambreSerializer(reservations, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class HebergementReservationsListView(generics.ListAPIView):
@@ -31,6 +52,22 @@ class HebergementReservationsListView(generics.ListAPIView):
     def get_queryset(self):
         hebergement_id = self.kwargs["hebergement_id"]
         return Reservation.objects.filter(hotel_reserve_id=hebergement_id)
+
+
+class ReservationsByHebergementView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, hebergement_id):
+        try:
+            hebergement = Hebergement.objects.get(id=hebergement_id)
+        except Hebergement.DoesNotExist:
+            return Response(
+                {"error": "Hébergement non trouvé"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        reservations = Reservation.objects.filter(hotel_reserve=hebergement)
+        serializer = ReservationSerializer(reservations, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
@@ -493,7 +530,6 @@ class AddHebergementImageView(APIView):
                 image_instance = HebergementImage(
                     hebergement=hebergement,
                     image=image,
-                    # Ajoutez d'autres champs comme couverture ou légende si nécessaire
                 )
                 image_instance.save()
                 image_list.append(image_instance)
@@ -704,3 +740,34 @@ class ChambreListView(generics.ListAPIView):
     queryset = Chambre.objects.all()
     serializer_class = ChambreSerializer
     permission_classes = [AllowAny]
+
+
+class MinHebergementDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, hebergement_id, *args, **kwargs):
+        hebergement = get_object_or_404(Hebergement, id=hebergement_id)
+        serializer = MinHebergementSerializer(hebergement)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, hebergement_id, *args, **kwargs):
+        hebergement = get_object_or_404(Hebergement, id=hebergement_id)
+        serializer = MinHebergementSerializer(hebergement, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, hebergement_id, *args, **kwargs):
+        hebergement = get_object_or_404(Hebergement, id=hebergement_id)
+        serializer = MinHebergementSerializer(
+            hebergement, data=request.data, partial=True
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

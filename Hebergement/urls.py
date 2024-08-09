@@ -3,11 +3,28 @@ from Hebergement import views
 
 
 urlpatterns = [
+    # Admin Accomodations
     path(
         "add-hebergement-image/",
         views.AddHebergementImageView.as_view(),
         name="add-hebergement-image",
     ),
+    path(
+        "reservations/<int:hebergement_id>/",
+        views.ReservationsByHebergementView.as_view(),
+        name="reservations-by-hebergement",
+    ),
+    path(
+        "clients-et-chambres/<int:hebergement_id>/",
+        views.ClientsAndChambresByHebergementView.as_view(),
+        name="clients-and-chambres-by-hebergement",
+    ),
+    path(
+        "info/<int:hebergement_id>/",
+        views.MinHebergementDetailView.as_view(),
+        name="hebergement-detail",
+    ),
+    #########################""
     path(
         "type-hebergement/",
         views.TypeHebergementListView.as_view(),
