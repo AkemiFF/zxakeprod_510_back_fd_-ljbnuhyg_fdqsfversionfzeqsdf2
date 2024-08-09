@@ -4,6 +4,11 @@ from Hebergement import views
 
 urlpatterns = [
     path(
+        "add-hebergement-image/",
+        views.AddHebergementImageView.as_view(),
+        name="add-hebergement-image",
+    ),
+    path(
         "type-hebergement/",
         views.TypeHebergementListView.as_view(),
         name="type-hebergement-list",
@@ -35,7 +40,9 @@ urlpatterns = [
         views.get_chambre_details,
         name="chambre-id",
     ),
-    path("create-hebergement/", views.create_hebergement, name="hebergement-create"),
+    path(
+        "create-hebergement/", views.create_new_hebergement, name="hebergement-create"
+    ),
     path(
         "update-hebergement/<int:hebergement_id>/",
         views.update_hebergement,

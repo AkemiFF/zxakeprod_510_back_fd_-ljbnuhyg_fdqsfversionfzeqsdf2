@@ -52,6 +52,37 @@ class LocalisationSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class SocialLinkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SocialLink
+        fields = ["icon", "label", "visible"]
+
+
+class NewHebergementSerializer(serializers.ModelSerializer):
+    # social_link = SocialLinkSerializer(many=True)
+    responsable_hebergement = serializers.PrimaryKeyRelatedField(
+        queryset=ResponsableEtablissement.objects.all()
+    )
+    type_hebergement = serializers.PrimaryKeyRelatedField(
+        queryset=TypeHebergement.objects.all()
+    )
+
+    class Meta:
+        model = Hebergement
+        fields = [
+            "id",
+            "nom_hebergement",
+            "description_hebergement",
+            "nombre_etoile_hebergement",
+            "responsable_hebergement",
+            "type_hebergement",
+            "nif",
+            "stat",
+            "autorisation",
+            # "social_link",
+        ]
+
+
 class HebergementSerializer(serializers.ModelSerializer):
     min_prix_nuit_chambre = serializers.SerializerMethodField()
     images = serializers.SerializerMethodField()

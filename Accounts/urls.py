@@ -19,6 +19,11 @@ urlpatterns = [
         name="type_responsable_create",
     ),
     path(
+        "responsables/create/",
+        views.ResponsableEtablissementCreateView.as_view(),
+        name="responsable-create",
+    ),
+    path(
         "type-responsable/update/<int:pk>/",
         views.type_responsable_update,
         name="type_responsable_update",

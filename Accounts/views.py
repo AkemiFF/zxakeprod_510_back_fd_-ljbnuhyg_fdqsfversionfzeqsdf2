@@ -52,6 +52,17 @@ def custom_404_view(request, exception=None):
     return render(request, "404.html")
 
 
+class ResponsableEtablissementCreateView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = AddResponsableEtablissementSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(["GET"])
 @permission_classes([IsClientUser])
 def type_responsable_detail(request, pk):
@@ -531,7 +542,6 @@ def verify_code(request):
             data = json.loads(request.body.decode("utf-8"))
             email = data["email"]
             code = data["code"]
-
 
             if not email or not code:
                 return JsonResponse(
