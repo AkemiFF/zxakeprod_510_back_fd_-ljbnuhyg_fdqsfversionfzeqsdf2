@@ -138,6 +138,12 @@ class SpecificationSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class ArtisanatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Artisanat
+        fields = "__all__"
+
+
 class AvisClientProduitArtisanalSerializer(serializers.ModelSerializer):
     utilisateur = serializers.StringRelatedField()
 

@@ -24,6 +24,12 @@ from rest_framework.decorators import (
     authentication_classes,
     permission_classes,
 )
+from Hebergement.models import Hebergement
+from Artisanal.models import Artisanat
+from Hebergement.serializers import MinHebergementSerializer
+from TourOperateur.models import TourOperateur
+from TourOperateur.serializers import TourOperateurSerializer
+from Artisanal.serializers import ArtisanatSerializer
 from django.contrib.auth.models import User
 from rest_framework.decorators import api_view
 from .models import Client, VerificationCode, ResponsableEtablissement
@@ -46,6 +52,97 @@ from .permissions import IsClientUser
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
+from django.contrib.auth import authenticate
+
+
+class ResponsableLoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email")
+        password = request.data.get("password")
+
+        if not email or not password:
+            return Response(
+                {"error": "Email et mot de passe sont requis"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            user = ResponsableEtablissement.objects.get(email=email)
+        except ResponsableEtablissement.DoesNotExist:
+            return Response(
+                {"error": "Identifiants invalides ou utilisateur non autorisé"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if not user.check_password(password):
+            return Response(
+                {"error": "Identifiants invalides ou utilisateur non autorisé"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        info_user = ResponsableEtablissementSerializer(user).data
+
+        refresh = RefreshToken.for_user(user)
+        access = refresh.access_token
+        type_etablissement = info_user["type_responsable"]
+        if type_etablissement == 1:
+            hebergements = Hebergement.objects.get(responsable_hebergement=user)
+            etablissement_info = MinHebergementSerializer(hebergements)
+        elif type_etablissement == 2:
+            artisanat = Artisanat.objects.get(responsable_hebergement=user)
+            etablissement_info = ArtisanatSerializer(artisanat)
+        elif type_etablissement == 3:
+            tour = TourOperateur.objects.get(responsable_hebergement=user)
+            etablissement_info = TourOperateurSerializer(tour)
+        else:
+            return Response(
+                {"error": "Vouns n'avez aucun établissement en votre nom"},
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
+        return Response(
+            {
+                "refresh": str(refresh),
+                "access": str(access),
+                "user": info_user,
+                "type_etablissement": type_etablissement,
+                "etablissement_info": etablissement_info.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class ResponsableEtablissementDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, responsable_id):
+        try:
+            responsable = ResponsableEtablissement.objects.get(id=responsable_id)
+        except ResponsableEtablissement.DoesNotExist:
+            return Response(
+                {"error": "Responsable non trouvé"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = ResponsableEtablissementSerializer(responsable)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request, responsable_id):
+        try:
+            responsable = ResponsableEtablissement.objects.get(id=responsable_id)
+        except ResponsableEtablissement.DoesNotExist:
+            return Response(
+                {"error": "Responsable non trouvé"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = ResponsableEtablissementSerializer(
+            responsable, data=request.data, partial=True
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 def custom_404_view(request, exception=None):
