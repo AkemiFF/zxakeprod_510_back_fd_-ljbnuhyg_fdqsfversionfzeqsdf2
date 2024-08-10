@@ -27,6 +27,53 @@ from Accounts.serializers import ResponsableEtablissementSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Hebergement, Reservation, Chambre
+
+from django.db.models import Sum
+
+
+class HebergementStatsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, hebergement_id):
+        try:
+            # Vérifie si l'hébergement existe
+            hebergement = Hebergement.objects.get(pk=hebergement_id)
+
+            # Compte le nombre de réservations pour cet hébergement
+            reservation_count = Reservation.objects.filter(
+                hebergement=hebergement
+            ).count()
+
+            # Compte le nombre de chambres disponibles pour cet hébergement
+            available_chambres_count = HebergementChambre.objects.filter(
+                hebergement=hebergement, status=1
+            ).count()
+
+            # Calcule le nombre total d'invités pour cet hébergement
+            total_guests = (
+                Reservation.objects.filter(hebergement=hebergement).aggregate(
+                    total_guests=Sum("nombre_personnes_reserve")
+                )["total_guests"]
+                or 0
+            )
+
+            return Response(
+                {
+                    "booking_count": reservation_count,
+                    "available_room_count": available_chambres_count,
+                    "total_guests": total_guests,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Hebergement.DoesNotExist:
+            return Response(
+                {"error": "Hébergement non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class ClientsAndChambresByHebergementView(APIView):
@@ -40,7 +87,7 @@ class ClientsAndChambresByHebergementView(APIView):
                 {"error": "Hébergement non trouvé"}, status=status.HTTP_404_NOT_FOUND
             )
 
-        reservations = Reservation.objects.filter(hotel_reserve=hebergement)
+        reservations = Reservation.objects.filter(hebergement=hebergement)
         serializer = ReservationWithClientAndChambreSerializer(reservations, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -51,7 +98,7 @@ class HebergementReservationsListView(generics.ListAPIView):
 
     def get_queryset(self):
         hebergement_id = self.kwargs["hebergement_id"]
-        return Reservation.objects.filter(hotel_reserve_id=hebergement_id)
+        return Reservation.objects.filter(hebergement_id=hebergement_id)
 
 
 class ReservationsByHebergementView(APIView):
@@ -65,7 +112,7 @@ class ReservationsByHebergementView(APIView):
                 {"error": "Hébergement non trouvé"}, status=status.HTTP_404_NOT_FOUND
             )
 
-        reservations = Reservation.objects.filter(hotel_reserve=hebergement)
+        reservations = Reservation.objects.filter(hebergement=hebergement)
         serializer = ReservationSerializer(reservations, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

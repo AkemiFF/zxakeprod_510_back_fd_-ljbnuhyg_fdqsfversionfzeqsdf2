@@ -189,7 +189,7 @@ class ImageChambre(models.Model):
 
 
 class Reservation(models.Model):
-    hotel_reserve = models.ForeignKey(
+    hebergement = models.ForeignKey(
         Hebergement, on_delete=models.CASCADE, related_name="reservations_hotel"
     )
     chambre_reserve = models.ForeignKey(
@@ -210,7 +210,7 @@ class Reservation(models.Model):
 
     def __str__(self) -> str:
         return (
-            f"{self.client_reserve} + {self.hotel_reserve} + {self.est_validee_reserve}"
+            f"{self.client_reserve} + {self.hebergement} + {self.est_validee_reserve}"
         )
 
 
