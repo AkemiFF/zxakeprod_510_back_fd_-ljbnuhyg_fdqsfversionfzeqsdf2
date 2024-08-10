@@ -31,8 +31,120 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Hebergement, Reservation, Chambre
-
+from django.db.models import Count
+from django.db.models.functions import TruncMonth
 from django.db.models import Sum
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Reservation, Hebergement
+
+
+class RecentReservationsForHebergementView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, hebergement_id):
+        try:
+            hebergement = Hebergement.objects.get(pk=hebergement_id)
+
+            recent_reservations = Reservation.objects.filter(
+                hebergement=hebergement
+            ).order_by("-date_debut_reserve")[:6]
+
+            from .serializers import ReservationSerializer
+
+            serializer = ReservationSerializer(recent_reservations, many=True)
+
+            return Response(
+                {"recent_reservations": serializer.data}, status=status.HTTP_200_OK
+            )
+
+        except Hebergement.DoesNotExist:
+            return Response(
+                {"error": "Hébergement non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
+from django.db.models.functions import ExtractWeekDay
+from django.db.models import Count
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Reservation, Hebergement
+
+
+class ReservationsByDayOfWeekView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, hebergement_id):
+        try:
+            hebergement = Hebergement.objects.get(pk=hebergement_id)
+
+            reservations = Reservation.objects.filter(hebergement=hebergement)
+
+            # Annonce les jours de la semaine
+            days_of_week = [
+                "Lundi",
+                "Mardi",
+                "Mercredi",
+                "Jeudi",
+                "Vendredi",
+                "Samedi",
+                "Dimanche",
+            ]
+
+            reservations_by_day = (
+                reservations.annotate(day_of_week=ExtractWeekDay("date_debut_reserve"))
+                .values("day_of_week")
+                .annotate(total_reservations=Count("id"))
+                .order_by("day_of_week")
+            )
+
+            reservations_count_by_day = {day: 0 for day in days_of_week}
+
+            for item in reservations_by_day:
+                day_index = item["day_of_week"] - 1
+                reservations_count_by_day[days_of_week[day_index]] = item[
+                    "total_reservations"
+                ]
+
+            return Response(
+                {"reservations_by_day": reservations_count_by_day},
+                status=status.HTTP_200_OK,
+            )
+
+        except Hebergement.DoesNotExist:
+            return Response(
+                {"error": "Hébergement non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class ReservationCountByMonthView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, hebergement_id):
+        try:
+            # Vérifie si l'hébergement existe
+            hebergement = Hebergement.objects.get(pk=hebergement_id)
+
+            # Filtre les réservations pour l'hébergement spécifié
+            reservations_by_month = (
+                Reservation.objects.filter(hebergement=hebergement)
+                .annotate(month=TruncMonth("date_debut_reserve"))
+                .values("month")
+                .annotate(total_reservations=Count("id"))
+                .order_by("month")
+            )
+
+            return Response(
+                {"reservations_by_month": list(reservations_by_month)},
+                status=status.HTTP_200_OK,
+            )
+        except Hebergement.DoesNotExist:
+            return Response(
+                {"error": "Hébergement non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class HebergementStatsView(APIView):

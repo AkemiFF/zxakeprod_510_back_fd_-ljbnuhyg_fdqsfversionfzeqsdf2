@@ -8,7 +8,21 @@ urlpatterns = [
         views.HebergementStatsView.as_view(),
         name="hebergement-stats",
     ),
-    # Admin Accomodations
+    path(
+        "<int:hebergement_id>/reservations/mois/",
+        views.ReservationCountByMonthView.as_view(),
+        name="reservation-stats",
+    ),
+    path(
+        "reservations-by-day/<int:hebergement_id>/",
+        views.ReservationsByDayOfWeekView.as_view(),
+        name="reservations_by_day_of_week",
+    ),
+    path(
+        "<int:hebergement_id>/recent-reservations/",
+        views.RecentReservationsForHebergementView.as_view(),
+        name="recent_reservations_for_hebergement",
+    ),
     path(
         "add-hebergement-image/",
         views.AddHebergementImageView.as_view(),
