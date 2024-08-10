@@ -14,6 +14,11 @@ urlpatterns = [
         name="reservation-stats",
     ),
     path(
+        "client-reservations/<int:client_id>/hebergement/<int:hebergement_id>/",
+        views.ClientReservationsView.as_view(),
+        name="client_reservations",
+    ),
+    path(
         "reservations-by-day/<int:hebergement_id>/",
         views.ReservationsByDayOfWeekView.as_view(),
         name="reservations_by_day_of_week",

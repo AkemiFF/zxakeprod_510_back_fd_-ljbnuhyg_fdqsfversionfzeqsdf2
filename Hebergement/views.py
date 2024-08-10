@@ -74,6 +74,75 @@ from rest_framework import status
 from .models import Reservation, Hebergement
 
 
+class ClientReservationsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, client_id, hebergement_id):
+        try:
+            # Vérifie si le client et l'hébergement existent
+            client = Client.objects.get(pk=client_id)
+            hebergement = Hebergement.objects.get(pk=hebergement_id)
+
+            # Récupère les réservations pour le client et l'hébergement spécifiés
+            reservations = Reservation.objects.filter(
+                client_reserve=client, hebergement=hebergement
+            )
+
+            # Prépare les données de réponse
+            reservations_data = []
+            for reservation in reservations:
+                # Calcul du nombre de nuits
+                start_date = reservation.date_debut_reserve
+                end_date = reservation.date_fin_reserve
+                if start_date and end_date:
+                    duration = (end_date - start_date).days
+                else:
+                    duration = 0
+
+                # Récupère les informations de la chambre si elle existe
+                chambre_data = None
+                if reservation.chambre_reserve:
+                    chambre = reservation.chambre_reserve
+                    chambre_data = {
+                        "id": chambre.id,
+                        "nom": chambre.nom_chambre,
+                        "prix_par_nuit": chambre.prix_nuit_chambre,
+                    }
+
+                # Prépare les informations de la réservation
+                reservations_data.append(
+                    {
+                        "id": reservation.id,
+                        "hebergement": reservation.hebergement.id,
+                        "chambre": chambre_data,
+                        "date_debut_reserve": reservation.date_debut_reserve,
+                        "date_fin_reserve": reservation.date_fin_reserve,
+                        "nombre_de_nuits": duration,
+                        "prix_total_reserve": reservation.prix_total_reserve,
+                        "nombre_personnes_reserve": reservation.nombre_personnes_reserve,
+                        "client": {
+                            "id": client.id,
+                            "nom": client.username,
+                            "email": client.email,
+                            # Ajoutez d'autres champs du client que vous souhaitez inclure
+                        },
+                    }
+                )
+
+            return Response(
+                {"reservations": reservations_data}, status=status.HTTP_200_OK
+            )
+
+        except Client.DoesNotExist:
+            return Response(
+                {"error": "Client non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Hebergement.DoesNotExist:
+            return Response(
+                {"error": "Hébergement non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
 class ReservationsByDayOfWeekView(APIView):
     permission_classes = [AllowAny]
 
