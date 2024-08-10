@@ -111,14 +111,34 @@ urlpatterns = [
         views.send_verification_code,
         name="send_verification_code",
     ),
+    path(
+        "send-responsable-code/",
+        views.responsable_verification_code,
+        name="responsable_verification_code",
+    ),
     path("send-recovery-code/", views.send_recovery_code, name="send_recovery_code"),
     path("verify-code/", views.verify_code, name="verify_code"),
+    path(
+        "responsable-verify-code/",
+        views.responsable_verify_code,
+        name="responsable_verify_code",
+    ),
+    path(
+        "responsable-check-email/",
+        views.CheckEmailResponsableView.as_view(),
+        name="responsable_check_email",
+    ),
     path("reset-password/", views.reset_password, name="reset_password"),
     path("welcome-mail/", views.welcome_mail, name="welcome_mail"),
     path("edit-client/", views.EditClientView.as_view(), name="edit-client"),
     path(
         "responsable/login/",
         views.ResponsableLoginView.as_view(),
+        name="responsable_login",
+    ),
+    path(
+        "test/",
+        views.SomeProtectedView.as_view(),
         name="responsable_login",
     ),
 ]

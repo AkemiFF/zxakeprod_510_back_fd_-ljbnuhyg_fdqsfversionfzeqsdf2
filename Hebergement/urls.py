@@ -3,6 +3,11 @@ from Hebergement import views
 
 
 urlpatterns = [
+    path(
+        "<int:hebergement_id>/stats/",
+        views.HebergementStatsView.as_view(),
+        name="hebergement-stats",
+    ),
     # Admin Accomodations
     path(
         "add-hebergement-image/",

@@ -48,11 +48,59 @@ from Accounts.models import (
     Client,
 )
 from rest_framework.permissions import *
-from .permissions import IsClientUser
+from .permissions import IsClientUser, IsResponsableEtablissement
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from django.contrib.auth import authenticate
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+
+
+class CheckEmailResponsableView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email")
+
+        if not email:
+            return Response(
+                {"error": "Email est requis"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if ResponsableEtablissement.objects.filter(email=email).exists():
+            return Response(
+                {
+                    "exists": True,
+                    "message": "Cet email est déjà utilisé par un autre responsable.",
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        try:
+            validate_email(email)
+        except ValidationError:
+            return Response(
+                {"valid": False, "message": "Format d'email invalide."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {"exists": False, "message": "Cet email n'est pas encore utilisé."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class SomeProtectedView(APIView):
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        user = request.user
+        print(request.user)
+        if isinstance(user, ResponsableEtablissement):
+            return Response({"message": f"Bienvenue, {user.username}!"})
+        return Response({"error": "Unauthorized"}, status=401)
 
 
 class ResponsableLoginView(APIView):
@@ -85,6 +133,7 @@ class ResponsableLoginView(APIView):
 
         refresh = RefreshToken.for_user(user)
         access = refresh.access_token
+
         type_etablissement = info_user["type_responsable"]
         if type_etablissement == 1:
             hebergements = Hebergement.objects.get(responsable_hebergement=user)
@@ -562,6 +611,43 @@ def send_verification_code(request):
 
 
 @csrf_exempt
+def responsable_verification_code(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+            email = data["email"]
+
+            verification_code = get_random_string(length=6, allowed_chars="1234567890")
+
+            VerificationCode.objects.create(user_email=email, code=verification_code)
+
+            context = {
+                "verification_code": verification_code,
+                "user_name": email,
+                "link_token": "aftrip.com",
+                "type_action": "signup to aftrip",
+            }
+
+            html_message = render_to_string("email/verification.html", context=context)
+
+            send_mail(
+                "Your Verification Code",
+                "",
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+                html_message=html_message,
+            )
+
+            return JsonResponse(
+                {"message": "Verification code sent successfully"}, status=200
+            )
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
+
+@csrf_exempt
 def welcome_mail(request):
     if request.method == "POST":
         try:
@@ -634,6 +720,36 @@ def send_recovery_code(request):
 
 @csrf_exempt
 def verify_code(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+            email = data["email"]
+            code = data["code"]
+
+            if not email or not code:
+                return JsonResponse(
+                    {"error": "Email and code are required"}, status=400
+                )
+
+            verification_code = VerificationCode.objects.filter(
+                user_email=email, code=code
+            ).first()
+
+            if verification_code and not verification_code.IsUsed():
+                verification_code.used = True
+                verification_code.save()
+                return JsonResponse({"message": "Verification successful"}, status=200)
+            else:
+                return JsonResponse(
+                    {"error": "Invalid or expired verification code"}, status=400
+                )
+        except User.DoesNotExist:
+            return JsonResponse({"error": "User not found"}, status=404)
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
+
+@csrf_exempt
+def responsable_verify_code(request):
     if request.method == "POST":
         try:
             data = json.loads(request.body.decode("utf-8"))

@@ -45,4 +45,5 @@ class IsResponsableEtablissement(BasePermission):
     """
 
     def has_permission(self, request, view):
+        print(request.user)
         return request.user and isinstance(request.user, ResponsableEtablissement)
