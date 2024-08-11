@@ -344,10 +344,39 @@ class ShortVoyageSerializer(serializers.ModelSerializer):
         ]
 
 
+class ShortTrajetVoyageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TrajetVoyage
+        fields = [
+            "numero_trajet",
+            "voyage",
+            "nom_ville",
+            "date_trajet",
+            "description_trajet",
+        ]
+
+    def create(self, validated_data):
+        voyage = validated_data.get("voyage")
+
+        dernier_trajet = (
+            TrajetVoyage.objects.filter(voyage=voyage)
+            .order_by("-numero_trajet")
+            .first()
+        )
+
+        if dernier_trajet:
+            numero_trajet = dernier_trajet.numero_trajet + 1
+        else:
+            numero_trajet = 1
+
+        validated_data["numero_trajet"] = numero_trajet
+
+        trajet_voyage = TrajetVoyage.objects.create(**validated_data)
+
+        return trajet_voyage
+
+
 class CreateVoyageSerializer(serializers.ModelSerializer):
-    inclusions = serializers.PrimaryKeyRelatedField(
-        queryset=InclusionVoyage.objects.all(), many=True, required=False
-    )
     images = serializers.PrimaryKeyRelatedField(
         queryset=ImageVoyage.objects.all(), many=True, required=False
     )
@@ -377,14 +406,13 @@ class CreateVoyageSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         inclusions_ids = validated_data.pop("inclusions", [])
         images_ids = validated_data.pop("images", [])
-        print(inclusions_ids)
 
         voyage = Voyage.objects.create(**validated_data)
 
         # Associer les inclusions
         if inclusions_ids:
             for inclusion_id in inclusions_ids:
-                inclusion = TypeInclusion.objects.get(nom_inclusion=inclusion_id)
+                inclusion = TypeInclusion.objects.get(pk=inclusion_id.id)
                 voyage.inclusions.add(inclusion)
 
         # Associer les images

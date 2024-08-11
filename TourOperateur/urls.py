@@ -44,4 +44,12 @@ urlpatterns = [
         views.TourOperateurViewSet.as_view({"get": "voyages"}),
         name="tour-operateur-voyages",
     ),
+    path(
+        "voyages/<int:voyage_id>/create-trajet/",
+        views.create_trajet_voyage,
+        name="create-trajet-voyage",
+    ),
+    path(
+        "inclusions/", views.TypeInclusionListView.as_view(), name="type-inclusion-list"
+    ),
 ]

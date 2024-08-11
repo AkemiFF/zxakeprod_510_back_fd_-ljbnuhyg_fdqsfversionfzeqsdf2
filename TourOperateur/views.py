@@ -150,3 +150,36 @@ def update_voyage(request, pk):
         return Response(
             {"detail": "Voyage not found."}, status=status.HTTP_404_NOT_FOUND
         )
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def create_trajet_voyage(request, voyage_id):
+    try:
+        # Vérifie que le voyage existe
+        voyage = Voyage.objects.get(pk=voyage_id)
+
+        # Crée une copie des données de la requête
+        data = request.data.copy()
+
+        # Ajoute l'ID du voyage aux données
+        data["voyage"] = voyage.id
+
+        # Sérialise et valide les données
+        serializer = ShortTrajetVoyageSerializer(data=data)
+
+        if serializer.is_valid():
+            # Sauvegarde si les données sont valides
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Voyage.DoesNotExist:
+        return Response(
+            {"detail": "Voyage not found."}, status=status.HTTP_404_NOT_FOUND
+        )
+
+
+class TypeInclusionListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    queryset = TypeInclusion.objects.all()
+    serializer_class = TypeInclusionSerializer
