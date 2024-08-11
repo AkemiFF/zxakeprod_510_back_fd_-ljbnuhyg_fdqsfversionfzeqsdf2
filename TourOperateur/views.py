@@ -12,6 +12,20 @@ from .models import Voyage
 from .serializers import VoyageSerializer
 
 
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def list_voyages(request, pk):
+    try:
+        tour_operateur = TourOperateur.objects.get(pk=pk)
+        voyages = Voyage.objects.filter(tour_operateur=tour_operateur)
+        serializer = ListVoyageSerializer(voyages, many=True)
+        return Response(serializer.data)
+    except TourOperateur.DoesNotExist:
+        return Response(
+            {"detail": "Tour Operateur not found."}, status=status.HTTP_404_NOT_FOUND
+        )
+
+
 class TourOperateurViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["get"])
     def voyages(self, request, pk=None):
@@ -79,3 +93,19 @@ def get_popular_tour_operateurs(request):
 
     serializer = TourOperateurSerializer(tour_operateurs, many=True)
     return Response(serializer.data)
+
+
+@api_view(["PATCH"])
+@permission_classes([AllowAny])
+def update_voyage(request, pk):
+    try:
+        voyage = Voyage.objects.get(pk=pk)
+        serializer = ListVoyageSerializer(voyage, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Voyage.DoesNotExist:
+        return Response(
+            {"detail": "Voyage not found."}, status=status.HTTP_404_NOT_FOUND
+        )
