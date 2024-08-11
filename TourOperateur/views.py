@@ -11,6 +11,11 @@ from .serializers import *
 from .models import Voyage
 from .serializers import VoyageSerializer
 
+from django.db.models import Sum
+from rest_framework.views import APIView
+from django.db.models import Count, Func
+from django.utils import timezone
+
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -150,3 +155,136 @@ def update_voyage(request, pk):
         return Response(
             {"detail": "Voyage not found."}, status=status.HTTP_404_NOT_FOUND
         )
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def create_trajet_voyage(request, voyage_id):
+    try:
+        # Vérifie que le voyage existe
+        voyage = Voyage.objects.get(pk=voyage_id)
+
+        # Crée une copie des données de la requête
+        data = request.data.copy()
+
+        # Ajoute l'ID du voyage aux données
+        data["voyage"] = voyage.id
+
+        # Sérialise et valide les données
+        serializer = ShortTrajetVoyageSerializer(data=data)
+
+        if serializer.is_valid():
+            # Sauvegarde si les données sont valides
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Voyage.DoesNotExist:
+        return Response(
+            {"detail": "Voyage not found."}, status=status.HTTP_404_NOT_FOUND
+        )
+
+
+class TypeInclusionListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    queryset = TypeInclusion.objects.all()
+    serializer_class = TypeInclusionSerializer
+
+
+class TourOperateurStatsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, tour_operateur_id):
+        try:
+            tour_operateur = TourOperateur.objects.get(pk=tour_operateur_id)
+
+            voyage_count = Voyage.objects.filter(tour_operateur=tour_operateur).count()
+
+            reservation_count = ReservationVoyage.objects.filter(
+                voyage__tour_operateur=tour_operateur
+            ).count()
+
+            total_guests = (
+                ReservationVoyage.objects.filter(
+                    voyage__tour_operateur=tour_operateur
+                ).aggregate(total_guests=Sum("nombre_voyageurs"))["total_guests"]
+                or 0
+            )
+
+            return Response(
+                {
+                    "voyage_count": voyage_count,
+                    "booking_count": reservation_count,
+                    "total_guests": total_guests,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except TourOperateur.DoesNotExist:
+            return Response(
+                {"error": "Tour opérateur non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+
+from django.db.models.functions import ExtractMonth
+
+
+class MonthlyReservationStatsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, tour_operateur_id):
+        try:
+            tour_operateur = TourOperateur.objects.get(pk=tour_operateur_id)
+
+            year = request.query_params.get("year", timezone.now().year)
+
+            reservations = ReservationVoyage.objects.filter(
+                voyage__tour_operateur=tour_operateur,
+                date_reservation_voyage__year=year,
+            )
+
+            monthly_reservations = (
+                reservations.annotate(month=ExtractMonth("date_reservation_voyage"))
+                .values("month")
+                .annotate(total_reservations=Count("id"))
+                .order_by("month")
+            )
+
+            monthly_stats = {month: 0 for month in range(1, 13)}
+
+            for entry in monthly_reservations:
+                month = entry["month"]
+                total_reservations = entry["total_reservations"]
+                monthly_stats[month] = total_reservations
+
+            return Response(
+                {"year": year, "monthly_reservations": monthly_stats},
+                status=status.HTTP_200_OK,
+            )
+
+        except TourOperateur.DoesNotExist:
+            return Response(
+                {"error": "Tour opérateur non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_recent_reservations_for_tour_operateur(request, tour_operateur_id):
+    try:
+        tour_operateur = TourOperateur.objects.get(pk=tour_operateur_id)
+
+        recent_reservations = ReservationVoyage.objects.filter(
+            voyage__tour_operateur=tour_operateur
+        ).order_by("-date_reservation_voyage")[:6]
+
+        serializer = ReservationVoyageSerializer(recent_reservations, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except TourOperateur.DoesNotExist:
+        return Response(
+            {"error": "Tour opérateur non trouvé."}, status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
