@@ -17,6 +17,29 @@ from django.db.models import Count, Func
 from django.utils import timezone
 
 
+class TourOperateurCreateView(generics.CreateAPIView):
+    queryset = TourOperateur.objects.all()
+    serializer_class = CreateTourOperateurSerializer
+    permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def create_localisation_tour(request):
+    if request.method == "POST":
+        serializer = LocalisationTourSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def add_images_to_voyage(request, voyage_id):

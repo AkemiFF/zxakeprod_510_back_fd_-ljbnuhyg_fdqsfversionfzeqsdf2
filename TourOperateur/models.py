@@ -23,6 +23,8 @@ class TourOperateur(models.Model):
     email_operateur = models.EmailField(unique=True, null=True, blank=True)
     telephone_operateur = models.CharField(max_length=10, null=True, blank=True)
     description_operateur = models.TextField(blank=True, null=True)
+    stat = models.CharField(max_length=255, null=True, blank=True)
+    nif = models.CharField(max_length=255, null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
