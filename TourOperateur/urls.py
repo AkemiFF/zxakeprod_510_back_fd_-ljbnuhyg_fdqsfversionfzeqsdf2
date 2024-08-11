@@ -52,4 +52,19 @@ urlpatterns = [
     path(
         "inclusions/", views.TypeInclusionListView.as_view(), name="type-inclusion-list"
     ),
+    path(
+        "<int:tour_operateur_id>/stats/",
+        views.TourOperateurStatsView.as_view(),
+        name="tour-operateur-stats",
+    ),
+    path(
+        "<int:tour_operateur_id>/monthly-reservations/",
+        views.MonthlyReservationStatsView.as_view(),
+        name="monthly-reservations",
+    ),
+    path(
+        "<int:tour_operateur_id>/recent-reservations/",
+        views.get_recent_reservations_for_tour_operateur,
+        name="recent-reservations",
+    ),
 ]
