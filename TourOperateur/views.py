@@ -1,8 +1,9 @@
 # views.py
 
-from rest_framework import generics
+
+from rest_framework import generics, viewsets
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
 from .models import *
 from rest_framework.permissions import *
@@ -11,10 +12,24 @@ from .models import Voyage
 from .serializers import VoyageSerializer
 
 
+class TourOperateurViewSet(viewsets.ViewSet):
+    @action(detail=True, methods=["get"])
+    def voyages(self, request, pk=None):
+        try:
+            tour_operateur = TourOperateur.objects.get(pk=pk)
+        except TourOperateur.DoesNotExist:
+            return Response({"error": "Tour opérateur non trouvé"}, status=404)
+
+        voyages = Voyage.objects.filter(tour_operateur=tour_operateur)
+        serializer = ShortVoyageSerializer(voyages, many=True)
+        return Response(serializer.data)
+
+
 class TourOperateurListCreateView(generics.ListCreateAPIView):
     queryset = TourOperateur.objects.all()
     serializer_class = TourOperateurSerializer
     permission_classes = [AllowAny]
+
 
 class TourOperateurDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = TourOperateur.objects.all()
@@ -26,14 +41,12 @@ class VoyageDetailView(generics.RetrieveAPIView):
     queryset = Voyage.objects.all()
     serializer_class = VoyageSerializer
     permission_classes = [AllowAny]
-    
+
 
 class VoyageListView(generics.ListAPIView):
     queryset = Voyage.objects.all()
     serializer_class = VoyageListSerializer
     permission_classes = [AllowAny]
-
-
 
 
 @api_view(["GET"])

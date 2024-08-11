@@ -8,6 +8,20 @@ class ClientSerializer(serializers.ModelSerializer):
         fields = ["id", "username", "numero_client", "adresse"]
 
 
+class DetailClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        fields = [
+            "id",
+            "adresse",
+            "profilPic",
+            "username",
+            "email",
+            "numero_client",
+            "adresse",
+        ]
+
+
 class AvisTourOperateurSerializer(serializers.ModelSerializer):
     client = ClientSerializer(read_only=True)
 
@@ -26,6 +40,14 @@ class ImageVoyageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImageVoyage
         fields = ["image", "couverture"]
+
+
+class NewReservationVoyageSerializer(serializers.ModelSerializer):
+    client = DetailClientSerializer()
+
+    class Meta:
+        model = ReservationVoyage
+        fields = ["client", "nombre_voyageurs"]
 
 
 class VoyageSerializer(serializers.ModelSerializer):
@@ -303,3 +325,17 @@ class ClientListSerializer(serializers.ModelSerializer):
     def get_list_client(self, obj):
         list_client = Client.objects.filter(voyage=obj)
         return ReservationVoyageSerializer(list_client, many=True).data
+
+
+class ShortVoyageSerializer(serializers.ModelSerializer):
+    reservations = NewReservationVoyageSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Voyage
+        fields = [
+            "id",
+            "nom_voyage",
+            "ville_depart",
+            "destination_voyage",
+            "reservations",
+        ]

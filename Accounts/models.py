@@ -21,6 +21,18 @@ class TypeResponsable(models.Model):
         return self.type_name
 
 
+class TypeCarteBancaire(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    regex_pattern = models.CharField(
+        max_length=255,
+        help_text="Expression régulière pour la validation du numéro de carte bancaire",
+        default=r"^$",
+    )
+
+    def __str__(self):
+        return self.name
+
+
 class ResponsableEtablissement(AbstractUser):
     numero_responsable = models.CharField(max_length=30, null=True, blank=True)
     USERNAME_FIELD = "email"
@@ -62,18 +74,6 @@ class ResponsableEtablissement(AbstractUser):
     # def save(self, *args, **kwargs):
     #     self.password_responsable = make_password(self.password_responsable)
     #     super().save(*args, **kwargs)
-
-
-class TypeCarteBancaire(models.Model):
-    name = models.CharField(max_length=50, unique=True)
-    regex_pattern = models.CharField(
-        max_length=255,
-        help_text="Expression régulière pour la validation du numéro de carte bancaire",
-        default=r"^$",
-    )
-
-    def __str__(self):
-        return self.name
 
 
 class Client(AbstractUser):

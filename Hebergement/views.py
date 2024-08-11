@@ -79,16 +79,13 @@ class ClientReservationsView(APIView):
 
     def get(self, request, client_id, hebergement_id):
         try:
-            # Vérifie si le client et l'hébergement existent
             client = Client.objects.get(pk=client_id)
             hebergement = Hebergement.objects.get(pk=hebergement_id)
 
-            # Récupère les réservations pour le client et l'hébergement spécifiés
             reservations = Reservation.objects.filter(
                 client_reserve=client, hebergement=hebergement
             )
 
-            # Prépare les données de réponse
             reservations_data = []
             for reservation in reservations:
                 # Calcul du nombre de nuits
@@ -99,7 +96,6 @@ class ClientReservationsView(APIView):
                 else:
                     duration = 0
 
-                # Récupère les informations de la chambre si elle existe
                 chambre_data = None
                 if reservation.chambre_reserve:
                     chambre = reservation.chambre_reserve
@@ -109,7 +105,6 @@ class ClientReservationsView(APIView):
                         "prix_par_nuit": chambre.prix_nuit_chambre,
                     }
 
-                # Prépare les informations de la réservation
                 reservations_data.append(
                     {
                         "id": reservation.id,
@@ -124,7 +119,6 @@ class ClientReservationsView(APIView):
                             "id": client.id,
                             "nom": client.username,
                             "email": client.email,
-                            # Ajoutez d'autres champs du client que vous souhaitez inclure
                         },
                     }
                 )

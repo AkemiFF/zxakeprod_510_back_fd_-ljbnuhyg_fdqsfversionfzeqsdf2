@@ -238,14 +238,14 @@ class ReservationVoyage(models.Model):
     )
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
     date_reservation_voyage = models.DateTimeField(auto_now_add=True)
-
+    nombre_voyageurs = models.IntegerField(null=True, blank=True, default=1)
     STATUS_CHOICES = (
         ("confirmed", _("Confirmée")),
         ("pending", _("En attente")),
         ("cancelled", _("Annulée")),
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
-
+    
     def __str__(self):
         return f"{self.client} reserved {self.voyage}"
 
