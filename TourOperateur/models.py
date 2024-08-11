@@ -3,6 +3,17 @@ from Accounts.models import ResponsableEtablissement, Client
 from django.utils.translation import gettext_lazy as _
 
 
+class TypeInclusion(models.Model):
+    nom_inclusion = models.CharField(max_length=200, null=True, blank=True)
+
+    def __str__(self) -> str:
+        return self.nom_inclusion
+
+    class Meta:
+        verbose_name = "Type d'Inclusion"
+        verbose_name_plural = "Types d'Inclusion"
+
+
 class TourOperateur(models.Model):
     nom_operateur = models.CharField(max_length=100)
     responsable_TourOperateur = models.ForeignKey(
@@ -89,6 +100,23 @@ class ImageTour(models.Model):
         verbose_name_plural = "Images Tour"
 
 
+class InclusionVoyage(models.Model):
+    type_inclusion = models.ForeignKey(
+        TypeInclusion,
+        on_delete=models.CASCADE,
+        related_name="voyage_part",
+        null=True,
+        blank=True,
+    )
+
+    def __str__(self):
+        return f"{self.type_inclusion}"
+
+    class Meta:
+        verbose_name = "Inclusion Voyage"
+        verbose_name_plural = "Inclusions Voyage"
+
+
 class Voyage(models.Model):
     tour_operateur = models.ForeignKey(
         TourOperateur, on_delete=models.CASCADE, related_name="voyages"
@@ -107,6 +135,9 @@ class Voyage(models.Model):
     places_disponibles = models.PositiveIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    inclusions = models.ManyToManyField(
+        TypeInclusion, related_name="voyages", blank=True
+    )
 
     type_transport = models.ForeignKey(
         TypeTransport,
@@ -178,41 +209,6 @@ class VoyageLike(models.Model):
         return f"{self.client} likes {self.voyage}"
 
 
-class TypeInclusion(models.Model):
-    nom_inclusion = models.CharField(max_length=200, null=True, blank=True)
-
-    def __str__(self) -> str:
-        return self.nom_inclusion
-
-    class Meta:
-        verbose_name = "Type d'Inclusion"
-        verbose_name_plural = "Types d'Inclusion"
-
-
-class InclusionVoyage(models.Model):
-    voyage = models.ForeignKey(
-        Voyage,
-        on_delete=models.CASCADE,
-        related_name="voyage_part",
-        null=True,
-        blank=True,
-    )
-    type_inclusion = models.ForeignKey(
-        TypeInclusion,
-        on_delete=models.CASCADE,
-        related_name="voyage_part",
-        null=True,
-        blank=True,
-    )
-
-    def __str__(self):
-        return f"{self.voyage} {self.type_inclusion}"
-
-    class Meta:
-        verbose_name = "Inclusion Voyage"
-        verbose_name_plural = "Inclusions Voyage"
-
-
 class ImageVoyage(models.Model):
     image_voyage = models.ForeignKey(
         Voyage,
@@ -245,7 +241,7 @@ class ReservationVoyage(models.Model):
         ("cancelled", _("Annulée")),
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
-    
+
     def __str__(self):
         return f"{self.client} reserved {self.voyage}"
 
