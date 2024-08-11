@@ -12,6 +12,47 @@ from .models import Voyage
 from .serializers import VoyageSerializer
 
 
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def add_images_to_voyage(request, voyage_id):
+    try:
+        voyage = Voyage.objects.get(id=voyage_id)
+    except Voyage.DoesNotExist:
+        return Response({"error": "Voyage not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    images = request.FILES.getlist("images")
+
+    if not images:
+        return Response(
+            {"error": "No images provided"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    for image in images:
+        image_voyage = ImageVoyage.objects.create(image_voyage=voyage, image=image)
+        if (
+            ImageVoyage.objects.filter(image_voyage=voyage, couverture=True).count()
+            == 0
+        ):
+            image_voyage.couverture = True
+            image_voyage.save()
+
+    return Response(
+        {"success": "Images added successfully"}, status=status.HTTP_201_CREATED
+    )
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def create_voyage(request):
+    serializer = CreateVoyageSerializer(data=request.data)
+    if serializer.is_valid():
+        voyage = serializer.save()
+        return Response(
+            CreateVoyageSerializer(voyage).data, status=status.HTTP_201_CREATED
+        )
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def list_voyages(request, pk):
