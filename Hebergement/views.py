@@ -99,10 +99,22 @@ class ClientReservationsView(APIView):
                 chambre_data = None
                 if reservation.chambre_reserve:
                     chambre = reservation.chambre_reserve
+                    # Récupère les images associées à la chambre
+                    images = ImageChambre.objects.filter(hebergement_chambre=chambre)
+                    images_data = [
+                        {
+                            "url": image.images.url,
+                            "couverture": image.couverture,
+                            "legende": image.legende_chambre,
+                        }
+                        for image in images
+                    ]
+
                     chambre_data = {
                         "id": chambre.id,
                         "nom": chambre.nom_chambre,
                         "prix_par_nuit": chambre.prix_nuit_chambre,
+                        "images": images_data,
                     }
 
                 reservations_data.append(
