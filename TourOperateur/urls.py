@@ -12,6 +12,12 @@ urlpatterns = [
         views.list_voyages,
         name="list-voyages",
     ),
+    path(
+        "voyages/<int:voyage_id>/add-images/",
+        views.add_images_to_voyage,
+        name="add-images-to-voyage",
+    ),
+    path("voyages/create/", views.create_voyage, name="create-voyage"),
     # Route pour mettre à jour les informations d'un voyage spécifique
     path("voyages/<int:pk>/update-voyage/", views.update_voyage, name="update-voyage"),
     path("voyages/<int:pk>/", views.VoyageDetailView.as_view(), name="voyage-detail"),
