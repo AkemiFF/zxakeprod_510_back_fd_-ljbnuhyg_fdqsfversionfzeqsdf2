@@ -1,6 +1,18 @@
 from rest_framework import serializers
-from .models import *
-from Accounts.models import *
+from .models import (
+    LocalisationArtisanat,
+    ResponsableEtablissement,
+    Panier,
+    ItemPanier,
+    Artisanat,
+    ProduitArtisanal,
+    Commande,
+    Client,
+    Specification,
+    AvisClientProduitArtisanal,
+    ImageProduitArtisanal
+)
+from Accounts.models import Client as AccountClient
 from Hebergement.models import Localisation
 from django.contrib.auth import get_user_model
 
@@ -21,20 +33,27 @@ class LocalisationArtisanatSerializer(serializers.ModelSerializer):
 class ResponsableEtablissementSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResponsableEtablissement
-        fields = "__all__"  # Adjust fields as needed
+        fields = "__all__"
+
+
+class ItemPanierSerializer(serializers.ModelSerializer):
+    produit = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ItemPanier
+        fields = ["produit", "quantite"]
+
+    def get_produit(self, obj):
+        return ProduitArtisanalSerializer(obj.produit).data
 
 
 class PanierSerializer(serializers.ModelSerializer):
-    client = (
-        serializers.StringRelatedField()
-    )  # or use ClientSerializer if you need detailed info
-    produits = serializers.StringRelatedField(
-        many=True
-    )  # or use ProduitArtisanalSerializer if detailed info is needed
+    client = serializers.StringRelatedField()
+    produits = ItemPanierSerializer(source="itempanier_set", many=True)
 
     class Meta:
         model = Panier
-        fields = "__all__"
+        fields = ["client", "produits", "total"]
 
 
 class ArtisanatDetailSerializer(serializers.ModelSerializer):
@@ -44,7 +63,6 @@ class ArtisanatDetailSerializer(serializers.ModelSerializer):
         model = Artisanat
         fields = [
             "nom_artisanat",
-            # "description_artisanat",
             "responsable_artisanat",
             "localisation_artisanat",
         ]
@@ -56,13 +74,10 @@ class ShortImageProduitArtisanalSerializer(serializers.ModelSerializer):
         fields = ["image", "couverture"]
 
 
-from rest_framework import serializers
-
-
 class ProduitArtisanalSerializer(serializers.ModelSerializer):
     artisanat = ArtisanatDetailSerializer()
     images = serializers.SerializerMethodField()
-    total_likes = serializers.ReadOnlyField()  # Champ readonly pour le nombre de likes
+    total_likes = serializers.ReadOnlyField()
 
     class Meta:
         model = ProduitArtisanal
@@ -70,7 +85,7 @@ class ProduitArtisanalSerializer(serializers.ModelSerializer):
             "id",
             "artisanat",
             "images",
-            "total_likes",  # Inclure le champ total_likes
+            "total_likes",
             "nom_produit_artisanal",
             "description_artisanat",
             "prix_artisanat",
@@ -89,47 +104,47 @@ class ProduitArtisanalSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        # Ajoute le nombre de likes au dictionnaire de représentation
         representation["total_likes"] = instance.total_likes()
         return representation
 
 
-"""[
-    
- 
-        "artisanat",
-        "images",
-        "total_likes",
-        "nom_produit_artisanal",
-        "description_artisanat",
-        "prix_artisanat",
-        "disponible_artisanat",
-        "nb_produit_dispo",
-        "created_at",
-        "updated_at",
-        "specifications",
-        "likes",
-]"""
-
-
-class ItemPanierSerializer(serializers.ModelSerializer):
-    panier = PanierSerializer()
-    produit = ProduitArtisanalSerializer()
-
-    class Meta:
-        model = ItemPanier
-        fields = "__all__"
-
-
 class CommandeSerializer(serializers.ModelSerializer):
-    client = (
-        serializers.StringRelatedField()
-    )  # or use ClientSerializer if you need detailed info
+    client = serializers.StringRelatedField()
     panier = PanierSerializer()
 
     class Meta:
         model = Commande
         fields = "__all__"
+
+
+class ClientSerializer(serializers.ModelSerializer):
+    total_commandes = serializers.SerializerMethodField()
+    produits_commandes = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Client
+        fields = ["username", "email", "numero_client", "total_commandes", "produits_commandes"]
+
+    def get_total_commandes(self, obj):
+        return obj.commandes.count()
+
+    def get_produits_commandes(self, obj):
+        # Obtenir les paniers associés aux commandes du client
+        paniers = Panier.objects.filter(client=obj)
+        
+        # Obtenir les produits associés à ces paniers via ItemPanier
+        produits = ProduitArtisanal.objects.filter(itempanier__panier__in=paniers).distinct()
+        
+        return ProduitArtisanalSerializer(produits, many=True).data
+
+
+class CommandeProduitSerializer(serializers.ModelSerializer):
+    client = ClientSerializer(read_only=True)
+    panier = PanierSerializer(read_only=True)
+
+    class Meta:
+        model = Commande
+        fields = ["id", "client", "prix_total", "date_commande", "status", "panier"]
 
 
 class SpecificationSerializer(serializers.ModelSerializer):
@@ -163,6 +178,7 @@ class ProduitArtisanalDetailSerializer(serializers.ModelSerializer):
     avis_clients = AvisClientProduitArtisanalSerializer(many=True, read_only=True)
     images = ImageProduitArtisanalSerializer(many=True, read_only=True)
     artisanat = ArtisanatDetailSerializer(read_only=True)
+    commandes = serializers.SerializerMethodField()
 
     class Meta:
         model = ProduitArtisanal
@@ -179,4 +195,9 @@ class ProduitArtisanalDetailSerializer(serializers.ModelSerializer):
             "updated_at",
             "avis_clients",
             "images",
+            "commandes",
         ]
+
+    def get_commandes(self, obj):
+        commandes = Commande.objects.filter(panier__itempanier__produit=obj)
+        return CommandeSerializer(commandes, many=True).data
