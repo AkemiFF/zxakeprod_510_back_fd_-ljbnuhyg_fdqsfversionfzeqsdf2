@@ -17,6 +17,36 @@ from django.db.models import Count, Func
 from django.utils import timezone
 
 
+class AddTourImageView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        tour_id = request.data.get("id")
+
+        if tour_id == "undefined" or not tour_id:
+            return Response(
+                {"error": "Invalid or missing hebergement ID"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        tour = TourOperateur.objects.get(id=tour_id)
+        image_list = []
+
+        # Parcourir toutes les clés pour récupérer les fichiers
+        for key, image in request.FILES.items():
+            if key.startswith("image_"):
+                image_instance = ImageTour(
+                    images_tour=tour,
+                    image=image,
+                )
+                image_instance.save()
+                image_list.append(image_instance)
+
+        serializer = ImageTourSerializer(image_list, many=True)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
 class TourOperateurCreateView(generics.CreateAPIView):
     queryset = TourOperateur.objects.all()
     serializer_class = CreateTourOperateurSerializer

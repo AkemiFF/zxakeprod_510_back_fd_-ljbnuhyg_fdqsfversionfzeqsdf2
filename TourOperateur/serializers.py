@@ -191,6 +191,12 @@ class SatisfactionClientSerializer(serializers.ModelSerializer):
         fields = ["client", "est_satisfait"]
 
 
+class ImageTourSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ImageTour
+        fields = "__all__"
+
+
 class CreateTourOperateurSerializer(serializers.ModelSerializer):
 
     class Meta:
