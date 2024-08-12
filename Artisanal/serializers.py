@@ -10,7 +10,7 @@ from .models import (
     Client,
     Specification,
     AvisClientProduitArtisanal,
-    ImageProduitArtisanal
+    ImageProduitArtisanal,
 )
 from Accounts.models import Client as AccountClient
 from Hebergement.models import Localisation
@@ -62,8 +62,8 @@ class ArtisanatDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Artisanat
         fields = [
-            "nom_artisanat",
-            "responsable_artisanat",
+            "nom",
+            "responsable",
             "localisation_artisanat",
         ]
 
@@ -123,7 +123,13 @@ class ClientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Client
-        fields = ["username", "email", "numero_client", "total_commandes", "produits_commandes"]
+        fields = [
+            "username",
+            "email",
+            "numero_client",
+            "total_commandes",
+            "produits_commandes",
+        ]
 
     def get_total_commandes(self, obj):
         return obj.commandes.count()
@@ -131,10 +137,12 @@ class ClientSerializer(serializers.ModelSerializer):
     def get_produits_commandes(self, obj):
         # Obtenir les paniers associés aux commandes du client
         paniers = Panier.objects.filter(client=obj)
-        
+
         # Obtenir les produits associés à ces paniers via ItemPanier
-        produits = ProduitArtisanal.objects.filter(itempanier__panier__in=paniers).distinct()
-        
+        produits = ProduitArtisanal.objects.filter(
+            itempanier__panier__in=paniers
+        ).distinct()
+
         return ProduitArtisanalSerializer(produits, many=True).data
 
 

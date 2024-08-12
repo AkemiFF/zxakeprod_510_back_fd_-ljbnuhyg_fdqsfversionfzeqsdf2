@@ -9,6 +9,7 @@ from .serializers import CommandeProduitSerializer
 from .models import Client, ProduitArtisanal, Commande
 from .serializers import ClientSerializer
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 
 # ViewSets
 
@@ -285,3 +286,18 @@ def clientList(request, artisanat_id):
         return Response(
             {"error": "Artisanat non trouvé"}, status=status.HTTP_404_NOT_FOUND
         )
+
+
+class PanierView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            panier = Panier.objects.get(client=request.user)
+            serializer = PanierSerializer(panier)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Panier.DoesNotExist:
+            return Response(
+                {"error": "Panier non trouvé pour ce client."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
