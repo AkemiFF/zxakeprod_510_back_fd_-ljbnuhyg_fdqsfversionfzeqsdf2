@@ -1,49 +1,117 @@
 from rest_framework import viewsets, permissions, generics, status
-from .models import Artisanat, ProduitArtisanal, Panier, ItemPanier, Commande
-from .serializers import *
-from rest_framework.decorators import api_view
+from rest_framework.permissions import AllowAny
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.decorators import (
-    api_view,
-    permission_classes,
-)
+from .models import *
+from .serializers import *
+from .models import Commande
+from .serializers import CommandeProduitSerializer
+from .models import Client, ProduitArtisanal, Commande
+from .serializers import ClientSerializer
+from rest_framework.permissions import IsAuthenticated
+# ViewSets
 
 
-class ArtisanatViewSet(viewsets.ModelViewSet):
-    queryset = Artisanat.objects.all()
-    serializer_class = ArtisanatDetailSerializer
-    permission_classes = [permissions.AllowAny]
+
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def LocalisationArtisanatViewSet(request, artisanat_id=None):
+    if artisanat_id is not None:
+        queryset = LocalisationArtisanat.objects.filter(id=artisanat_id)
+        if not queryset.exists():
+            return Response({'Aucun responsable trouvé'}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = LocalisationArtisanatSerializer(queryset, many=True)
+        return Response(serializer.data)
+    return Response({'error': 'Responsable ID non fourni'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ProduitArtisanalViewSet(viewsets.ModelViewSet):
-    queryset = ProduitArtisanal.objects.all()
-    serializer_class = ProduitArtisanalSerializer
-    permission_classes = [permissions.AllowAny]
 
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def ResponsableEtablissementViewSet(request, artisanat_id=None):
+    if artisanat_id is not None:
+        queryset = ResponsableEtablissement.objects.filter(id=artisanat_id)
+        if not queryset.exists():
+            return Response({'Aucun responsable trouvé'}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = ResponsableEtablissementSerializer(queryset, many=True)
+        return Response(serializer.data)
+    return Response({'error': 'Responsable ID non fourni'}, status=status.HTTP_400_BAD_REQUEST)
 
+@permission_classes([permissions.IsAuthenticated])
 class PanierViewSet(viewsets.ModelViewSet):
     queryset = Panier.objects.all()
     serializer_class = PanierSerializer
     permission_classes = [permissions.AllowAny]
 
 
+@permission_classes([permissions.IsAuthenticated])
 class ItemPanierViewSet(viewsets.ModelViewSet):
     queryset = ItemPanier.objects.all()
     serializer_class = ItemPanierSerializer
     permission_classes = [permissions.AllowAny]
 
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def artisanantList(request, artisanat_id=None):
+    if artisanat_id is not None:
+        queryset = Artisanat.objects.filter(id=artisanat_id)
+        if not queryset.exists():
+            return Response({'Aucune artisanat trouvé'}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = ArtisanatSerializer(queryset, many=True)
+        return Response(serializer.data)
+    return Response({'error': 'Artisanat ID non fourni'}, status=status.HTTP_400_BAD_REQUEST)
 
-class CommandeViewSet(viewsets.ModelViewSet):
-    queryset = Commande.objects.all()
-    serializer_class = CommandeSerializer
+@permission_classes([permissions.IsAuthenticated])
+class ArtisanatViewSet(viewsets.ModelViewSet):
+    queryset = Artisanat.objects.all()
+    serializer_class = ArtisanatDetailSerializer
     permission_classes = [permissions.AllowAny]
 
+@permission_classes([permissions.IsAuthenticated])
+class ProduitArtisanalViewSet(viewsets.ModelViewSet):
+    serializer_class = ProduitArtisanalSerializer
 
-class ProduitArtisanalDetailView(generics.RetrieveAPIView):
-    queryset = ProduitArtisanal.objects.all()
-    serializer_class = ProduitArtisanalDetailSerializer
-    permission_classes = [permissions.AllowAny]
+    def get_queryset(self):
+        artisanat_id = self.kwargs.get('artisanat_id')
+        # Filtre les produits par artisanat
+        return ProduitArtisanal.objects.filter(artisanat_id=artisanat_id)
+    
 
+#@permission_classes([permissions.IsAuthenticated])
+#class CommandeProduitViewSet(viewsets.ModelViewSet):
+#    queryset = Commande.objects.all()
+#    serializer_class = CommandeProduitSerializer
+#    permission_classes = [permissions.AllowAny]
+
+
+#@permission_classes([permissions.IsAuthenticated])
+#class SpecificationViewSet(viewsets.ModelViewSet):
+#    queryset = Specification.objects.all()
+#    serializer_class = SpecificationSerializer
+#    permission_classes = [permissions.AllowAny]
+
+#@permission_classes([permissions.IsAuthenticated])
+#class AvisClientProduitArtisanalViewSet(viewsets.ModelViewSet):
+#    queryset = AvisClientProduitArtisanal.objects.all()
+#    serializer_class = AvisClientProduitArtisanalSerializer
+#    permission_classes = [permissions.AllowAny]
+
+#@permission_classes([permissions.IsAuthenticated])
+#class ImageProduitArtisanalViewSet(viewsets.ModelViewSet):
+#    queryset = ImageProduitArtisanal.objects.all()
+#    serializer_class = ImageProduitArtisanalSerializer
+#    permission_classes = [permissions.AllowAny]
+
+#@permission_classes([permissions.IsAuthenticated])
+#class ProduitArtisanalDetailView(generics.RetrieveAPIView):
+#    queryset = ProduitArtisanal.objects.all()
+#    serializer_class = ProduitArtisanalDetailSerializer
+#    permission_classes = [permissions.AllowAny]
+
+# API Views
 
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
@@ -89,7 +157,7 @@ def check_if_client_liked_product(request, produit_id):
             return Response({"liked": False}, status=status.HTTP_200_OK)
     except ProduitArtisanal.DoesNotExist:
         return Response(
-            {"error": "Produit not found"}, status=status.HTTP_404_NOT_FOUND
+            {"error": "Produit non trouvé"}, status=status.HTTP_404_NOT_FOUND
         )
 
 
@@ -111,9 +179,6 @@ def like_produit(request, produit_id):
         return Response({"message": "Like ajouté"}, status=status.HTTP_200_OK)
 
 
-from rest_framework.decorators import api_view, permission_classes
-
-
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
 def filter_produits(request):
@@ -121,7 +186,7 @@ def filter_produits(request):
 
     if not specifications:
         return Response(
-            {"error": "No specifications provided"}, status=status.HTTP_400_BAD_REQUEST
+            {"error": "Aucune spécification fournie"}, status=status.HTTP_400_BAD_REQUEST
         )
 
     spec_ids = [spec["id"] for spec in specifications if "id" in spec]
@@ -132,3 +197,61 @@ def filter_produits(request):
 
     serializer = ProduitArtisanalSerializer(produits, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def commandeList(request, artisanat_id=None):
+    if artisanat_id is not None:
+        # Filtrer les commandes par artisanat_id
+        produits = ProduitArtisanal.objects.filter(artisanat__id=artisanat_id)
+        queryset = Commande.objects.filter(panier__produits__in=produits)
+        
+        if not queryset.exists():
+            return Response({'message': 'Aucune commande reçue pour vous'}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = CommandeSerializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    return Response({'error': 'Artisanat ID non fourni'}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def commandeListDetail(request, artisanat_id=None, produit_id=None):
+    if artisanat_id is not None:
+        # Filtrer les produits par artisanat_id
+        produits = ProduitArtisanal.objects.filter(artisanat__id=artisanat_id)
+        
+        if produit_id is not None:
+            produits = produits.filter(id=produit_id)
+        
+        # Filtrer les commandes par les produits trouvés
+        queryset = Commande.objects.filter(panier__itempanier__produit__in=produits).distinct()
+        
+        if not queryset.exists():
+            return Response({'message': 'produit introuvable'}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = CommandeProduitSerializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    return Response({'error': 'Artisanat ID non fourni'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def clientList(request, artisanat_id):
+    try:
+        # Obtenir les produits associés à l'artisanat
+        produits = ProduitArtisanal.objects.filter(artisanat__id=artisanat_id)
+        
+        # Obtenir les commandes associées à ces produits
+        commandes = Commande.objects.filter(panier__produits__in=produits)
+        
+        # Obtenir les clients associés à ces commandes
+        clients = Client.objects.filter(commandes__in=commandes).distinct()
+        
+        # Sérialiser les clients
+        serializer = ClientSerializer(clients, many=True)
+        return Response(serializer.data)
+    except Artisanat.DoesNotExist:
+        return Response({'error': 'Artisanat non trouvé'}, status=status.HTTP_404_NOT_FOUND)
