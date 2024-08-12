@@ -17,6 +17,59 @@ from django.db.models import Count, Func
 from django.utils import timezone
 
 
+class AddTourImageView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        tour_id = request.data.get("id")
+
+        if tour_id == "undefined" or not tour_id:
+            return Response(
+                {"error": "Invalid or missing hebergement ID"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        tour = TourOperateur.objects.get(id=tour_id)
+        image_list = []
+
+        # Parcourir toutes les clés pour récupérer les fichiers
+        for key, image in request.FILES.items():
+            if key.startswith("image_"):
+                image_instance = ImageTour(
+                    images_tour=tour,
+                    image=image,
+                )
+                image_instance.save()
+                image_list.append(image_instance)
+
+        serializer = ImageTourSerializer(image_list, many=True)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class TourOperateurCreateView(generics.CreateAPIView):
+    queryset = TourOperateur.objects.all()
+    serializer_class = CreateTourOperateurSerializer
+    permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def create_localisation_tour(request):
+    if request.method == "POST":
+        serializer = LocalisationTourSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def add_images_to_voyage(request, voyage_id):

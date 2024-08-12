@@ -8,6 +8,11 @@ from rest_framework.routers import DefaultRouter
 
 urlpatterns = [
     path(
+        "add-image/",
+        views.AddTourImageView.as_view(),
+        name="add-tour-image",
+    ),
+    path(
         "<int:pk>/list-voyages/",
         views.list_voyages,
         name="list-voyages",
@@ -66,5 +71,15 @@ urlpatterns = [
         "<int:tour_operateur_id>/recent-reservations/",
         views.get_recent_reservations_for_tour_operateur,
         name="recent-reservations",
+    ),
+    path(
+        "create/",
+        views.TourOperateurCreateView.as_view(),
+        name="create-tour-operateur",
+    ),
+    path(
+        "localisation/create/",
+        views.create_localisation_tour,
+        name="create_localisation_tour",
     ),
 ]
