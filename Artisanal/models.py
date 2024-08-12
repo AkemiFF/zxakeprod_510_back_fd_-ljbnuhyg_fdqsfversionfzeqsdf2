@@ -8,18 +8,24 @@ from Hebergement.models import Localisation
 
 
 class Artisanat(models.Model):
-    nom_artisanat = models.CharField(max_length=200, null=True, blank=True)
+    nom = models.CharField(max_length=200, null=True, blank=True)
 
-    responsable_artisanat = models.ForeignKey(
+    responsable = models.ForeignKey(
         ResponsableEtablissement,
         on_delete=models.CASCADE,
-        related_name="responsable_artisanat",
+        related_name="artisanat_responsable",
     )
+    telephone = models.CharField(max_length=15, null=True, blank=True)
 
-    description_artisanat = models.TextField(max_length=400, null=True, blank=True)
+    stat = models.CharField(max_length=255, null=True, blank=True)
+    nif = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(max_length=400, null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.responsable_artisanat} ({self.nom_artisanat})"
+        return f"{self.responsable} ({self.nom})"
 
 
 class LocalisationArtisanat(models.Model):
@@ -51,7 +57,7 @@ class ProduitArtisanal(models.Model):
     artisanat = models.ForeignKey(
         Artisanat,
         on_delete=models.CASCADE,
-        related_name="responsable",
+        related_name="responsable_produit",
         null=True,
         blank=True,
     )
@@ -62,7 +68,7 @@ class ProduitArtisanal(models.Model):
     likes = models.ManyToManyField(Client, related_name="liked_produits", blank=True)
 
     def __str__(self):
-        return f"({self.nom_produit_artisanal}) - {self.artisanat.responsable_artisanat.email}"
+        return f"({self.nom_produit_artisanal}) - {self.artisanat.responsable.email}"
 
     def total_likes(self):
         return self.likes.count()
