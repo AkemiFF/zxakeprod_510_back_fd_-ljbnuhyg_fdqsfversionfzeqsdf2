@@ -90,9 +90,15 @@ class ShortImageProduitArtisanalSerializer(serializers.ModelSerializer):
 from rest_framework import serializers
 
 
+class ImageProduitArtisanalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ImageProduitArtisanal
+        fields = ["id", "image", "couverture"]
+
+
 class ProduitArtisanalSerializer(serializers.ModelSerializer):
     artisanat = ArtisanatDetailSerializer()
-    images = serializers.SerializerMethodField()
+    images = ImageProduitArtisanalSerializer(many=True, read_only=True)
     total_likes = serializers.ReadOnlyField()  # Champ readonly pour le nombre de likes
 
     class Meta:
