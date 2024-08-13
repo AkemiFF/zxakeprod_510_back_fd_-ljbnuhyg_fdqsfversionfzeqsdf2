@@ -104,7 +104,11 @@ class Localisation(models.Model):
     )
 
     def __str__(self):
-        return self.adresse
+        return (
+            str(self.id)
+            + " "
+            + str(self.hebergement_id.nom_hebergement if self.hebergement_id else "")
+        )
 
 
 class SocialLink(models.Model):

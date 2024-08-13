@@ -687,14 +687,13 @@ def create_new_hebergement(request):
         "stat": request.data.get("stat"),
         "autorisation": False,
     }
-    print(hebergement_data)
 
-    localisation_data = {
-        "adresse": request.data.get("address"),
-        "ville": request.data.get("city"),
-        "latitude": None,
-        "longitude": None,
-    }
+    # localisation_data = {
+    #     "adresse": request.data.get("address"),
+    #     "ville": request.data.get("city"),
+    #     "latitude": None,
+    #     "longitude": None,
+    # }
 
     hebergement_serializer = NewHebergementSerializer(data=hebergement_data)
 
@@ -702,25 +701,25 @@ def create_new_hebergement(request):
         hebergement = hebergement_serializer.save()
         print(request.data)
 
-        localisation_data["hebergement_id"] = hebergement.id
-        localisation_serializer = LocalisationSerializer(data=localisation_data)
+        # localisation_data["hebergement_id"] = hebergement.id
+        # localisation_serializer = LocalisationSerializer(data=localisation_data)
 
-        if localisation_serializer.is_valid():
-            localisation_serializer.save()
+        # if localisation_serializer.is_valid():
+        #     localisation_serializer.save()
 
-            return Response(
-                {
-                    "hebergement": hebergement_serializer.data,
-                    "localisation": localisation_serializer.data,
-                    "id_hebergement": hebergement.id,
-                },
-                status=status.HTTP_201_CREATED,
-            )
-        else:
-            return Response(
-                {"localisation_errors": localisation_serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        return Response(
+            {
+                "hebergement": hebergement_serializer.data,
+                # "localisation": localisation_serializer.data,
+                "id_hebergement": hebergement.id,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+        # else:
+        #     return Response(
+        #         {"localisation_errors": localisation_serializer.errors},
+        #         status=status.HTTP_400_BAD_REQUEST,
+        #     )
     else:
         return Response(
             {"hebergement_errors": hebergement_serializer.errors},
@@ -1004,4 +1003,15 @@ class MinHebergementDetailView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
 
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CreateLocalisationView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = LocalisationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
