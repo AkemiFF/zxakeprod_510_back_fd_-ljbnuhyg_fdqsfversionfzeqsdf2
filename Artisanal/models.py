@@ -7,6 +7,13 @@ from django.core.exceptions import ValidationError
 from Hebergement.models import Localisation
 
 
+class Specification(models.Model):
+    type_specification = models.CharField(max_length=300, null=True, unique=True)
+
+    def __str__(self) -> str:
+        return self.type_specification
+
+
 class Artisanat(models.Model):
     nom = models.CharField(max_length=200, null=True, blank=True)
 
@@ -100,13 +107,6 @@ class ImageProduitArtisanal(models.Model):
 
     def __str__(self):
         return f"Image for {self.produit.nom_produit_artisanal}"
-
-
-class Specification(models.Model):
-    type_specification = models.CharField(max_length=300, null=True, unique=True)
-
-    def __str__(self) -> str:
-        return self.type_specification
 
 
 class Panier(models.Model):

@@ -27,6 +27,8 @@ class PanierView(APIView):
 
 
 class ClientsByArtisanatView(APIView):
+    permission_classes = [permissions.AllowAny]
+
     def get(self, request, artisanat_id):
         try:
             artisanat = Artisanat.objects.get(id=artisanat_id)
@@ -54,7 +56,7 @@ class ArtisanatViewSet(viewsets.ModelViewSet):
 class ArtisanatCreateView(generics.CreateAPIView):
     queryset = Artisanat.objects.all()
     serializer_class = ArtisanatSerializer
-    queryset = Artisanat.objects.all()
+    permission_classes = [permissions.AllowAny]
 
 
 class ProduitArtisanalViewSet(viewsets.ModelViewSet):
