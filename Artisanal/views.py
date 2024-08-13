@@ -38,6 +38,7 @@ class ClientsByArtisanatView(APIView):
         commandes = Commande.objects.filter(
             panier__produits__artisanat=artisanat
         ).distinct()
+        print(commandes)
         clients = Client.objects.filter(commandes__in=commandes).distinct()
 
         serializer = ClientSerializer(clients, many=True)
