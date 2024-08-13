@@ -4,6 +4,11 @@ from Hebergement import views
 
 urlpatterns = [
     path(
+        "localisation/create/",
+        views.CreateLocalisationView.as_view(),
+        name="create-localisation",
+    ),
+    path(
         "<int:hebergement_id>/stats/",
         views.HebergementStatsView.as_view(),
         name="hebergement-stats",
