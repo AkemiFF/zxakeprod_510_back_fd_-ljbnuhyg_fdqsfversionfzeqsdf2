@@ -26,10 +26,34 @@ class PanierView(APIView):
             )
 
 
+class ClientsByArtisanatView(APIView):
+    def get(self, request, artisanat_id):
+        try:
+            artisanat = Artisanat.objects.get(id=artisanat_id)
+        except Artisanat.DoesNotExist:
+            return Response(
+                {"detail": "Artisanat not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        commandes = Commande.objects.filter(
+            panier__produits__artisanat=artisanat
+        ).distinct()
+        clients = Client.objects.filter(commandes__in=commandes).distinct()
+
+        serializer = ClientSerializer(clients, many=True)
+        return Response(serializer.data)
+
+
 class ArtisanatViewSet(viewsets.ModelViewSet):
     queryset = Artisanat.objects.all()
     serializer_class = ArtisanatDetailSerializer
     permission_classes = [permissions.AllowAny]
+
+
+class ArtisanatCreateView(generics.CreateAPIView):
+    queryset = Artisanat.objects.all()
+    serializer_class = ArtisanatSerializer
+    queryset = Artisanat.objects.all()
 
 
 class ProduitArtisanalViewSet(viewsets.ModelViewSet):

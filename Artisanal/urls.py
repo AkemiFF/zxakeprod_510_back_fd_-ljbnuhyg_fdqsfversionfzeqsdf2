@@ -26,4 +26,10 @@ urlpatterns = [
     path("produit/<int:produit_id>/like/", like_produit, name="like_produit"),
     path("produits/filter/", filter_produits, name="filter_produits"),
     path("client-panier/", PanierView.as_view(), name="panier-client"),
+    path("create/", ArtisanatCreateView.as_view(), name="artisanat-create"),
+    path(
+        "<int:artisanat_id>/clients/",
+        ClientsByArtisanatView.as_view(),
+        name="clients-by-artisanat",
+    ),
 ]

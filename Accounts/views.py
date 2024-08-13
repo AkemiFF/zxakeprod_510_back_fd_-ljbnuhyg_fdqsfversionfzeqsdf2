@@ -139,10 +139,10 @@ class ResponsableLoginView(APIView):
             hebergements = Hebergement.objects.get(responsable_hebergement=user)
             etablissement_info = MinHebergementSerializer(hebergements)
         elif type_etablissement == 2:
-            artisanat = Artisanat.objects.get(responsable_hebergement=user)
+            artisanat = Artisanat.objects.get(responsable=user)
             etablissement_info = ArtisanatSerializer(artisanat)
         elif type_etablissement == 3:
-            tour = TourOperateur.objects.get(responsable_hebergement=user)
+            tour = TourOperateur.objects.get(responsable_TourOperateur=user)
             etablissement_info = TourOperateurSerializer(tour)
         else:
             return Response(

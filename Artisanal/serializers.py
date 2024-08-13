@@ -7,6 +7,30 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
+class ShortCommandeSerializer(serializers.ModelSerializer):
+    panier = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Commande
+        fields = ["client", "panier"]
+
+    def get_panier(self, obj):
+        items = ItemPanier.objects.filter(panier=obj.panier)
+        return ShortItemPanierSerializer(items, many=True).data
+
+
+class ClientSerializer(serializers.ModelSerializer):
+    commandes = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Client
+        fields = ["id", "username", "email", "numero_client", "commandes"]
+
+    def get_commandes(self, obj):
+        commandes = Commande.objects.filter(client=obj)
+        return ShortCommandeSerializer(commandes, many=True).data
+
+
 class LocalisationArtisanatSerializer(serializers.ModelSerializer):
     class Meta:
         model = LocalisationArtisanat
@@ -89,6 +113,19 @@ class ProduitArtisanalSerializer(serializers.ModelSerializer):
             "likes",
         ]
 
+
+class ShortProduitArtisanalSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ProduitArtisanal
+        fields = [
+            "id",
+            "nom_produit_artisanal",
+            "description_artisanat",
+            "prix_artisanat",
+            "nb_produit_dispo",
+        ]
+
     def get_images(self, obj):
         images = obj.images.all()
         sorted_images = sorted(images, key=lambda x: (not x.couverture, x.id))
@@ -126,6 +163,14 @@ class ItemPanierSerializer(serializers.ModelSerializer):
     class Meta:
         model = ItemPanier
         fields = "__all__"
+
+
+class ShortItemPanierSerializer(serializers.ModelSerializer):
+    produit = ShortProduitArtisanalSerializer()
+
+    class Meta:
+        model = ItemPanier
+        fields = ["produit", "quantite"]
 
 
 class CommandeSerializer(serializers.ModelSerializer):

@@ -20,6 +20,7 @@ class Artisanat(models.Model):
     stat = models.CharField(max_length=255, null=True, blank=True)
     nif = models.CharField(max_length=255, null=True, blank=True)
     description = models.TextField(max_length=400, null=True, blank=True)
+    email = models.EmailField(max_length=400, null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
