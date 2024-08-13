@@ -7,7 +7,10 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 N_RUN = 0
+
 FrontHosts = [
+    "http://192.168.88.30:3000",
+     "http://192.168.88.30"
     "http://localhost:3000",
     "http://192.168.88.23:3000",
     "http://192.168.88.43:3000",
