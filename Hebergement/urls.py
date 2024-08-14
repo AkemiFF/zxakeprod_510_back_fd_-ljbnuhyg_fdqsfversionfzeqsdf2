@@ -3,6 +3,20 @@ from Hebergement import views
 
 
 urlpatterns = [
+    #########################################
+    # For Super Admin #
+    path("list/", views.AdminHebergementListView.as_view(), name="hebergement-list"),
+    path(
+        "type/",
+        views.TypeHebergementListView.as_view(),
+        name="type-hebergement",
+    ),
+    path(
+        "toggle-autorisation/<int:pk>/",
+        views.ToggleAutorisationView.as_view(),
+        name="toggle_autorisation",
+    ),
+    #########################################
     path(
         "localisation/create/",
         views.CreateLocalisationView.as_view(),

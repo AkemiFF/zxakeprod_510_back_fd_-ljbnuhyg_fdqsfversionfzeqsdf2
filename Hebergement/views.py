@@ -41,6 +41,12 @@ from rest_framework import status
 from .models import Reservation, Hebergement
 
 
+class AdminHebergementListView(generics.ListAPIView):
+    queryset = Hebergement.objects.all()
+    serializer_class = ShortHebergementSerializer
+    permission_classes = [IsAdminUser]
+
+
 class RecentReservationsForHebergementView(APIView):
     permission_classes = [AllowAny]
 
@@ -1015,3 +1021,22 @@ class CreateLocalisationView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+StatusSerializer
+
+
+class ToggleAutorisationView(APIView):
+    def patch(self, request, pk, format=None):
+        try:
+            hebergement = Hebergement.objects.get(pk=pk)
+        except Hebergement.DoesNotExist:
+            return Response(
+                {"error": "Hebergement not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        hebergement.autorisation = not hebergement.autorisation
+        hebergement.save()
+
+        serializer = StatusSerializer(hebergement)
+        return Response(serializer.data, status=status.HTTP_200_OK)
