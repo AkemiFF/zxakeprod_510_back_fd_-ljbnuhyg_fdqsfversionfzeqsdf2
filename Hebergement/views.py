@@ -42,7 +42,13 @@ from .models import Reservation, Hebergement
 
 
 class AdminHebergementListView(generics.ListAPIView):
-    queryset = Hebergement.objects.all()
+    queryset = Hebergement.objects.filter(delete=False)
+    serializer_class = ShortHebergementSerializer
+    permission_classes = [IsAdminUser]
+
+
+class DeletedHebergementListView(generics.ListAPIView):
+    queryset = Hebergement.objects.filter(delete=True)
     serializer_class = ShortHebergementSerializer
     permission_classes = [IsAdminUser]
 
@@ -584,7 +590,7 @@ def check_if_client_liked_hebergement(request, hebergement_id):
 @permission_classes([AllowAny])
 def get_all_hebergements(request):
     try:
-        all_hebergement = Hebergement.objects.annotate(
+        all_hebergement = Hebergement.objects.filter(autorisation=True).annotate(
             min_prix_nuit_chambre=Min("hebergementchambre__prix_nuit_chambre")
         )
     except Hebergement.DoesNotExist:
@@ -1026,7 +1032,24 @@ class CreateLocalisationView(APIView):
 StatusSerializer
 
 
+class ToggleDeleteHebergement(APIView):
+    permission_classes = [IsAdminUser]
+    
+    def patch(self, request, pk, format=None):
+        try:
+            hebergement = Hebergement.objects.get(pk=pk)
+            hebergement.delete = not hebergement.delete
+            hebergement.autorisation = False
+            hebergement.save()
+            return Response({"delete": hebergement.delete}, status=status.HTTP_200_OK)
+        except Hebergement.DoesNotExist:
+            return Response(
+                {"error": "Hebergement not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
 class ToggleAutorisationView(APIView):
+    permission_classes = [IsAdminUser]
     def patch(self, request, pk, format=None):
         try:
             hebergement = Hebergement.objects.get(pk=pk)

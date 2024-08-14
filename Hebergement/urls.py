@@ -7,6 +7,9 @@ urlpatterns = [
     # For Super Admin #
     path("list/", views.AdminHebergementListView.as_view(), name="hebergement-list"),
     path(
+        "deleted/", views.DeletedHebergementListView.as_view(), name="hebergement-list"
+    ),
+    path(
         "type/",
         views.TypeHebergementListView.as_view(),
         name="type-hebergement",
@@ -15,6 +18,11 @@ urlpatterns = [
         "toggle-autorisation/<int:pk>/",
         views.ToggleAutorisationView.as_view(),
         name="toggle_autorisation",
+    ),
+    path(
+        "toggle-delete/<int:pk>/",
+        views.ToggleDeleteHebergement.as_view(),
+        name="toggle_delete",
     ),
     #########################################
     path(

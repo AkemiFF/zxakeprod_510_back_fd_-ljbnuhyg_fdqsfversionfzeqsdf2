@@ -77,8 +77,8 @@ class Hebergement(models.Model):
     )
     nif = models.CharField(max_length=100, null=True, blank=True)
     stat = models.CharField(max_length=100, null=True, blank=True)
-
     autorisation = models.BooleanField(default=False)
+    delete = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     likes = models.ManyToManyField(Client, related_name="liked_hebergement", blank=True)
