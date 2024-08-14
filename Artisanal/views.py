@@ -7,8 +7,73 @@ from rest_framework.decorators import (
     api_view,
     permission_classes,
 )
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
+
+
+class SpecificationListView(generics.ListAPIView):
+    queryset = Specification.objects.all()
+    serializer_class = SpecificationSerializer
+    permission_classes = [AllowAny]
+
+
+class ProduitArtisanalListView(generics.ListCreateAPIView):
+    serializer_class = FieldsProduitArtisanalSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        artisanat_id = self.kwargs["artisanat_id"]
+        return ProduitArtisanal.objects.filter(artisanat_id=artisanat_id)
+
+    def put(self, request, *args, **kwargs):
+        try:
+            product = ProduitArtisanal.objects.get(pk=kwargs["pk"])
+        except ProduitArtisanal.DoesNotExist:
+            return Response(
+                {"error": "Produit non trouvé"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = FieldsProduitArtisanalSerializer(
+            product, data=request.data, partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CommandeDetailView(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
+    queryset = Commande.objects.all()
+    serializer_class = DetailCommandeSerializer
+
+    def get(self, request, *args, **kwargs):
+        pk = self.kwargs.get("pk")
+        try:
+            commande = self.queryset.get(pk=pk)
+        except Commande.DoesNotExist:
+            return Response(
+                {"detail": "Commande not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = self.get_serializer(commande)
+        return Response(serializer.data)
+
+
+class ArtisanatCommandesView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, artisanat_id):
+        try:
+            artisanat_products = ProduitArtisanal.objects.filter(
+                artisanat_id=artisanat_id, itempanier__panier__commande__isnull=False
+            ).distinct()
+            serializer = ArtisanatCommandeSerializer(artisanat_products, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except ProduitArtisanal.DoesNotExist:
+            return Response(
+                {"error": "Artisanat not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class PanierView(APIView):
@@ -40,7 +105,6 @@ class ClientsByArtisanatView(APIView):
         commandes = Commande.objects.filter(
             panier__produits__artisanat=artisanat
         ).distinct()
-        print(commandes)
         clients = Client.objects.filter(commandes__in=commandes).distinct()
 
         serializer = ClientSerializer(clients, many=True)

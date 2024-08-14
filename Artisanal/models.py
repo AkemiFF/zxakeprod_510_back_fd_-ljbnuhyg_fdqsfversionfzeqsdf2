@@ -61,7 +61,9 @@ class ProduitArtisanal(models.Model):
     specifications = models.ManyToManyField(
         "Specification", related_name="produits_artisanaux"
     )
-
+    poid_kg = models.FloatField(null=True, blank=True)
+    largeur = models.FloatField(null=True, blank=True)
+    hauteur = models.FloatField(null=True, blank=True)
     artisanat = models.ForeignKey(
         Artisanat,
         on_delete=models.CASCADE,
@@ -141,16 +143,8 @@ class Commande(models.Model):
     )
     prix_total = models.DecimalField(max_digits=10, decimal_places=2)
     date_commande = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(
-        max_length=20,
-        choices=[
-            ("En attente", "En attente"),
-            ("En cours", "En cours"),
-            ("Livré", "Livré"),
-            ("Annulé", "Annulé"),
-        ],
-        default="En attente",
-    )
+    # livré ou pas
+    status = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if not self.panier:

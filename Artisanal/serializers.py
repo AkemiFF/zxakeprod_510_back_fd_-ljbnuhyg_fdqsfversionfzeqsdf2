@@ -3,20 +3,81 @@ from .models import *
 from Accounts.models import *
 from Hebergement.models import Localisation
 from django.contrib.auth import get_user_model
+from datetime import datetime
 
 User = get_user_model()
 
 
+class ProduitCommandeSerializer(serializers.ModelSerializer):
+    client = serializers.SerializerMethodField()
+    statut_commande = serializers.SerializerMethodField()
+    date_commande = serializers.SerializerMethodField()
+    id_commande = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ItemPanier
+        fields = [
+            "id_commande",
+            "produit",
+            "quantite",
+            "client",
+            "statut_commande",
+            "date_commande",
+            "id_commande",
+        ]
+
+    def get_client(self, obj):
+        return {
+            "nom": obj.panier.client.username,
+            "email": obj.panier.client.email,
+            "telephone": obj.panier.client.numero_client,
+        }
+
+    def get_statut_commande(self, obj):
+        return obj.panier.commande.status
+
+    def get_date_commande(self, obj):
+        date_commande = obj.panier.commande.date_commande
+        if isinstance(date_commande, datetime):
+            return date_commande.strftime("%d-%m-%Y")  # Format jour-mois-année
+        return None
+
+    def get_id_commande(self, obj):
+        id_commande = obj.panier.commande.id
+        if id_commande:
+            return id_commande  # Format jour-mois-année
+
+
+class ArtisanatCommandeSerializer(serializers.ModelSerializer):
+    commandes = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProduitArtisanal
+        fields = [
+            "nom_produit_artisanal",
+            "commandes",
+            "prix_artisanat",
+        ]
+
+    def get_commandes(self, obj):
+        items = ItemPanier.objects.filter(produit=obj, panier__commande__status=False)
+        return ProduitCommandeSerializer(items, many=True).data
+
+
 class ShortCommandeSerializer(serializers.ModelSerializer):
     panier = serializers.SerializerMethodField()
+    total = serializers.SerializerMethodField()
 
     class Meta:
         model = Commande
-        fields = ["client", "panier"]
+        fields = ["client", "panier", "total"]
 
     def get_panier(self, obj):
         items = ItemPanier.objects.filter(panier=obj.panier)
         return ShortItemPanierSerializer(items, many=True).data
+
+    def get_total(self, obj):
+        return obj.panier.total
 
 
 class ClientSerializer(serializers.ModelSerializer):
@@ -29,6 +90,12 @@ class ClientSerializer(serializers.ModelSerializer):
     def get_commandes(self, obj):
         commandes = Commande.objects.filter(client=obj)
         return ShortCommandeSerializer(commandes, many=True).data
+
+
+class NewClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        fields = ["id", "username", "email", "numero_client"]
 
 
 class LocalisationArtisanatSerializer(serializers.ModelSerializer):
@@ -120,6 +187,12 @@ class ProduitArtisanalSerializer(serializers.ModelSerializer):
         ]
 
 
+class FieldsProduitArtisanalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProduitArtisanal
+        fields = "__all__"
+
+
 class ShortProduitArtisanalSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -180,9 +253,7 @@ class ShortItemPanierSerializer(serializers.ModelSerializer):
 
 
 class CommandeSerializer(serializers.ModelSerializer):
-    client = (
-        serializers.StringRelatedField()
-    )  # or use ClientSerializer if you need detailed info
+    client = NewClientSerializer()
     panier = PanierSerializer()
 
     class Meta:
@@ -238,3 +309,29 @@ class ProduitArtisanalDetailSerializer(serializers.ModelSerializer):
             "avis_clients",
             "images",
         ]
+
+
+class NProduitArtisanalSerializer(serializers.ModelSerializer):
+    images = ImageProduitArtisanalSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ProduitArtisanal
+        fields = "__all__"
+
+
+class eeeItemPanierSerializer(serializers.ModelSerializer):
+    produit = NProduitArtisanalSerializer()
+
+    class Meta:
+        model = ItemPanier
+        fields = ["produit", "quantite"]
+
+
+class DetailCommandeSerializer(serializers.ModelSerializer):
+    client = NewClientSerializer()
+    items = eeeItemPanierSerializer(source="panier.itempanier_set", many=True)
+    date_commande = serializers.DateTimeField(format="%d-%m-%Y")
+
+    class Meta:
+        model = Commande
+        fields = ["id", "client", "items", "prix_total", "date_commande", "status"]

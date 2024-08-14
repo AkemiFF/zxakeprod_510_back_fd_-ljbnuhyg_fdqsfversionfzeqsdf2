@@ -32,4 +32,21 @@ urlpatterns = [
         ClientsByArtisanatView.as_view(),
         name="clients-by-artisanat",
     ),
+    path(
+        "<int:artisanat_id>/commandes/",
+        ArtisanatCommandesView.as_view(),
+        name="artisanat-commandes",
+    ),
+    path("commande/<int:pk>/", CommandeDetailView.as_view(), name="commande-detail"),
+    path(
+        "<int:artisanat_id>/produits/",
+        ProduitArtisanalListView.as_view(),
+        name="produit-artisanal-list",
+    ),
+    path(
+        "<int:artisanat_id>/produits/<int:pk>/",
+        ProduitArtisanalListView.as_view(),
+        name="produit-artisanal-detail",
+    ),
+    path("specifications/", SpecificationListView.as_view(), name="specification-list"),
 ]
