@@ -48,7 +48,7 @@ class ResponsableEtablissement(AbstractUser):
     updated_at = models.DateTimeField(auto_now=True)
     adresse = models.CharField(max_length=150, null=True, blank=True)
     ville = models.CharField(max_length=150, null=True, blank=True)
-
+    ban = models.BooleanField(default=True)
     groups = models.ManyToManyField(
         "auth.Group",
         related_name="responsableetablissement_set",

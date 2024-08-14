@@ -134,7 +134,8 @@ class ResponsableLoginView(APIView):
         refresh = RefreshToken.for_user(user)
         access = refresh.access_token
 
-        type_etablissement = info_user["type_responsable"]
+        type_etablissement = info_user["type_responsable"]["id"]
+        print(type_etablissement)
         if type_etablissement == 1:
             hebergements = Hebergement.objects.get(responsable_hebergement=user)
             etablissement_info = MinHebergementSerializer(hebergements)
@@ -147,7 +148,7 @@ class ResponsableLoginView(APIView):
         else:
             return Response(
                 {"error": "Vouns n'avez aucun établissement en votre nom"},
-                status=status.HTTP_406_NOT_ACCEPTABLE,
+                status=status.HTTP_404_NOT_FOUND,
             )
         return Response(
             {
@@ -389,7 +390,7 @@ def profil_client(request):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([IsAdminUser])
 def fetch_clients_detail(request):
     try:
         clients = Client.objects.all()
@@ -397,6 +398,18 @@ def fetch_clients_detail(request):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     serializer = ClientSerializer(clients, many=True)
+    return JsonResponse(serializer.data, safe=False)
+
+
+@api_view(["GET"])
+@permission_classes([IsAdminUser])
+def fetch_responsable_detail(request):
+    try:
+        clients = ResponsableEtablissement.objects.all()
+    except ResponsableEtablissement.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    serializer = ResponsableEtablissementSerializer(clients, many=True)
     return JsonResponse(serializer.data, safe=False)
 
 
@@ -873,7 +886,7 @@ class ResponsableEtablissementListByTypeView(generics.ListAPIView):
 
 
 @api_view(["PATCH"])
-@permission_classes([AllowAny])
+@permission_classes([IsAdminUser])
 def update_ban_status(request, pk):
     try:
         client = Client.objects.get(pk=pk)
@@ -891,6 +904,43 @@ def update_ban_status(request, pk):
         return Response(serializer.data)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ToggleBanView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, pk, format=None):
+        try:
+            client = Client.objects.get(pk=pk)
+        except Client.DoesNotExist:
+            return Response(
+                {"error": "Client not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        client.ban = not client.ban
+        client.save()
+
+        serializer = ClientBanSerializer(client)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ToggleBanAdminView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, pk, format=None):
+        try:
+            responsable = ResponsableEtablissement.objects.get(pk=pk)
+        except ResponsableEtablissement.DoesNotExist:
+            return Response(
+                {"error": "Responsable not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        responsable.ban = not responsable.ban
+        responsable.save()
+
+        serializer = FullResponsableEtablissementSerializer(responsable)
+        print(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):

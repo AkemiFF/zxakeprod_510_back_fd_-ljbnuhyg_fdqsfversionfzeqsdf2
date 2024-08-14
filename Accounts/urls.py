@@ -5,7 +5,14 @@ from django.contrib import admin
 urlpatterns = [
     path("404_dfiu__faftripserveru__dont_/", admin.site.urls),
     path(
-        "client-update/<int:pk>/ban/", views.update_ban_status, name="client-ban-update"
+        "client/<int:pk>/ban/",
+        views.ToggleBanView.as_view(),
+        name="client-ban-update",
+    ),
+    path(
+        "responsable/<int:pk>/ban/",
+        views.ToggleBanAdminView.as_view(),
+        name="responsable-ban-update",
     ),
     path("get_count_client/", views.get_count_client, name="get_count_client"),
     path(
@@ -79,6 +86,11 @@ urlpatterns = [
     path("client/<int:pk>/", views.client_detail, name="client_detail"),
     path("profil-client/", views.profil_client, name="profil_client"),
     path("clients/", views.fetch_clients_detail, name="fecth_clients_detail"),
+    path(
+        "responsables/",
+        views.fetch_responsable_detail,
+        name="fecth_responsables_detail",
+    ),
     path("client/create/", views.client_create, name="client_create"),
     path(
         "client/create-with-username/",

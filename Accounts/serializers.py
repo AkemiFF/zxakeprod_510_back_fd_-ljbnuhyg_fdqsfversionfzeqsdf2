@@ -88,12 +88,15 @@ class TypeResponsableSerializer(serializers.ModelSerializer):
 
 
 class ResponsableEtablissementSerializer(serializers.ModelSerializer):
+    type_responsable = TypeResponsableSerializer(read_only=True)
+
     class Meta:
         model = ResponsableEtablissement
         fields = (
             "id",
             "first_name",
             "last_name",
+            "ban",
             "username",
             "email",
             "numero_responsable",
@@ -101,6 +104,15 @@ class ResponsableEtablissementSerializer(serializers.ModelSerializer):
             "updated_at",
             "type_responsable",
         )
+        extra_kwargs = {
+            "password_responsable": {"write_only": True},
+        }
+
+
+class FullResponsableEtablissementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResponsableEtablissement
+        fields = "__all__"
         extra_kwargs = {
             "password_responsable": {"write_only": True},
         }
