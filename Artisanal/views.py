@@ -7,7 +7,7 @@ from rest_framework.decorators import (
     api_view,
     permission_classes,
 )
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.views import APIView
 
 
@@ -15,6 +15,41 @@ class SpecificationListView(generics.ListAPIView):
     queryset = Specification.objects.all()
     serializer_class = SpecificationSerializer
     permission_classes = [AllowAny]
+
+
+class CreateImageProduitArtisanalView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = ImageProduitSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ToggleAutorisationView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, pk, format=None):
+        try:
+            artisanat = Artisanat.objects.get(pk=pk)
+        except Artisanat.DoesNotExist:
+            return Response(
+                {"error": "Hebergement not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        artisanat.active = not artisanat.active
+        artisanat.save()
+
+        serializer = ArtisanatSerializer(artisanat)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ArtisanatListView(generics.ListAPIView):
+    queryset = Artisanat.objects.all()
+    serializer_class = ArtisanatSerializer
+    permission_classes = [IsAdminUser]
 
 
 class ProduitArtisanalListView(generics.ListCreateAPIView):

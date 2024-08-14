@@ -28,7 +28,7 @@ class Artisanat(models.Model):
     nif = models.CharField(max_length=255, null=True, blank=True)
     description = models.TextField(max_length=400, null=True, blank=True)
     email = models.EmailField(max_length=400, null=True, blank=True)
-
+    active = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -64,6 +64,7 @@ class ProduitArtisanal(models.Model):
     poid_kg = models.FloatField(null=True, blank=True)
     largeur = models.FloatField(null=True, blank=True)
     hauteur = models.FloatField(null=True, blank=True)
+
     artisanat = models.ForeignKey(
         Artisanat,
         on_delete=models.CASCADE,

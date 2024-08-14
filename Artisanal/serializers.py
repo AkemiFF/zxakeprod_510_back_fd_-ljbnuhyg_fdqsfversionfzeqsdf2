@@ -267,10 +267,22 @@ class SpecificationSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class ResponsableSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResponsableEtablissement
+        fields = ["id", "username", "email", "ban"]
+
+
 class ArtisanatSerializer(serializers.ModelSerializer):
+    responsable = ResponsableSerializer()
+    total_produits = serializers.SerializerMethodField()
+
     class Meta:
         model = Artisanat
         fields = "__all__"
+
+    def get_total_produits(self, obj):
+        return ProduitArtisanal.objects.filter(artisanat=obj).count()
 
 
 class AvisClientProduitArtisanalSerializer(serializers.ModelSerializer):
@@ -285,6 +297,12 @@ class ImageProduitArtisanalSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImageProduitArtisanal
         fields = ["image"]
+
+
+class ImageProduitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ImageProduitArtisanal
+        fields = "__all__"
 
 
 class ProduitArtisanalDetailSerializer(serializers.ModelSerializer):

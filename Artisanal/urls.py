@@ -11,6 +11,11 @@ router.register(r"items-panier", ItemPanierViewSet)
 router.register(r"commandes", CommandeViewSet)
 
 urlpatterns = [
+    path(
+        "images-produits/",
+        CreateImageProduitArtisanalView.as_view(),
+        name="create_image_produit",
+    ),
     path("", include(router.urls)),
     path(
         "produit/<int:pk>/",
@@ -49,4 +54,10 @@ urlpatterns = [
         name="produit-artisanal-detail",
     ),
     path("specifications/", SpecificationListView.as_view(), name="specification-list"),
+    path("list/", ArtisanatListView.as_view(), name="artisanat-list"),
+    path(
+        "toggle-autorisation/<int:pk>/",
+        ToggleAutorisationView.as_view(),
+        name="toggle_autorisation_artisanat",
+    ),
 ]
