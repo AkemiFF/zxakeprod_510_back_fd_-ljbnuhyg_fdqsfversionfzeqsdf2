@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from API import views
-from API.views import CustomTokenObtainPairView
+from API.views import *
 
 urlpatterns = [
     path("hebergement/", include("Hebergement.urls")),
@@ -17,6 +17,9 @@ urlpatterns = [
         name="get_csrf_token_direct",
     ),
     path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path(
+        "log/admin/", CustomAdminTokenObtainPairView.as_view(), name="token_obtain_pair"
+    ),
     path(
         "token-with-email/",
         CustomTokenObtainPairView.as_view(),
