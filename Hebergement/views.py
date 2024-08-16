@@ -27,6 +27,252 @@ from Accounts.serializers import ResponsableEtablissementSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Hebergement, Reservation, Chambre
+from django.db.models import Count
+from django.db.models.functions import TruncMonth
+from django.db.models import Sum
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Reservation, Hebergement
+
+
+class AdminHebergementListView(generics.ListAPIView):
+    queryset = Hebergement.objects.filter(delete=False)
+    serializer_class = ShortHebergementSerializer
+    permission_classes = [IsAdminUser]
+
+
+class DeletedHebergementListView(generics.ListAPIView):
+    queryset = Hebergement.objects.filter(delete=True)
+    serializer_class = ShortHebergementSerializer
+    permission_classes = [IsAdminUser]
+
+
+class RecentReservationsForHebergementView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, hebergement_id):
+        try:
+            hebergement = Hebergement.objects.get(pk=hebergement_id)
+
+            recent_reservations = Reservation.objects.filter(
+                hebergement=hebergement
+            ).order_by("-date_debut_reserve")[:6]
+
+            from .serializers import ReservationSerializer
+
+            serializer = ReservationSerializer(recent_reservations, many=True)
+
+            return Response(
+                {"recent_reservations": serializer.data}, status=status.HTTP_200_OK
+            )
+
+        except Hebergement.DoesNotExist:
+            return Response(
+                {"error": "Hébergement non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
+from django.db.models.functions import ExtractWeekDay
+from django.db.models import Count
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Reservation, Hebergement
+
+
+class ClientReservationsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, client_id, hebergement_id):
+        try:
+            client = Client.objects.get(pk=client_id)
+            hebergement = Hebergement.objects.get(pk=hebergement_id)
+
+            reservations = Reservation.objects.filter(
+                client_reserve=client, hebergement=hebergement
+            )
+
+            reservations_data = []
+            for reservation in reservations:
+                # Calcul du nombre de nuits
+                start_date = reservation.date_debut_reserve
+                end_date = reservation.date_fin_reserve
+                if start_date and end_date:
+                    duration = (end_date - start_date).days
+                else:
+                    duration = 0
+
+                chambre_data = None
+                if reservation.chambre_reserve:
+                    chambre = reservation.chambre_reserve
+                    # Récupère les images associées à la chambre
+                    images = ImageChambre.objects.filter(hebergement_chambre=chambre)
+                    images_data = [
+                        {
+                            "url": image.images.url,
+                            "couverture": image.couverture,
+                            "legende": image.legende_chambre,
+                        }
+                        for image in images
+                    ]
+
+                    chambre_data = {
+                        "id": chambre.id,
+                        "nom": chambre.nom_chambre,
+                        "prix_par_nuit": chambre.prix_nuit_chambre,
+                        "images": images_data,
+                    }
+
+                reservations_data.append(
+                    {
+                        "id": reservation.id,
+                        "hebergement": reservation.hebergement.id,
+                        "chambre": chambre_data,
+                        "date_debut_reserve": reservation.date_debut_reserve,
+                        "date_fin_reserve": reservation.date_fin_reserve,
+                        "nombre_de_nuits": duration,
+                        "prix_total_reserve": reservation.prix_total_reserve,
+                        "nombre_personnes_reserve": reservation.nombre_personnes_reserve,
+                        "client": {
+                            "id": client.id,
+                            "nom": client.username,
+                            "email": client.email,
+                        },
+                    }
+                )
+
+            return Response(
+                {"reservations": reservations_data}, status=status.HTTP_200_OK
+            )
+
+        except Client.DoesNotExist:
+            return Response(
+                {"error": "Client non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Hebergement.DoesNotExist:
+            return Response(
+                {"error": "Hébergement non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class ReservationsByDayOfWeekView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, hebergement_id):
+        try:
+            hebergement = Hebergement.objects.get(pk=hebergement_id)
+
+            reservations = Reservation.objects.filter(hebergement=hebergement)
+
+            # Annonce les jours de la semaine
+            days_of_week = [
+                "Lundi",
+                "Mardi",
+                "Mercredi",
+                "Jeudi",
+                "Vendredi",
+                "Samedi",
+                "Dimanche",
+            ]
+
+            reservations_by_day = (
+                reservations.annotate(day_of_week=ExtractWeekDay("date_debut_reserve"))
+                .values("day_of_week")
+                .annotate(total_reservations=Count("id"))
+                .order_by("day_of_week")
+            )
+
+            reservations_count_by_day = {day: 0 for day in days_of_week}
+
+            for item in reservations_by_day:
+                day_index = item["day_of_week"] - 1
+                reservations_count_by_day[days_of_week[day_index]] = item[
+                    "total_reservations"
+                ]
+
+            return Response(
+                {"reservations_by_day": reservations_count_by_day},
+                status=status.HTTP_200_OK,
+            )
+
+        except Hebergement.DoesNotExist:
+            return Response(
+                {"error": "Hébergement non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class ReservationCountByMonthView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, hebergement_id):
+        try:
+            # Vérifie si l'hébergement existe
+            hebergement = Hebergement.objects.get(pk=hebergement_id)
+
+            # Filtre les réservations pour l'hébergement spécifié
+            reservations_by_month = (
+                Reservation.objects.filter(hebergement=hebergement)
+                .annotate(month=TruncMonth("date_debut_reserve"))
+                .values("month")
+                .annotate(total_reservations=Count("id"))
+                .order_by("month")
+            )
+
+            return Response(
+                {"reservations_by_month": list(reservations_by_month)},
+                status=status.HTTP_200_OK,
+            )
+        except Hebergement.DoesNotExist:
+            return Response(
+                {"error": "Hébergement non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class HebergementStatsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, hebergement_id):
+        try:
+            # Vérifie si l'hébergement existe
+            hebergement = Hebergement.objects.get(pk=hebergement_id)
+
+            # Compte le nombre de réservations pour cet hébergement
+            reservation_count = Reservation.objects.filter(
+                hebergement=hebergement
+            ).count()
+
+            # Compte le nombre de chambres disponibles pour cet hébergement
+            available_chambres_count = HebergementChambre.objects.filter(
+                hebergement=hebergement, status=1
+            ).count()
+
+            # Calcule le nombre total d'invités pour cet hébergement
+            total_guests = (
+                Reservation.objects.filter(hebergement=hebergement).aggregate(
+                    total_guests=Sum("nombre_personnes_reserve")
+                )["total_guests"]
+                or 0
+            )
+
+            return Response(
+                {
+                    "booking_count": reservation_count,
+                    "available_room_count": available_chambres_count,
+                    "total_guests": total_guests,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Hebergement.DoesNotExist:
+            return Response(
+                {"error": "Hébergement non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class ClientsAndChambresByHebergementView(APIView):
@@ -40,7 +286,7 @@ class ClientsAndChambresByHebergementView(APIView):
                 {"error": "Hébergement non trouvé"}, status=status.HTTP_404_NOT_FOUND
             )
 
-        reservations = Reservation.objects.filter(hotel_reserve=hebergement)
+        reservations = Reservation.objects.filter(hebergement=hebergement)
         serializer = ReservationWithClientAndChambreSerializer(reservations, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -51,7 +297,7 @@ class HebergementReservationsListView(generics.ListAPIView):
 
     def get_queryset(self):
         hebergement_id = self.kwargs["hebergement_id"]
-        return Reservation.objects.filter(hotel_reserve_id=hebergement_id)
+        return Reservation.objects.filter(hebergement_id=hebergement_id)
 
 
 class ReservationsByHebergementView(APIView):
@@ -65,7 +311,7 @@ class ReservationsByHebergementView(APIView):
                 {"error": "Hébergement non trouvé"}, status=status.HTTP_404_NOT_FOUND
             )
 
-        reservations = Reservation.objects.filter(hotel_reserve=hebergement)
+        reservations = Reservation.objects.filter(hebergement=hebergement)
         serializer = ReservationSerializer(reservations, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -344,7 +590,7 @@ def check_if_client_liked_hebergement(request, hebergement_id):
 @permission_classes([AllowAny])
 def get_all_hebergements(request):
     try:
-        all_hebergement = Hebergement.objects.annotate(
+        all_hebergement = Hebergement.objects.filter(autorisation=True).annotate(
             min_prix_nuit_chambre=Min("hebergementchambre__prix_nuit_chambre")
         )
     except Hebergement.DoesNotExist:
@@ -453,14 +699,13 @@ def create_new_hebergement(request):
         "stat": request.data.get("stat"),
         "autorisation": False,
     }
-    print(hebergement_data)
 
-    localisation_data = {
-        "adresse": request.data.get("address"),
-        "ville": request.data.get("city"),
-        "latitude": None,
-        "longitude": None,
-    }
+    # localisation_data = {
+    #     "adresse": request.data.get("address"),
+    #     "ville": request.data.get("city"),
+    #     "latitude": None,
+    #     "longitude": None,
+    # }
 
     hebergement_serializer = NewHebergementSerializer(data=hebergement_data)
 
@@ -468,25 +713,25 @@ def create_new_hebergement(request):
         hebergement = hebergement_serializer.save()
         print(request.data)
 
-        localisation_data["hebergement_id"] = hebergement.id
-        localisation_serializer = LocalisationSerializer(data=localisation_data)
+        # localisation_data["hebergement_id"] = hebergement.id
+        # localisation_serializer = LocalisationSerializer(data=localisation_data)
 
-        if localisation_serializer.is_valid():
-            localisation_serializer.save()
+        # if localisation_serializer.is_valid():
+        #     localisation_serializer.save()
 
-            return Response(
-                {
-                    "hebergement": hebergement_serializer.data,
-                    "localisation": localisation_serializer.data,
-                    "id_hebergement": hebergement.id,
-                },
-                status=status.HTTP_201_CREATED,
-            )
-        else:
-            return Response(
-                {"localisation_errors": localisation_serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        return Response(
+            {
+                "hebergement": hebergement_serializer.data,
+                # "localisation": localisation_serializer.data,
+                "id_hebergement": hebergement.id,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+        # else:
+        #     return Response(
+        #         {"localisation_errors": localisation_serializer.errors},
+        #         status=status.HTTP_400_BAD_REQUEST,
+        #     )
     else:
         return Response(
             {"hebergement_errors": hebergement_serializer.errors},
@@ -771,3 +1016,50 @@ class MinHebergementDetailView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CreateLocalisationView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = LocalisationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+StatusSerializer
+
+
+class ToggleDeleteHebergement(APIView):
+    permission_classes = [IsAdminUser]
+    
+    def patch(self, request, pk, format=None):
+        try:
+            hebergement = Hebergement.objects.get(pk=pk)
+            hebergement.delete = not hebergement.delete
+            hebergement.autorisation = False
+            hebergement.save()
+            return Response({"delete": hebergement.delete}, status=status.HTTP_200_OK)
+        except Hebergement.DoesNotExist:
+            return Response(
+                {"error": "Hebergement not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class ToggleAutorisationView(APIView):
+    permission_classes = [IsAdminUser]
+    def patch(self, request, pk, format=None):
+        try:
+            hebergement = Hebergement.objects.get(pk=pk)
+        except Hebergement.DoesNotExist:
+            return Response(
+                {"error": "Hebergement not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        hebergement.autorisation = not hebergement.autorisation
+        hebergement.save()
+
+        serializer = StatusSerializer(hebergement)
+        return Response(serializer.data, status=status.HTTP_200_OK)

@@ -48,11 +48,59 @@ from Accounts.models import (
     Client,
 )
 from rest_framework.permissions import *
-from .permissions import IsClientUser
+from .permissions import IsClientUser, IsResponsableEtablissement
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from django.contrib.auth import authenticate
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+
+
+class CheckEmailResponsableView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email")
+
+        if not email:
+            return Response(
+                {"error": "Email est requis"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if ResponsableEtablissement.objects.filter(email=email).exists():
+            return Response(
+                {
+                    "exists": True,
+                    "message": "Cet email est déjà utilisé par un autre responsable.",
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        try:
+            validate_email(email)
+        except ValidationError:
+            return Response(
+                {"valid": False, "message": "Format d'email invalide."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {"exists": False, "message": "Cet email n'est pas encore utilisé."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class SomeProtectedView(APIView):
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        user = request.user
+        print(request.user)
+        if isinstance(user, ResponsableEtablissement):
+            return Response({"message": f"Bienvenue, {user.username}!"})
+        return Response({"error": "Unauthorized"}, status=401)
 
 
 class ResponsableLoginView(APIView):
@@ -85,20 +133,22 @@ class ResponsableLoginView(APIView):
 
         refresh = RefreshToken.for_user(user)
         access = refresh.access_token
-        type_etablissement = info_user["type_responsable"]
+
+        type_etablissement = info_user["type_responsable"]["id"]
+        print(type_etablissement)
         if type_etablissement == 1:
             hebergements = Hebergement.objects.get(responsable_hebergement=user)
             etablissement_info = MinHebergementSerializer(hebergements)
         elif type_etablissement == 2:
-            artisanat = Artisanat.objects.get(responsable_hebergement=user)
+            artisanat = Artisanat.objects.get(responsable=user)
             etablissement_info = ArtisanatSerializer(artisanat)
         elif type_etablissement == 3:
-            tour = TourOperateur.objects.get(responsable_hebergement=user)
+            tour = TourOperateur.objects.get(responsable_TourOperateur=user)
             etablissement_info = TourOperateurSerializer(tour)
         else:
             return Response(
                 {"error": "Vouns n'avez aucun établissement en votre nom"},
-                status=status.HTTP_406_NOT_ACCEPTABLE,
+                status=status.HTTP_404_NOT_FOUND,
             )
         return Response(
             {
@@ -340,7 +390,7 @@ def profil_client(request):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([IsAdminUser])
 def fetch_clients_detail(request):
     try:
         clients = Client.objects.all()
@@ -348,6 +398,18 @@ def fetch_clients_detail(request):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     serializer = ClientSerializer(clients, many=True)
+    return JsonResponse(serializer.data, safe=False)
+
+
+@api_view(["GET"])
+@permission_classes([IsAdminUser])
+def fetch_responsable_detail(request):
+    try:
+        clients = ResponsableEtablissement.objects.all()
+    except ResponsableEtablissement.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    serializer = ResponsableEtablissementSerializer(clients, many=True)
     return JsonResponse(serializer.data, safe=False)
 
 
@@ -562,6 +624,43 @@ def send_verification_code(request):
 
 
 @csrf_exempt
+def responsable_verification_code(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+            email = data["email"]
+
+            verification_code = get_random_string(length=6, allowed_chars="1234567890")
+
+            VerificationCode.objects.create(user_email=email, code=verification_code)
+
+            context = {
+                "verification_code": verification_code,
+                "user_name": email,
+                "link_token": "aftrip.com",
+                "type_action": "signup to aftrip",
+            }
+
+            html_message = render_to_string("email/verification.html", context=context)
+
+            send_mail(
+                "Your Verification Code",
+                "",
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+                html_message=html_message,
+            )
+
+            return JsonResponse(
+                {"message": "Verification code sent successfully"}, status=200
+            )
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
+
+@csrf_exempt
 def welcome_mail(request):
     if request.method == "POST":
         try:
@@ -634,6 +733,36 @@ def send_recovery_code(request):
 
 @csrf_exempt
 def verify_code(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+            email = data["email"]
+            code = data["code"]
+
+            if not email or not code:
+                return JsonResponse(
+                    {"error": "Email and code are required"}, status=400
+                )
+
+            verification_code = VerificationCode.objects.filter(
+                user_email=email, code=code
+            ).first()
+
+            if verification_code and not verification_code.IsUsed():
+                verification_code.used = True
+                verification_code.save()
+                return JsonResponse({"message": "Verification successful"}, status=200)
+            else:
+                return JsonResponse(
+                    {"error": "Invalid or expired verification code"}, status=400
+                )
+        except User.DoesNotExist:
+            return JsonResponse({"error": "User not found"}, status=404)
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
+
+@csrf_exempt
+def responsable_verify_code(request):
     if request.method == "POST":
         try:
             data = json.loads(request.body.decode("utf-8"))
@@ -757,7 +886,7 @@ class ResponsableEtablissementListByTypeView(generics.ListAPIView):
 
 
 @api_view(["PATCH"])
-@permission_classes([AllowAny])
+@permission_classes([IsAdminUser])
 def update_ban_status(request, pk):
     try:
         client = Client.objects.get(pk=pk)
@@ -775,6 +904,43 @@ def update_ban_status(request, pk):
         return Response(serializer.data)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ToggleBanView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, pk, format=None):
+        try:
+            client = Client.objects.get(pk=pk)
+        except Client.DoesNotExist:
+            return Response(
+                {"error": "Client not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        client.ban = not client.ban
+        client.save()
+
+        serializer = ClientBanSerializer(client)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ToggleBanAdminView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, pk, format=None):
+        try:
+            responsable = ResponsableEtablissement.objects.get(pk=pk)
+        except ResponsableEtablissement.DoesNotExist:
+            return Response(
+                {"error": "Responsable not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        responsable.ban = not responsable.ban
+        responsable.save()
+
+        serializer = FullResponsableEtablissementSerializer(responsable)
+        print(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):

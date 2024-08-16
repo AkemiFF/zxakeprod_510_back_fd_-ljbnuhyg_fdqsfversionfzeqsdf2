@@ -5,7 +5,14 @@ from django.contrib import admin
 urlpatterns = [
     path("404_dfiu__faftripserveru__dont_/", admin.site.urls),
     path(
-        "client-update/<int:pk>/ban/", views.update_ban_status, name="client-ban-update"
+        "client/<int:pk>/ban/",
+        views.ToggleBanView.as_view(),
+        name="client-ban-update",
+    ),
+    path(
+        "responsable/<int:pk>/ban/",
+        views.ToggleBanAdminView.as_view(),
+        name="responsable-ban-update",
     ),
     path("get_count_client/", views.get_count_client, name="get_count_client"),
     path(
@@ -79,6 +86,11 @@ urlpatterns = [
     path("client/<int:pk>/", views.client_detail, name="client_detail"),
     path("profil-client/", views.profil_client, name="profil_client"),
     path("clients/", views.fetch_clients_detail, name="fecth_clients_detail"),
+    path(
+        "responsables/",
+        views.fetch_responsable_detail,
+        name="fecth_responsables_detail",
+    ),
     path("client/create/", views.client_create, name="client_create"),
     path(
         "client/create-with-username/",
@@ -111,14 +123,34 @@ urlpatterns = [
         views.send_verification_code,
         name="send_verification_code",
     ),
+    path(
+        "send-responsable-code/",
+        views.responsable_verification_code,
+        name="responsable_verification_code",
+    ),
     path("send-recovery-code/", views.send_recovery_code, name="send_recovery_code"),
     path("verify-code/", views.verify_code, name="verify_code"),
+    path(
+        "responsable-verify-code/",
+        views.responsable_verify_code,
+        name="responsable_verify_code",
+    ),
+    path(
+        "responsable-check-email/",
+        views.CheckEmailResponsableView.as_view(),
+        name="responsable_check_email",
+    ),
     path("reset-password/", views.reset_password, name="reset_password"),
     path("welcome-mail/", views.welcome_mail, name="welcome_mail"),
     path("edit-client/", views.EditClientView.as_view(), name="edit-client"),
     path(
         "responsable/login/",
         views.ResponsableLoginView.as_view(),
+        name="responsable_login",
+    ),
+    path(
+        "test/",
+        views.SomeProtectedView.as_view(),
         name="responsable_login",
     ),
 ]

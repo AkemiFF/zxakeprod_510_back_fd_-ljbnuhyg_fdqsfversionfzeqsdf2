@@ -587,3 +587,38 @@ class AjoutChambreSerializer(serializers.ModelSerializer):
             )
 
         return hebergement_chambre
+
+
+class ShortHebergementSerializer(serializers.ModelSerializer):
+    images = HebergementImageSerializer(many=True)
+    prix_min_chambre = serializers.SerializerMethodField()
+    chambres = HebergementChambreSerializer(many=True, source="hebergementchambre_set")
+    localisation = LocalisationSerializer()
+    # type_hebergement = TypeHebergementSerializer()
+
+    class Meta:
+        model = Hebergement
+        fields = [
+            "id",
+            "chambres",
+            "localisation",
+            "nom_hebergement",
+            "description_hebergement",
+            "images",
+            "autorisation",
+            "prix_min_chambre",
+            "type_hebergement",
+            "nombre_etoile_hebergement",
+        ]
+
+    def get_prix_min_chambre(self, obj):
+        chambres = HebergementChambre.objects.filter(hebergement=obj)
+        if chambres.exists():
+            return chambres.order_by("prix_nuit_chambre").first().prix_nuit_chambre
+        return None
+
+
+class StatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Hebergement
+        fields = ["id", "autorisation"]

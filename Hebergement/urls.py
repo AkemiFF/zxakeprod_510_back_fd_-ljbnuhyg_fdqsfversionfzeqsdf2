@@ -3,7 +3,58 @@ from Hebergement import views
 
 
 urlpatterns = [
-    # Admin Accomodations
+    #########################################
+    # For Super Admin #
+    path("list/", views.AdminHebergementListView.as_view(), name="hebergement-list"),
+    path(
+        "deleted/", views.DeletedHebergementListView.as_view(), name="hebergement-list"
+    ),
+    path(
+        "type/",
+        views.TypeHebergementListView.as_view(),
+        name="type-hebergement",
+    ),
+    path(
+        "toggle-autorisation/<int:pk>/",
+        views.ToggleAutorisationView.as_view(),
+        name="toggle_autorisation",
+    ),
+    path(
+        "toggle-delete/<int:pk>/",
+        views.ToggleDeleteHebergement.as_view(),
+        name="toggle_delete",
+    ),
+    #########################################
+    path(
+        "localisation/create/",
+        views.CreateLocalisationView.as_view(),
+        name="create-localisation",
+    ),
+    path(
+        "<int:hebergement_id>/stats/",
+        views.HebergementStatsView.as_view(),
+        name="hebergement-stats",
+    ),
+    path(
+        "<int:hebergement_id>/reservations/mois/",
+        views.ReservationCountByMonthView.as_view(),
+        name="reservation-stats",
+    ),
+    path(
+        "client-reservations/<int:client_id>/hebergement/<int:hebergement_id>/",
+        views.ClientReservationsView.as_view(),
+        name="client_reservations",
+    ),
+    path(
+        "reservations-by-day/<int:hebergement_id>/",
+        views.ReservationsByDayOfWeekView.as_view(),
+        name="reservations_by_day_of_week",
+    ),
+    path(
+        "<int:hebergement_id>/recent-reservations/",
+        views.RecentReservationsForHebergementView.as_view(),
+        name="recent_reservations_for_hebergement",
+    ),
     path(
         "add-hebergement-image/",
         views.AddHebergementImageView.as_view(),

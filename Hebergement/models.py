@@ -77,8 +77,8 @@ class Hebergement(models.Model):
     )
     nif = models.CharField(max_length=100, null=True, blank=True)
     stat = models.CharField(max_length=100, null=True, blank=True)
-
     autorisation = models.BooleanField(default=False)
+    delete = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     likes = models.ManyToManyField(Client, related_name="liked_hebergement", blank=True)
@@ -104,7 +104,11 @@ class Localisation(models.Model):
     )
 
     def __str__(self):
-        return self.adresse
+        return (
+            str(self.id)
+            + " "
+            + str(self.hebergement_id.nom_hebergement if self.hebergement_id else "")
+        )
 
 
 class SocialLink(models.Model):
@@ -189,7 +193,7 @@ class ImageChambre(models.Model):
 
 
 class Reservation(models.Model):
-    hotel_reserve = models.ForeignKey(
+    hebergement = models.ForeignKey(
         Hebergement, on_delete=models.CASCADE, related_name="reservations_hotel"
     )
     chambre_reserve = models.ForeignKey(
@@ -210,7 +214,7 @@ class Reservation(models.Model):
 
     def __str__(self) -> str:
         return (
-            f"{self.client_reserve} + {self.hotel_reserve} + {self.est_validee_reserve}"
+            f"{self.client_reserve} + {self.hebergement} + {self.est_validee_reserve}"
         )
 
 
@@ -228,18 +232,3 @@ class AvisClients(models.Model):
 
     def __str__(self) -> str:
         return f"Note: {self.note} - Hebergement: {self.hebergement.nom_hebergement}"
-
-
-# class HebergementLike(models.Model):
-#     hebergement = models.ForeignKey(
-#         Hebergement, on_delete=models.CASCADE, related_name="likes"
-#     )
-#     client = models.ForeignKey(Client, on_delete=models.CASCADE)
-
-#     class Meta:
-#         unique_together = ("hebergement", "client")
-#         verbose_name = "Hebergement Like"
-#         verbose_name_plural = "Hebergement Likes"
-
-#     def __str__(self):
-#         return f"{self.client} likes {self.hebergement}"

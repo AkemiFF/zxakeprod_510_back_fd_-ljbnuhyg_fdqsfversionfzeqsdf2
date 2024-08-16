@@ -7,19 +7,33 @@ from django.core.exceptions import ValidationError
 from Hebergement.models import Localisation
 
 
-class Artisanat(models.Model):
-    nom_artisanat = models.CharField(max_length=200, null=True, blank=True)
+class Specification(models.Model):
+    type_specification = models.CharField(max_length=300, null=True, unique=True)
 
-    responsable_artisanat = models.ForeignKey(
+    def __str__(self) -> str:
+        return self.type_specification
+
+
+class Artisanat(models.Model):
+    nom = models.CharField(max_length=200, null=True, blank=True)
+
+    responsable = models.ForeignKey(
         ResponsableEtablissement,
         on_delete=models.CASCADE,
-        related_name="responsable_artisanat",
+        related_name="artisanat_responsable",
     )
+    telephone = models.CharField(max_length=15, null=True, blank=True)
 
-    description_artisanat = models.TextField(max_length=400, null=True, blank=True)
+    stat = models.CharField(max_length=255, null=True, blank=True)
+    nif = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(max_length=400, null=True, blank=True)
+    email = models.EmailField(max_length=400, null=True, blank=True)
+    active = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.responsable_artisanat} ({self.nom_artisanat})"
+        return f"{self.responsable} ({self.nom})"
 
 
 class LocalisationArtisanat(models.Model):
@@ -47,11 +61,14 @@ class ProduitArtisanal(models.Model):
     specifications = models.ManyToManyField(
         "Specification", related_name="produits_artisanaux"
     )
+    poid_kg = models.FloatField(null=True, blank=True)
+    largeur = models.FloatField(null=True, blank=True)
+    hauteur = models.FloatField(null=True, blank=True)
 
     artisanat = models.ForeignKey(
         Artisanat,
         on_delete=models.CASCADE,
-        related_name="responsable",
+        related_name="responsable_produit",
         null=True,
         blank=True,
     )
@@ -62,7 +79,7 @@ class ProduitArtisanal(models.Model):
     likes = models.ManyToManyField(Client, related_name="liked_produits", blank=True)
 
     def __str__(self):
-        return f"({self.nom_produit_artisanal}) - {self.artisanat.responsable_artisanat.email}"
+        return f"({self.nom_produit_artisanal}) - {self.artisanat.responsable.email}"
 
     def total_likes(self):
         return self.likes.count()
@@ -93,13 +110,6 @@ class ImageProduitArtisanal(models.Model):
 
     def __str__(self):
         return f"Image for {self.produit.nom_produit_artisanal}"
-
-
-class Specification(models.Model):
-    type_specification = models.CharField(max_length=300, null=True, unique=True)
-
-    def __str__(self) -> str:
-        return self.type_specification
 
 
 class Panier(models.Model):
@@ -134,16 +144,8 @@ class Commande(models.Model):
     )
     prix_total = models.DecimalField(max_digits=10, decimal_places=2)
     date_commande = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(
-        max_length=20,
-        choices=[
-            ("En attente", "En attente"),
-            ("En cours", "En cours"),
-            ("Livré", "Livré"),
-            ("Annulé", "Annulé"),
-        ],
-        default="En attente",
-    )
+    # livré ou pas
+    status = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if not self.panier:
