@@ -9,6 +9,7 @@ from rest_framework.decorators import (
 )
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.views import APIView
+from django.db.models import Count
 
 
 class SpecificationListView(generics.ListAPIView):
@@ -21,11 +22,42 @@ class CreateImageProduitArtisanalView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        serializer = ImageProduitSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        images = request.FILES.getlist("image[]")
+        produit_id = request.data.get("produit")
+
+        if not images:
+            return Response(
+                {"error": "No images provided"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        created_images = []
+        for image in images:
+            data = {"produit": produit_id, "image": image}
+            serializer = ImageProduitSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                created_images.append(serializer.data)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(created_images, status=status.HTTP_201_CREATED)
+
+
+class ProduitArtisanalDeleteView(APIView):
+    permission_classes = [AllowAny]
+
+    def delete(self, request, pk, format=None):
+        try:
+            produit = ProduitArtisanal.objects.get(pk=pk)
+            produit.delete()
+            return Response(
+                {"detail": "Produit supprimé avec succès."},
+                status=status.HTTP_204_NO_CONTENT,
+            )
+        except ProduitArtisanal.DoesNotExist:
+            return Response(
+                {"detail": "Produit non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class ToggleAutorisationView(APIView):
@@ -162,6 +194,16 @@ class ProduitArtisanalViewSet(viewsets.ModelViewSet):
     queryset = ProduitArtisanal.objects.all()
     serializer_class = ProduitArtisanalSerializer
     permission_classes = [permissions.AllowAny]
+
+
+class FiltreLikeProduitArtisanalViewSet(viewsets.ModelViewSet):
+    serializer_class = ProduitArtisanalSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        queryset = ProduitArtisanal.objects.annotate(total_likes=Count("likes"))
+        queryset = queryset.order_by("-total_likes")[:6]
+        return queryset
 
 
 class PanierViewSet(viewsets.ModelViewSet):

@@ -56,7 +56,7 @@ class LocalisationArtisanat(models.Model):
 class ProduitArtisanal(models.Model):
     nom_produit_artisanal = models.CharField(max_length=100, default="")
     description_artisanat = models.TextField()
-    prix_artisanat = models.DecimalField(max_digits=8, decimal_places=2)
+    prix_artisanat = models.DecimalField(max_digits=16, decimal_places=2)
     disponible_artisanat = models.BooleanField(default=True)
     specifications = models.ManyToManyField(
         "Specification", related_name="produits_artisanaux"
