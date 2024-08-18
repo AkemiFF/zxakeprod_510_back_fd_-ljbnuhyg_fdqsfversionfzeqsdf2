@@ -126,6 +126,8 @@ def list_voyages(request, pk):
 
 
 class TourOperateurViewSet(viewsets.ViewSet):
+    permission_classes = [AllowAny]
+
     @action(detail=True, methods=["get"])
     def voyages(self, request, pk=None):
         try:
