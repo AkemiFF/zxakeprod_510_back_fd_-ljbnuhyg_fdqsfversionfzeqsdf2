@@ -6,8 +6,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from Hebergement.serializers import *
 from Hebergement.models import *
-from django.http import FileResponse
-
 from rest_framework.permissions import *
 from django.db.models import Min
 from django.shortcuts import get_object_or_404, render
@@ -24,8 +22,7 @@ from .utils import generer_description_hebergement
 import os
 from Accounts.permissions import IsResponsableEtablissement
 from Accounts.serializers import ResponsableEtablissementSerializer
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import authenticate
+
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -39,6 +36,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Reservation, Hebergement
+
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.utils.dateparse import parse_date
 
 
 class AdminHebergementListView(generics.ListAPIView):
@@ -1034,7 +1036,7 @@ StatusSerializer
 
 class ToggleDeleteHebergement(APIView):
     permission_classes = [IsAdminUser]
-    
+
     def patch(self, request, pk, format=None):
         try:
             hebergement = Hebergement.objects.get(pk=pk)
@@ -1050,6 +1052,7 @@ class ToggleDeleteHebergement(APIView):
 
 class ToggleAutorisationView(APIView):
     permission_classes = [IsAdminUser]
+
     def patch(self, request, pk, format=None):
         try:
             hebergement = Hebergement.objects.get(pk=pk)
@@ -1063,3 +1066,58 @@ class ToggleAutorisationView(APIView):
 
         serializer = StatusSerializer(hebergement)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def check_availability_and_calculate_price(request):
+    if request.method == "POST":
+        data = request.data
+        chambre_ids = data.get("chambre_ids", [])
+        check_in = parse_date(data.get("check_in"))
+        check_out = parse_date(data.get("check_out"))
+
+        if not chambre_ids or not check_in or not check_out:
+            return JsonResponse({"error": "Invalid data"}, status=404)
+
+        nombre_de_jours = (check_out - check_in).days
+        print(nombre_de_jours)
+        total_price = 0
+        unavailable_chambres = []
+
+        for chambre_id in chambre_ids:
+            try:
+                chambre = HebergementChambre.objects.get(id=chambre_id)
+                prix_par_nuit = chambre.prix_nuit_chambre
+                prix_total_chambre = prix_par_nuit * nombre_de_jours
+
+                reservation_exists = Reservation.objects.filter(
+                    chambre_reserve=chambre,
+                    date_debut_reserve__lt=check_out,
+                    date_fin_reserve__gt=check_in,
+                    est_validee_reserve=True,
+                ).exists()
+
+                if reservation_exists:
+                    unavailable_chambres.append(chambre_id)
+                else:
+                    total_price += prix_total_chambre
+
+            except HebergementChambre.DoesNotExist:
+                unavailable_chambres.append(chambre_id)
+        print(total_price)
+        if unavailable_chambres:
+            return JsonResponse(
+                {
+                    "unavailable_chambres": unavailable_chambres,
+                    "message": "Some rooms are not available for the selected dates.",
+                },
+                status=400,
+            )
+
+        return JsonResponse(
+            {"total_price": total_price, "message": "All rooms are available."},
+            status=200,
+        )
+    else:
+        return JsonResponse({"error": "Invalid request"}, status=400)

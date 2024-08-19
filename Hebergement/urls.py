@@ -3,6 +3,18 @@ from Hebergement import views
 
 
 urlpatterns = [
+    # Reservation #
+    # data format
+    # {
+    #     "chambre_ids": [1, 2, 3],
+    #     "check_in": "2024-08-20",
+    #     "check_out": "2024-08-25"
+    # }
+    path(
+        "check/",
+        views.check_availability_and_calculate_price,
+        name="check_availability",
+    ),
     #########################################
     # For Super Admin #
     path("list/", views.AdminHebergementListView.as_view(), name="hebergement-list"),

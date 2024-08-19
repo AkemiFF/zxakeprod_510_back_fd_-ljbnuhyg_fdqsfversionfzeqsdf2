@@ -16,6 +16,11 @@ urlpatterns = [
         CreateImageProduitArtisanalView.as_view(),
         name="create_image_produit",
     ),
+    path(
+        "produits-artisanaux/filter/",
+        FiltreLikeProduitArtisanalViewSet.as_view({"get": "list"}),
+        name="artisanaux_produit",
+    ),
     path("", include(router.urls)),
     path(
         "produit/<int:pk>/",
@@ -59,5 +64,10 @@ urlpatterns = [
         "toggle-autorisation/<int:pk>/",
         ToggleAutorisationView.as_view(),
         name="toggle_autorisation_artisanat",
+    ),
+    path(
+        "produit/<int:pk>/delete/",
+        ProduitArtisanalDeleteView.as_view(),
+        name="produit-artisanal-delete",
     ),
 ]
