@@ -273,6 +273,13 @@ class ReservationSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class ReservationSerializer1(serializers.ModelSerializer):
+
+    class Meta:
+        model = Reservation
+        fields = "__all__"
+
+
 class AvisClientsSerializer(serializers.ModelSerializer):
     class Meta:
         model = AvisClients
@@ -622,3 +629,29 @@ class StatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = Hebergement
         fields = ["id", "autorisation"]
+
+
+class TransactionHebergementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TransactionHebergement
+        fields = "__all__"
+
+
+class ListReservationSerializer(serializers.ModelSerializer):
+    chambre_reserve = HebergementChambreSerializer()
+    hebergement = HebergementSerializer()
+
+    class Meta:
+        model = Reservation
+        fields = [
+            "id",
+            "hebergement",
+            "chambre_reserve",
+            "date_debut_reserve",
+            "date_fin_reserve",
+            "nombre_personnes_reserve",
+            "prix_total_reserve",
+            "est_validee_reserve",
+            "created_at",
+            "updated_at",
+        ]

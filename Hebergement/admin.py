@@ -2,6 +2,40 @@ from django.contrib import admin
 from .models import *
 
 
+class TransactionHebergementAdmin(admin.ModelAdmin):
+    list_display = (
+        "transaction_id",
+        "status",
+        "amount_formatted",
+        "currency",
+        "payer_name",
+        "payer_email",
+        "payee_email",
+        "description",
+        "create_time_formatted",
+        "update_time_formatted",
+    )
+    search_fields = ("transaction_id", "payer_name", "payer_email")
+    list_filter = ("status", "currency", "create_time")
+
+    def amount_formatted(self, obj):
+        return f"{obj.amount} {obj.currency}"
+
+    amount_formatted.short_description = "Amount"
+
+    def create_time_formatted(self, obj):
+        return obj.create_time.strftime("%Y-%m-%d %H:%M:%S")
+
+    create_time_formatted.short_description = "Created At"
+
+    def update_time_formatted(self, obj):
+        return obj.update_time.strftime("%Y-%m-%d %H:%M:%S")
+
+    update_time_formatted.short_description = "Updated At"
+
+
+# Enregistrez le modèle avec la classe d'administration personnalisée
+admin.site.register(TransactionHebergement, TransactionHebergementAdmin)
 admin.site.register(Hebergement)
 admin.site.register(HebergementImage)
 
