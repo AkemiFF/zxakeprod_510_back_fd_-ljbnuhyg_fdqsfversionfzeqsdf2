@@ -87,6 +87,34 @@ class TypeResponsableSerializer(serializers.ModelSerializer):
 # Pour ResponsableEtablissement
 
 
+class FullClientSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(
+        write_only=True, required=True, validators=[validate_password]
+    )
+
+    class Meta:
+        model = Client
+        fields = (
+            "id",
+            "email",
+            "username",
+            "first_name",
+            "last_name",
+            "adresse",
+            "ville",
+            "numero_client",
+            "password",
+        )
+
+    def create(self, validated_data):
+        password = validated_data.pop("password", None)
+        instance = self.Meta.model(**validated_data)
+        if password is not None:
+            instance.set_password(password)
+        instance.save()
+        return instance
+
+
 class ResponsableEtablissementSerializer(serializers.ModelSerializer):
     type_responsable = TypeResponsableSerializer(read_only=True)
 
