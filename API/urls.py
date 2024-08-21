@@ -26,5 +26,11 @@ urlpatterns = [
         name="token_obtain_pair_email",
     ),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path(
+        "token/responsable/",
+        ResponsableEtablissementTokenObtainPairView.as_view(),
+        name="responsable_token_obtain_pair",
+    ),
     path("message/", include("Message.urls")),
+    path("secure-endpoint/", MySecureView.as_view(), name="secure_endpoint"),
 ]

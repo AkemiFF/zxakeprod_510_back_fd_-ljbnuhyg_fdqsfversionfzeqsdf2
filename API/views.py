@@ -7,12 +7,35 @@ from rest_framework.decorators import api_view, permission_classes
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.http import JsonResponse
 from rest_framework_simplejwt.views import TokenObtainPairView
-from API.serializers import CustomTokenObtainPairSerializer
-
+from API.serializers import *
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework.response import Response
 from rest_framework import status
+from .authentication import CustomJWTAuthentication
+from rest_framework_simplejwt.views import TokenViewBase
+from Accounts.models import Client, ResponsableEtablissement
+from Accounts.permissions import *
+
+
+class ResponsableEtablissementTokenObtainPairView(TokenViewBase):
+    serializer_class = ResponsableEtablissementTokenObtainPairSerializer
+
+
+class MySecureView(APIView):
+    authentication_classes = [CustomJWTAuthentication]
+    permission_classes = [IsResponsable]
+
+    def get(self, request):
+        # Créez un dictionnaire avec les informations de l'utilisateur
+        user_info = {
+            "username": request.user.username,
+            "email": request.user.email,
+            "is_client": isinstance(request.user, Client),
+            "is_responsable": isinstance(request.user, ResponsableEtablissement),
+        }
+
+        # Retourne une réponse JSON
+        return Response({"message": "Vous êtes authentifié!", "user": user_info})
 
 
 class CustomAdminTokenObtainPairView(TokenObtainPairView):
