@@ -20,7 +20,6 @@ from .models import Hebergement
 from django.conf import settings
 from .utils import generer_description_hebergement
 import os
-from Accounts.permissions import IsResponsableEtablissement
 from Accounts.serializers import ResponsableEtablissementSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
