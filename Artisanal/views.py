@@ -317,3 +317,112 @@ def filter_produits(request):
 
     serializer = ProduitArtisanalSerializer(produits, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def check_product(request):
+    try:
+        id_produit = request.data.get("id_produit")
+        quantite = request.data.get("quantite")
+
+        produit = ProduitArtisanal.objects.get(id=id_produit)
+
+        if quantite > produit.nb_produit_dispo:
+            return Response(
+                {"message": "Quantité insuffisante disponible pour ce produit."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        product_data = {
+            "produit": produit.id,
+            "prix_unitaire": produit.prix_artisanat,
+            "prix_total": produit.prix_artisanat * quantite,
+            "quantite_disponible": produit.nb_produit_dispo,
+            "quantite": quantite,
+            "status": True,
+        }
+
+        return Response(product_data, status=status.HTTP_200_OK)
+
+    except ProduitArtisanal.DoesNotExist:
+        return Response(
+            {"message": "Le produit n'existe pas."}, status=status.HTTP_404_NOT_FOUND
+        )
+
+
+def create_transaction(transaction_data, user):
+    formatted_data = {
+        "transaction_id": transaction_data.get("id"),
+        "status": transaction_data.get("status"),
+        "amount": transaction_data["purchase_units"][0]["amount"]["value"],
+        "currency": transaction_data["purchase_units"][0]["amount"]["currency_code"],
+        "payer_name": f"{transaction_data['payer']['name']['given_name']} {transaction_data['payer']['name']['surname']}",
+        "payer_email": transaction_data["payer"]["email_address"],
+        "payer_id": transaction_data["payer"]["payer_id"],
+        "payee_email": transaction_data["purchase_units"][0]["payee"]["email_address"],
+        "merchant_id": transaction_data["purchase_units"][0]["payee"]["merchant_id"],
+        "description": transaction_data["purchase_units"][0].get("description"),
+        "shipping_address": transaction_data["purchase_units"][0]["shipping"][
+            "address"
+        ]["address_line_1"],
+        "shipping_city": transaction_data["purchase_units"][0]["shipping"]["address"][
+            "admin_area_2"
+        ],
+        "shipping_state": transaction_data["purchase_units"][0]["shipping"]["address"][
+            "admin_area_1"
+        ],
+        "shipping_postal_code": transaction_data["purchase_units"][0]["shipping"][
+            "address"
+        ]["postal_code"],
+        "shipping_country": transaction_data["purchase_units"][0]["shipping"][
+            "address"
+        ]["country_code"],
+        "create_time": transaction_data["create_time"],
+        "update_time": transaction_data["update_time"],
+        "capture_id": transaction_data["purchase_units"][0]["payments"]["captures"][
+            0
+        ].get("id"),
+        "client": user.id,
+    }
+
+    serializer = TransactionArtisanatSerializer(data=formatted_data)
+    if serializer.is_valid():
+        transaction = serializer.save()
+        return transaction, None
+    return None, serializer.errors
+
+
+class CreateAchatView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        # Récupérer les données de la commande
+        commande_data = request.data.get("commande")
+
+        if not commande_data:
+            return Response(
+                {"error": "No commande data provided"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Créer la transaction
+        transaction_data = request.data.get("transaction")
+        transaction, errors = create_transaction(transaction_data, request.user)
+
+        if errors:
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Associer le client et la transaction à la commande
+        commande_data["client"] = request.user.id
+        commande_data["transaction"] = transaction.id
+
+        # Serializer pour la commande
+        serializer = CommandeProduitSerializer(data=commande_data)
+        if serializer.is_valid():
+            commande = serializer.save()
+            created_commande = serializer.data
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(created_commande, status=status.HTTP_201_CREATED)
