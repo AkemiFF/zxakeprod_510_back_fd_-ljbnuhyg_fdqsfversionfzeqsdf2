@@ -10,7 +10,7 @@ N_RUN = 0
 
 FrontHosts = [
     "http://192.168.88.30:3000",
-     "http://192.168.88.30"
+    "http://192.168.88.30",
     "http://localhost:3000",
     "http://192.168.88.23:3000",
     "http://192.168.88.43:3000",
@@ -20,6 +20,8 @@ FrontHosts = [
     "http://35.184.115.101",
     "https://www.craft-aftrip.com",
     "https://craft-aftrip.com",
+    "http://192.168.88.4:3000",
+    "http://192.168.88.4",
 ]
 
 
@@ -46,10 +48,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "allauth",
-    "allauth.account",
-    "allauth.socialaccount",
-    "allauth.socialaccount.providers.google",
+    # "allauth",
+    # "allauth.account",
+    # "allauth.socialaccount",
+    # "allauth.socialaccount.providers.google",
     "corsheaders",
     "Accounts",
     "Artisanal",
@@ -70,12 +72,13 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "Accounts.middleware.CSRFMiddleware",
-    "allauth.account.middleware.AccountMiddleware",
+    # "allauth.account.middleware.AccountMiddleware",
 ]
 
 AUTHENTICATION_BACKENDS = [
+    "API.backends.CustomUserModelBackend",
     "django.contrib.auth.backends.ModelBackend",
-    "allauth.account.auth_backends.AuthenticationBackend",
+    # "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
 ROOT_URLCONF = "ReservationHotel.urls"
@@ -104,27 +107,18 @@ LOGIN_REDIRECT_URL = "/"
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql_psycopg2",
-#         "NAME": "aftrip",
-#         "USER": "postgres",
-#         "PASSWORD": "H{S[jcJ7(x50LD2N",
-#         "HOST": "/cloudsql/impactful-post-428514-j8:us-central1:aftrip-db",
-#         "PORT": "5432",
-#     }
-# }
 
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "aftrip",
+        "NAME": "craft",
         "USER": "postgres",
         "PASSWORD": "H{S[jcJ7(x50LD2N",
         "HOST": "34.122.112.53",
         "PORT": "5432",
     }
 }
+
 # DATABASES = {
 #     "default": {
 #         "ENGINE": "django.db.backends.sqlite3",
@@ -198,18 +192,17 @@ REST_FRAMEWORK = {
 
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
-X_FRAME_OPTIONS = 'DENY'
+X_FRAME_OPTIONS = "DENY"
 SECURE_HSTS_SECONDS = 3600
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_SSL_REDIRECT = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-
 EMAIL_HOST_USER = config("EMAIL_HOST_NEW_USER")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_NEW_PASSWORD")
 OPENAI_API_KEY = config("GPT_API_KEY")

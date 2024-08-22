@@ -20,10 +20,7 @@ from .models import Hebergement
 from django.conf import settings
 from .utils import generer_description_hebergement
 import os
-from Accounts.permissions import IsResponsableEtablissement
 from Accounts.serializers import ResponsableEtablissementSerializer
-
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -31,13 +28,10 @@ from .models import Hebergement, Reservation, Chambre
 from django.db.models import Count
 from django.db.models.functions import TruncMonth
 from django.db.models import Sum
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Reservation, Hebergement
-
-
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.utils.dateparse import parse_date
@@ -1068,6 +1062,61 @@ class ToggleAutorisationView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+# @api_view(["POST"])
+# @permission_classes([AllowAny])
+# def check_availability_and_calculate_price(request):
+#     if request.method == "POST":
+#         data = request.data
+#         chambre_ids = data.get("chambre_ids", [])
+#         check_in = parse_date(data.get("check_in"))
+#         check_out = parse_date(data.get("check_out"))
+
+#         if not chambre_ids or not check_in or not check_out:
+#             return JsonResponse({"error": "Invalid data"}, status=404)
+
+#         nombre_de_jours = (check_out - check_in).days
+#         print(nombre_de_jours)
+#         total_price = 0
+#         unavailable_chambres = []
+
+#         for chambre_id in chambre_ids:
+#             try:
+#                 chambre = HebergementChambre.objects.get(id=chambre_id)
+#                 prix_par_nuit = chambre.prix_nuit_chambre
+#                 prix_total_chambre = prix_par_nuit * nombre_de_jours
+
+#                 reservation_exists = Reservation.objects.filter(
+#                     chambre_reserve=chambre,
+#                     date_debut_reserve__lt=check_out,
+#                     date_fin_reserve__gt=check_in,
+#                     est_validee_reserve=True,
+#                 ).exists()
+
+#                 if reservation_exists:
+#                     unavailable_chambres.append(chambre_id)
+#                 else:
+#                     total_price += prix_total_chambre
+
+#             except HebergementChambre.DoesNotExist:
+#                 unavailable_chambres.append(chambre_id)
+#         print(total_price)
+#         if unavailable_chambres:
+#             return JsonResponse(
+#                 {
+#                     "unavailable_chambres": unavailable_chambres,
+#                     "message": "Some rooms are not available for the selected dates.",
+#                 },
+#                 status=400,
+#             )
+
+#         return JsonResponse(
+#             {"total_price": total_price, "message": "All rooms are available."},
+#             status=200,
+#         )
+#     else:
+#         return JsonResponse({"error": "Invalid request"}, status=400)
+
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def check_availability_and_calculate_price(request):
@@ -1076,14 +1125,15 @@ def check_availability_and_calculate_price(request):
         chambre_ids = data.get("chambre_ids", [])
         check_in = parse_date(data.get("check_in"))
         check_out = parse_date(data.get("check_out"))
+        nombre_personnes = data.get("guests", 1)
 
         if not chambre_ids or not check_in or not check_out:
             return JsonResponse({"error": "Invalid data"}, status=404)
 
         nombre_de_jours = (check_out - check_in).days
-        print(nombre_de_jours)
         total_price = 0
         unavailable_chambres = []
+        reservation_details = []
 
         for chambre_id in chambre_ids:
             try:
@@ -1102,10 +1152,21 @@ def check_availability_and_calculate_price(request):
                     unavailable_chambres.append(chambre_id)
                 else:
                     total_price += prix_total_chambre
+                    reservation_details.append(
+                        {
+                            "hebergement": chambre.hebergement.id,
+                            "chambre_reserve": chambre.id,
+                            "date_debut_reserve": check_in,
+                            "date_fin_reserve": check_out,
+                            "nombre_personnes_reserve": nombre_personnes,
+                            "prix_total_reserve": prix_total_chambre,
+                            "est_validee_reserve": False,
+                        }
+                    )
 
             except HebergementChambre.DoesNotExist:
                 unavailable_chambres.append(chambre_id)
-        print(total_price)
+
         if unavailable_chambres:
             return JsonResponse(
                 {
@@ -1116,8 +1177,241 @@ def check_availability_and_calculate_price(request):
             )
 
         return JsonResponse(
-            {"total_price": total_price, "message": "All rooms are available."},
+            {
+                "total_price": total_price,
+                "message": "All rooms are available.",
+                "reservation_details": reservation_details,
+            },
             status=200,
         )
     else:
         return JsonResponse({"error": "Invalid request"}, status=400)
+
+
+class CreateTransactionView(APIView):
+    def post(self, request, *args, **kwargs):
+        # Extraire les données nécessaires du JSON de la requête
+        transaction_data = request.data
+
+        # Formater les données pour le modèle Transaction
+        formatted_data = {
+            "transaction_id": transaction_data.get("id"),
+            "status": transaction_data.get("status"),
+            "amount": transaction_data["purchase_units"][0]["amount"]["value"],
+            "currency": transaction_data["purchase_units"][0]["amount"][
+                "currency_code"
+            ],
+            "payer_name": f"{transaction_data['payer']['name']['given_name']} {transaction_data['payer']['name']['surname']}",
+            "payer_email": transaction_data["payer"]["email_address"],
+            "payer_id": transaction_data["payer"]["payer_id"],
+            "payee_email": transaction_data["purchase_units"][0]["payee"][
+                "email_address"
+            ],
+            "merchant_id": transaction_data["purchase_units"][0]["payee"][
+                "merchant_id"
+            ],
+            "description": transaction_data["purchase_units"][0].get("description"),
+            "shipping_address": transaction_data["purchase_units"][0]["shipping"][
+                "address"
+            ]["address_line_1"],
+            "shipping_city": transaction_data["purchase_units"][0]["shipping"][
+                "address"
+            ]["admin_area_2"],
+            "shipping_state": transaction_data["purchase_units"][0]["shipping"][
+                "address"
+            ]["admin_area_1"],
+            "shipping_postal_code": transaction_data["purchase_units"][0]["shipping"][
+                "address"
+            ]["postal_code"],
+            "shipping_country": transaction_data["purchase_units"][0]["shipping"][
+                "address"
+            ]["country_code"],
+            "create_time": transaction_data["create_time"],
+            "update_time": transaction_data["update_time"],
+            "capture_id": transaction_data["purchase_units"][0]["payments"]["captures"][
+                0
+            ].get("id"),
+        }
+
+        # Sérialiser les données
+        serializer = TransactionHebergementSerializer(data=formatted_data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CreateTransactionHebergementView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        transaction_data = request.data
+
+        formatted_data = {
+            "transaction_id": transaction_data.get("id"),
+            "status": transaction_data.get("status"),
+            "amount": transaction_data["purchase_units"][0]["amount"]["value"],
+            "currency": transaction_data["purchase_units"][0]["amount"][
+                "currency_code"
+            ],
+            "payer_name": f"{transaction_data['payer']['name']['given_name']} {transaction_data['payer']['name']['surname']}",
+            "payer_email": transaction_data["payer"]["email_address"],
+            "payer_id": transaction_data["payer"]["payer_id"],
+            "payee_email": transaction_data["purchase_units"][0]["payee"][
+                "email_address"
+            ],
+            "merchant_id": transaction_data["purchase_units"][0]["payee"][
+                "merchant_id"
+            ],
+            "description": transaction_data["purchase_units"][0].get("description"),
+            "shipping_address": transaction_data["purchase_units"][0]["shipping"][
+                "address"
+            ]["address_line_1"],
+            "shipping_city": transaction_data["purchase_units"][0]["shipping"][
+                "address"
+            ]["admin_area_2"],
+            "shipping_state": transaction_data["purchase_units"][0]["shipping"][
+                "address"
+            ]["admin_area_1"],
+            "shipping_postal_code": transaction_data["purchase_units"][0]["shipping"][
+                "address"
+            ]["postal_code"],
+            "shipping_country": transaction_data["purchase_units"][0]["shipping"][
+                "address"
+            ]["country_code"],
+            "create_time": transaction_data["create_time"],
+            "update_time": transaction_data["update_time"],
+            "capture_id": transaction_data["purchase_units"][0]["payments"]["captures"][
+                0
+            ].get("id"),
+            "client": request.user.id,
+        }
+
+        serializer = TransactionHebergementSerializer(data=formatted_data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# class CreateReservationView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request, *args, **kwargs):
+#         serializer = ReservationSerializer(data=request.data)
+#         if serializer.is_valid():
+#             reservation = serializer.save(client_reserve=request.user.client)
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def create_transaction(transaction_data, user):
+    formatted_data = {
+        "transaction_id": transaction_data.get("id"),
+        "status": transaction_data.get("status"),
+        "amount": transaction_data["purchase_units"][0]["amount"]["value"],
+        "currency": transaction_data["purchase_units"][0]["amount"]["currency_code"],
+        "payer_name": f"{transaction_data['payer']['name']['given_name']} {transaction_data['payer']['name']['surname']}",
+        "payer_email": transaction_data["payer"]["email_address"],
+        "payer_id": transaction_data["payer"]["payer_id"],
+        "payee_email": transaction_data["purchase_units"][0]["payee"]["email_address"],
+        "merchant_id": transaction_data["purchase_units"][0]["payee"]["merchant_id"],
+        "description": transaction_data["purchase_units"][0].get("description"),
+        "shipping_address": transaction_data["purchase_units"][0]["shipping"][
+            "address"
+        ]["address_line_1"],
+        "shipping_city": transaction_data["purchase_units"][0]["shipping"]["address"][
+            "admin_area_2"
+        ],
+        "shipping_state": transaction_data["purchase_units"][0]["shipping"]["address"][
+            "admin_area_1"
+        ],
+        "shipping_postal_code": transaction_data["purchase_units"][0]["shipping"][
+            "address"
+        ]["postal_code"],
+        "shipping_country": transaction_data["purchase_units"][0]["shipping"][
+            "address"
+        ]["country_code"],
+        "create_time": transaction_data["create_time"],
+        "update_time": transaction_data["update_time"],
+        "capture_id": transaction_data["purchase_units"][0]["payments"]["captures"][
+            0
+        ].get("id"),
+        "client": user.id,
+    }
+
+    serializer = TransactionHebergementSerializer(data=formatted_data)
+    if serializer.is_valid():
+        transaction = serializer.save()
+        return transaction, None
+    return None, serializer.errors
+
+
+# class CreateReservationView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request, *args, **kwargs):
+#         print(request.data.get("reservation_data"))
+#         transaction, errors = create_transaction(
+#             request.data.get("transaction"), request.user
+#         )
+
+#         if errors:
+#             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
+#         # serializer = TransactionHebergementSerializer(data=request.data)
+#         serializer = ReservationSerializer1(data=request.data)
+#         if serializer.is_valid():
+#             reservation = serializer.save(client_reserve=request.user.client)
+#             return Response(
+#                 serializer.data.get("reservation_data"),
+#                 status=status.HTTP_201_CREATED,
+#             )
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CreateReservationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+
+        reservation_data_list = request.data.get("reservation_data")
+
+        if not reservation_data_list:
+            return Response(
+                {"error": "No reservation data provided"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        transaction, errors = create_transaction(
+            request.data.get("transaction"), request.user
+        )
+
+        if errors:
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
+        created_reservations = []
+
+        for reservation_data in reservation_data_list:
+
+            reservation_data["client_reserve"] = request.user.id
+            reservation_data["transaction_id"] = transaction.id
+
+            serializer = ReservationSerializer1(data=reservation_data)
+            if serializer.is_valid():
+                reservation = serializer.save()
+                created_reservations.append(serializer.data)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(created_reservations, status=status.HTTP_201_CREATED)
+
+
+class ClientReservationsListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        client = request.user
+        reservations = Reservation.objects.filter(client_reserve=client)
+        serializer = ListReservationSerializer(reservations, many=True)
+        return Response(serializer.data, status=200)

@@ -11,6 +11,16 @@ urlpatterns = [
     #     "check_out": "2024-08-25"
     # }
     path(
+        "client/reservations/",
+        views.ClientReservationsListView.as_view(),
+        name="client-reservations",
+    ),
+    path(
+        "transactions/create/",
+        views.CreateReservationView.as_view(),
+        name="create-transaction",
+    ),
+    path(
         "check/",
         views.check_availability_and_calculate_price,
         name="check_availability",
@@ -249,4 +259,9 @@ urlpatterns = [
         name="delete-hebergement-chambre",
     ),
     path("type-chambres/", views.ChambreListView.as_view(), name="chambre-list"),
+    path(
+        "reservations/create/",
+        views.CreateReservationView.as_view(),
+        name="create-reservation",
+    ),
 ]
