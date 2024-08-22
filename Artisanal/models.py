@@ -36,6 +36,33 @@ class Artisanat(models.Model):
         return f"{self.responsable} ({self.nom})"
 
 
+class TransactionArtisanat(models.Model):
+    transaction_id = models.CharField(max_length=255, unique=True)
+    status = models.CharField(max_length=50)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=10)
+    payer_name = models.CharField(max_length=255)
+    payer_email = models.EmailField()
+    payer_id = models.CharField(max_length=255)
+    payee_email = models.EmailField()
+    merchant_id = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    shipping_address = models.CharField(max_length=255, null=True, blank=True)
+    shipping_city = models.CharField(max_length=100, null=True, blank=True)
+    shipping_state = models.CharField(max_length=100, null=True, blank=True)
+    shipping_postal_code = models.CharField(max_length=20, null=True, blank=True)
+    shipping_country = models.CharField(max_length=10, null=True, blank=True)
+    create_time = models.DateTimeField()
+    update_time = models.DateTimeField()
+    capture_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    client = models.ForeignKey(
+        Client, on_delete=models.CASCADE, related_name="transactions_artisanat"
+    )
+
+    def __str__(self):
+        return f"Transaction {self.transaction_id} - {self.status}"
+
+
 class LocalisationArtisanat(models.Model):
     adresse = models.CharField(max_length=200, null=True, blank=True)
     ville = models.CharField(max_length=100, null=True, blank=True)
@@ -151,6 +178,33 @@ class Commande(models.Model):
         if not self.panier:
             raise ValueError("Un panier est requis pour passer une commande.")
         self.prix_total = self.panier.total
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Commande {self.id} - {self.client.email} - {self.date_commande}"
+
+
+class CommandeProduit(models.Model):
+    client = models.ForeignKey(
+        Client, on_delete=models.CASCADE, related_name="commande_produit"
+    )
+    produit = models.ForeignKey(
+        ProduitArtisanal, on_delete=models.CASCADE, null=True, blank=True
+    )
+    transaction = models.ForeignKey(
+        TransactionArtisanat, on_delete=models.CASCADE, null=True, blank=True
+    )
+    prix_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    quantite = models.IntegerField(default=1)
+    date_commande = models.DateTimeField(auto_now_add=True)
+    status = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        if self.produit:
+            self.prix_total = self.produit.prix_artisanat * self.quantite
+        else:
+            raise ValueError("Un produit est requis pour passer une commande.")
+
         super().save(*args, **kwargs)
 
     def __str__(self):

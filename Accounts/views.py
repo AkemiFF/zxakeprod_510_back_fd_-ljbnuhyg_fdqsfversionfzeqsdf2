@@ -37,7 +37,7 @@ from rest_framework.status import HTTP_200_OK
 from .serializers import *
 from rest_framework import generics
 from django.contrib.auth.hashers import check_password
-from imaplib import _Authenticator
+
 from django.http import JsonResponse
 from rest_framework.response import Response
 
@@ -55,6 +55,65 @@ from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from django.contrib.auth import authenticate
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+
+
+class CreateClientView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = FullClientSerializer(data=request.data)
+        if serializer.is_valid():
+            client = serializer.save()
+            return Response(
+                FullClientSerializer(client).data, status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def client_pay_create(request):
+    if request.method == "POST":
+        serializer = FullClientSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+
+            refresh = RefreshToken.for_user(user)
+            access_token = refresh.access_token
+
+            response_data = {
+                "user": serializer.data,
+                "refresh": str(refresh),
+                "access": str(access_token),
+                "emailPhotoUrl": user.emailPhotoUrl,
+            }
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+@api_view(["PUT"])
+@permission_classes([IsAuthenticated])
+def edit_client_pay_create(request):
+    user = request.user 
+    serializer = FullClientSerializer(instance=user, data=request.data, partial=True) 
+
+    if serializer.is_valid():
+        user = serializer.save()
+
+        refresh = RefreshToken.for_user(user)
+        access_token = refresh.access_token
+
+        response_data = {
+            "user": serializer.data,
+            "refresh": str(refresh),
+            "access": str(access_token),
+            "emailPhotoUrl": user.emailPhotoUrl,
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)  # Utilisation de 200 OK pour la mise à jour réussie
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class CheckEmailResponsableView(APIView):
@@ -135,7 +194,7 @@ class ResponsableLoginView(APIView):
         access = refresh.access_token
 
         type_etablissement = info_user["type_responsable"]["id"]
-        print(type_etablissement)
+
         if type_etablissement == 1:
             hebergements = Hebergement.objects.get(responsable_hebergement=user)
             etablissement_info = MinHebergementSerializer(hebergements)

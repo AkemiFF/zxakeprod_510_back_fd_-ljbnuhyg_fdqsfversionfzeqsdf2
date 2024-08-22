@@ -285,6 +285,18 @@ class ArtisanatSerializer(serializers.ModelSerializer):
         return ProduitArtisanal.objects.filter(artisanat=obj).count()
 
 
+class TransactionArtisanatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TransactionArtisanat
+        fields = "__all__"
+
+
+class CommandeProduitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CommandeProduit
+        fields = "__all__"
+
+
 class AvisClientProduitArtisanalSerializer(serializers.ModelSerializer):
     utilisateur = serializers.StringRelatedField()
 
