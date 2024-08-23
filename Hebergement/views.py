@@ -586,8 +586,12 @@ def check_if_client_liked_hebergement(request, hebergement_id):
 @permission_classes([AllowAny])
 def get_all_hebergements(request):
     try:
-        all_hebergement = Hebergement.objects.filter(autorisation=True).annotate(
-            min_prix_nuit_chambre=Min("hebergementchambre__prix_nuit_chambre")
+        all_hebergement = (
+            Hebergement.objects.filter(autorisation=True)
+            .annotate(
+                min_prix_nuit_chambre=Min("hebergementchambre__prix_nuit_chambre")
+            )
+            .order_by("-taux_commission")
         )
     except Hebergement.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -608,10 +612,14 @@ def get_all_accessoire(request):
 @permission_classes([AllowAny])
 def get_suggestion_hebergements(request):
     try:
-        all_hebergement = Hebergement.objects.annotate(
-            min_prix_nuit_chambre=Min("hebergementchambre__prix_nuit_chambre"),
-            note_moyenne=Avg("avis_hotel__note"),
-        ).order_by("-note_moyenne")[:3]
+        all_hebergement = (
+            Hebergement.objects.filter(autorisation=True)
+            .annotate(
+                min_prix_nuit_chambre=Min("hebergementchambre__prix_nuit_chambre"),
+                note_moyenne=Avg("avis_hotel__note"),
+            )
+            .order_by("-note_moyenne", "-taux_commission")[:3]
+        )
     except Hebergement.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -628,7 +636,9 @@ def get_suggestion_hebergements(request):
 @api_view(["GET"])
 def get_id_hebergements(request, hebergement_id):
     try:
-        id_hebergement = Hebergement.objects.filter(pk=hebergement_id)
+        id_hebergement = Hebergement.objects.filter(
+            pk=hebergement_id, autorisation=True
+        )
     except Hebergement.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = HebergementSerializer(id_hebergement, many=True)
@@ -1115,6 +1125,9 @@ class ToggleAutorisationView(APIView):
 #         )
 #     else:
 #         return JsonResponse({"error": "Invalid request"}, status=400)
+from django.http import JsonResponse
+from django.utils.dateparse import parse_date
+from .models import HebergementChambre, Reservation
 
 
 @api_view(["POST"])
@@ -1128,7 +1141,7 @@ def check_availability_and_calculate_price(request):
         nombre_personnes = data.get("guests", 1)
 
         if not chambre_ids or not check_in or not check_out:
-            return JsonResponse({"error": "Invalid data"}, status=404)
+            return JsonResponse({"error": "Invalid data"}, status=400)
 
         nombre_de_jours = (check_out - check_in).days
         total_price = 0
@@ -1138,8 +1151,10 @@ def check_availability_and_calculate_price(request):
         for chambre_id in chambre_ids:
             try:
                 chambre = HebergementChambre.objects.get(id=chambre_id)
-                prix_par_nuit = chambre.prix_nuit_chambre
-                prix_total_chambre = prix_par_nuit * nombre_de_jours
+
+                prix_par_nuit = chambre.prix_final()
+                prix_par_nuit_arrondi = round(prix_par_nuit, 2)
+                prix_total_chambre = prix_par_nuit_arrondi * nombre_de_jours
 
                 reservation_exists = Reservation.objects.filter(
                     chambre_reserve=chambre,
@@ -1171,7 +1186,7 @@ def check_availability_and_calculate_price(request):
             return JsonResponse(
                 {
                     "unavailable_chambres": unavailable_chambres,
-                    "message": "Some rooms are not available for the selected dates.",
+                    "message": "Certaines chambres ne sont pas disponibles pour les dates sélectionnées.",
                 },
                 status=400,
             )
@@ -1179,13 +1194,84 @@ def check_availability_and_calculate_price(request):
         return JsonResponse(
             {
                 "total_price": total_price,
-                "message": "All rooms are available.",
+                "message": "Toutes les chambres sont disponibles.",
                 "reservation_details": reservation_details,
             },
             status=200,
         )
     else:
         return JsonResponse({"error": "Invalid request"}, status=400)
+
+
+# @api_view(["POST"])
+# @permission_classes([AllowAny])
+# def check_availability_and_calculate_price(request):
+#     if request.method == "POST":
+#         data = request.data
+#         chambre_ids = data.get("chambre_ids", [])
+#         check_in = parse_date(data.get("check_in"))
+#         check_out = parse_date(data.get("check_out"))
+#         nombre_personnes = data.get("guests", 1)
+
+#         if not chambre_ids or not check_in or not check_out:
+#             return JsonResponse({"error": "Invalid data"}, status=404)
+
+#         nombre_de_jours = (check_out - check_in).days
+#         total_price = 0
+#         unavailable_chambres = []
+#         reservation_details = []
+
+#         for chambre_id in chambre_ids:
+#             try:
+#                 chambre = HebergementChambre.objects.get(id=chambre_id)
+#                 prix_par_nuit = chambre.prix_nuit_chambre
+#                 prix_total_chambre = prix_par_nuit * nombre_de_jours
+
+#                 reservation_exists = Reservation.objects.filter(
+#                     chambre_reserve=chambre,
+#                     date_debut_reserve__lt=check_out,
+#                     date_fin_reserve__gt=check_in,
+#                     est_validee_reserve=True,
+#                 ).exists()
+
+#                 if reservation_exists:
+#                     unavailable_chambres.append(chambre_id)
+#                 else:
+#                     total_price += prix_total_chambre
+#                     reservation_details.append(
+#                         {
+#                             "hebergement": chambre.hebergement.id,
+#                             "chambre_reserve": chambre.id,
+#                             "date_debut_reserve": check_in,
+#                             "date_fin_reserve": check_out,
+#                             "nombre_personnes_reserve": nombre_personnes,
+#                             "prix_total_reserve": prix_total_chambre,
+#                             "est_validee_reserve": False,
+#                         }
+#                     )
+
+#             except HebergementChambre.DoesNotExist:
+#                 unavailable_chambres.append(chambre_id)
+
+#         if unavailable_chambres:
+#             return JsonResponse(
+#                 {
+#                     "unavailable_chambres": unavailable_chambres,
+#                     "message": "Some rooms are not available for the selected dates.",
+#                 },
+#                 status=400,
+#             )
+
+#         return JsonResponse(
+#             {
+#                 "total_price": total_price,
+#                 "message": "All rooms are available.",
+#                 "reservation_details": reservation_details,
+#             },
+#             status=200,
+#         )
+#     else:
+#         return JsonResponse({"error": "Invalid request"}, status=400)
 
 
 class CreateTransactionView(APIView):
