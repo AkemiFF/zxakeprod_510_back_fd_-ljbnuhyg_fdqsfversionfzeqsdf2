@@ -34,6 +34,38 @@ class DetailClientSerializer(serializers.ModelSerializer):
         ]
 
 
+class CreateReservationVoyageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReservationVoyage
+        fields = "__all__"
+
+
+class TransactionTourSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TransactionTour
+        fields = [
+            "transaction_id",
+            "status",
+            "amount",
+            "currency",
+            "payer_name",
+            "payer_email",
+            "payer_id",
+            "payee_email",
+            "merchant_id",
+            "description",
+            "shipping_address",
+            "shipping_city",
+            "shipping_state",
+            "shipping_postal_code",
+            "shipping_country",
+            "create_time",
+            "update_time",
+            "capture_id",
+            "client",
+        ]
+
+
 class AvisTourOperateurSerializer(serializers.ModelSerializer):
     client = ClientSerializer(read_only=True)
 
