@@ -10,6 +10,7 @@ from rest_framework.decorators import (
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.views import APIView
 from django.db.models import Count
+from django.db.models import F, FloatField
 
 
 class SpecificationListView(generics.ListAPIView):
@@ -196,6 +197,22 @@ class ProduitArtisanalViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
 
 
+class ProduitArtisanalViewSet(viewsets.ModelViewSet):
+    serializer_class = ProduitArtisanalSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        queryset = ProduitArtisanal.objects.all()
+
+        queryset = queryset.annotate(taux_commission=F("artisanat__taux_commission"))
+
+        queryset = queryset.annotate(nb_likes=Count("likes"))
+
+        queryset = queryset.order_by("-taux_commission", "prix_artisanat", "-nb_likes")
+
+        return queryset
+
+
 class FiltreLikeProduitArtisanalViewSet(viewsets.ModelViewSet):
     serializer_class = ProduitArtisanalSerializer
     permission_classes = [permissions.AllowAny]
@@ -336,8 +353,8 @@ def check_product(request):
 
         product_data = {
             "produit": produit.id,
-            "prix_unitaire": produit.prix_artisanat,
-            "prix_total": produit.prix_artisanat * quantite,
+            "prix_unitaire": produit.prix_final(),
+            "prix_total": produit.prix_final() * quantite,
             "quantite_disponible": produit.nb_produit_dispo,
             "quantite": quantite,
             "status": True,

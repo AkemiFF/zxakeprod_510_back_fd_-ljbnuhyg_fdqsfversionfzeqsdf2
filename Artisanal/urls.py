@@ -5,7 +5,9 @@ from .views import *
 # Créez un routeur et enregistrez vos viewsets
 router = DefaultRouter()
 router.register(r"artisanats", ArtisanatViewSet)
-router.register(r"produits-artisanaux", ProduitArtisanalViewSet)
+router.register(
+    r"produits-artisanaux", ProduitArtisanalViewSet, basename="produit-artisanal"
+)
 router.register(r"paniers", PanierViewSet)
 router.register(r"items-panier", ItemPanierViewSet)
 router.register(r"commandes", CommandeViewSet)
