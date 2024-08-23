@@ -94,10 +94,13 @@ class HebergementSerializer(serializers.ModelSerializer):
     total_likes = serializers.ReadOnlyField()
 
     def get_min_prix_nuit_chambre(self, instance):
-        min_price = HebergementChambre.objects.filter(hebergement=instance).aggregate(
-            Min("prix_nuit_chambre")
-        )["prix_nuit_chambre__min"]
-        return min_price
+        chambres = HebergementChambre.objects.filter(hebergement=instance)
+
+        if not chambres.exists():
+            return None
+
+        min_price = min([chambre.prix_final() for chambre in chambres])
+        return round(min_price, 2)
 
     def get_accessoires(self, instance):
         accessoires = HebergementAccessoire.objects.filter(hebergement=instance)
@@ -314,16 +317,19 @@ class HebergementChambreSerializer(serializers.ModelSerializer):
     accessoires = AccessoireChambreSerializer(many=True)
     images_chambre = ImageChambreSerializer(many=True, read_only=True)
     reservation = serializers.SerializerMethodField()
+    prix_nuit_chambre = serializers.SerializerMethodField()
 
     class Meta:
         model = HebergementChambre
         fields = "__all__"
 
     def get_reservation(self, obj):
-        # Assurez-vous que 'chambre_reserve' est la bonne relation dans le modèle Reservation
         reservation = Reservation.objects.filter(chambre_reserve=obj)
         serializer = ReservationSerializer(reservation, many=True)
         return serializer.data
+
+    def get_prix_nuit_chambre(self, obj):
+        return round(obj.prix_final(), 2)
 
 
 class TypeAccessoireSerializer(serializers.ModelSerializer):
