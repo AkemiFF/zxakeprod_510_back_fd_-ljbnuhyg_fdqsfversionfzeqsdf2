@@ -22,6 +22,11 @@ urlpatterns = [
         views.add_images_to_voyage,
         name="add-images-to-voyage",
     ),
+    path(
+        "transactions/create/",
+        views.ReservationDeVoyageView.as_view(),
+        name="reservation-de-voyage",
+    ),
     path("voyages/create/", views.create_voyage, name="create-voyage"),
     # Route pour mettre à jour les informations d'un voyage spécifique
     path("voyages/<int:pk>/update-voyage/", views.update_voyage, name="update-voyage"),
@@ -38,6 +43,7 @@ urlpatterns = [
         name="tour_operateur-detail",
     ),
     path("voyages/", views.get_all_voyages, name="get_all_voyages"),
+    path("voyage/check/", views.CheckVoyageView.as_view(), name="voyage_check_voyages"),
     path("voyages-populaire/", views.get_popular_voyages, name="get_popular_voyages"),
     path(
         "operateurs-populaires/",
