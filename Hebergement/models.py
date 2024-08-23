@@ -1,5 +1,6 @@
 from django.db import models
 from Accounts.models import ResponsableEtablissement, Client
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class TypeHebergement(models.Model):
@@ -82,6 +83,12 @@ class Hebergement(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     likes = models.ManyToManyField(Client, related_name="liked_hebergement", blank=True)
+    taux_commission = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=7.00,
+        validators=[MinValueValidator(7.00), MaxValueValidator(15.00)],
+    )
 
     def __str__(self):
         return self.nom_hebergement
@@ -147,6 +154,12 @@ class HebergementChambre(models.Model):
     accessoires = models.ManyToManyField(
         "AccessoireChambre", through="HebergementChambreAccessoire"
     )
+
+    def prix_final(self):
+        hebergement = self.hebergement
+        taux_commission = hebergement.taux_commission / 100
+        prix_final = self.prix_nuit_chambre * (1 + taux_commission)
+        return prix_final
 
     def __str__(self):
         return f"{self.hebergement} - {self.chambre} - {self.chambre_personaliser}"

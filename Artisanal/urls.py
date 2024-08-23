@@ -5,12 +5,19 @@ from .views import *
 # Créez un routeur et enregistrez vos viewsets
 router = DefaultRouter()
 router.register(r"artisanats", ArtisanatViewSet)
-router.register(r"produits-artisanaux", ProduitArtisanalViewSet)
+router.register(
+    r"produits-artisanaux", ProduitArtisanalViewSet, basename="produit-artisanal"
+)
 router.register(r"paniers", PanierViewSet)
 router.register(r"items-panier", ItemPanierViewSet)
 router.register(r"commandes", CommandeViewSet)
 
 urlpatterns = [
+    path(
+        "transactions/create/",
+        CreateAchatView.as_view(),
+        name="create-transaction",
+    ),
     path(
         "images-produits/",
         CreateImageProduitArtisanalView.as_view(),
@@ -26,6 +33,11 @@ urlpatterns = [
         "produit/<int:pk>/",
         ProduitArtisanalDetailView.as_view(),
         name="produit-artisanal-detail",
+    ),
+    path(
+        "product/check/",
+        check_product,
+        name="produit-check",
     ),
     path(
         "produits/<int:produit_id>/liked/",

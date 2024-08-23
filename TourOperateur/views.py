@@ -125,6 +125,55 @@ def list_voyages(request, pk):
         )
 
 
+class CheckVoyageView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        booking_info = request.data
+
+        id_voyage = booking_info.get("id_voyage")
+        nb_voyageur = booking_info.get("nb_voyageur")
+
+        # Vérification des données envoyées
+        if not id_voyage or not nb_voyageur:
+            return Response(
+                {"error": "Voyage ID and number of voyageurs are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Récupérer le voyage correspondant
+        try:
+            voyage = Voyage.objects.get(id=id_voyage)
+        except Voyage.DoesNotExist:
+            return Response(
+                {"error": "Voyage not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Vérifier la disponibilité des places
+        if voyage.places_disponibles < nb_voyageur:
+            return Response(
+                {"error": "Not enough places available"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Calculer le prix total
+        prix_total = voyage.prix_voyage * nb_voyageur
+
+        # Renvoyer les informations vérifiées
+        return Response(
+            {
+                "voyage": voyage.id,
+                "prix_voyage": voyage.prix_voyage,
+                "prix_total": prix_total,
+                "places_disponibles": voyage.places_disponibles,
+                "nombre_voyageurs": nb_voyageur,
+                "status": True,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
 class TourOperateurViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
 
@@ -343,3 +392,94 @@ def get_recent_reservations_for_tour_operateur(request, tour_operateur_id):
         )
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ReservationDeVoyageView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+
+        reservation_data = request.data.get("reservation_data")
+        if not reservation_data:
+            return Response(
+                {"error": "No reservation data provided"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        transaction_data = request.data.get("transaction")
+        if not transaction_data:
+            return Response(
+                {"error": "No transaction data provided"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        transaction, errors = create_transaction_tour(transaction_data, request.user)
+        if errors:
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
+        reservation_data["client"] = request.user.id
+        reservation_data["transaction"] = transaction.id
+
+        serializer = CreateReservationVoyageSerializer(data=reservation_data)
+        if serializer.is_valid():
+            reservation = serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def create_transaction_tour(transaction_data, user):
+    try:
+        formatted_data = {
+            "transaction_id": transaction_data.get("id", ""),
+            "status": transaction_data.get("status", ""),
+            "amount": transaction_data["purchase_units"][0]["amount"]["value"],
+            "currency": transaction_data["purchase_units"][0]["amount"][
+                "currency_code"
+            ],
+            "payer_name": f"{transaction_data['payer']['name']['given_name']} {transaction_data['payer']['name']['surname']}",
+            "payer_email": transaction_data["payer"]["email_address"],
+            "payer_id": transaction_data["payer"]["payer_id"],
+            "payee_email": transaction_data["purchase_units"][0]["payee"][
+                "email_address"
+            ],
+            "merchant_id": transaction_data["purchase_units"][0]["payee"][
+                "merchant_id"
+            ],
+            "description": transaction_data["purchase_units"][0].get("description", ""),
+            "shipping_address": transaction_data["purchase_units"][0]["shipping"][
+                "address"
+            ]["address_line_1"],
+            "shipping_city": transaction_data["purchase_units"][0]["shipping"][
+                "address"
+            ]["admin_area_2"],
+            "shipping_state": transaction_data["purchase_units"][0]["shipping"][
+                "address"
+            ]["admin_area_1"],
+            "shipping_postal_code": transaction_data["purchase_units"][0]["shipping"][
+                "address"
+            ]["postal_code"],
+            "shipping_country": transaction_data["purchase_units"][0]["shipping"][
+                "address"
+            ]["country_code"],
+            "create_time": transaction_data["create_time"],
+            "update_time": transaction_data["update_time"],
+            "capture_id": transaction_data["purchase_units"][0]["payments"]["captures"][
+                0
+            ].get("id", ""),
+            "client": user.id,
+        }
+
+        serializer = TransactionTourSerializer(data=formatted_data)
+
+        if serializer.is_valid():
+            transaction = serializer.save()
+            print(serializer.data)
+            return transaction, None
+        else:
+            return None, serializer.errors
+
+    except KeyError as e:
+        return None, {"error": f"Missing data: {str(e)}"}
+    except Exception as e:
+        return None, {"error": str(e)}
