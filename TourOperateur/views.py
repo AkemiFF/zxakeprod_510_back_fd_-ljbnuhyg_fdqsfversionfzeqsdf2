@@ -213,6 +213,14 @@ class VoyageListView(generics.ListAPIView):
     permission_classes = [AllowAny]
 
 
+class ClientReservationsListView(generics.ListAPIView):
+    serializer_class = LongReservationVoyageSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return ReservationVoyage.objects.filter(client=self.request.user)
+
+
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def get_all_voyages(request):
