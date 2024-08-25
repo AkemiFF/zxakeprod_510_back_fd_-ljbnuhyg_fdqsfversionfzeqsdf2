@@ -614,6 +614,7 @@ class ShortHebergementSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "chambres",
+            "taux_commission",
             "localisation",
             "nom_hebergement",
             "description_hebergement",

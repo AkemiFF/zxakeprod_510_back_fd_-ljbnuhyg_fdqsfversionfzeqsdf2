@@ -8,6 +8,11 @@ from rest_framework.routers import DefaultRouter
 
 urlpatterns = [
     path(
+        "client/reservations/",
+        views.ClientReservationsListView.as_view(),
+        name="client-reservations-list",
+    ),
+    path(
         "add-image/",
         views.AddTourImageView.as_view(),
         name="add-tour-image",

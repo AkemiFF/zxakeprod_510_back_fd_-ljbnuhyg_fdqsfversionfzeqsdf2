@@ -40,7 +40,7 @@ admin.site.register(TransactionHebergement, TransactionHebergementAdmin)
 
 @admin.register(Hebergement)
 class HebergementAdmin(admin.ModelAdmin):
-    list_display = ["nom_hebergement", "taux_commission"]
+    list_display = ["nom_hebergement", "taux_commission", "autorisation", "delete"]
     fields = [
         "nom_hebergement",
         "description_hebergement",

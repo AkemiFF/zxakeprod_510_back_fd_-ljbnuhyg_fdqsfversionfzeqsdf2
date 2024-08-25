@@ -587,7 +587,7 @@ def check_if_client_liked_hebergement(request, hebergement_id):
 def get_all_hebergements(request):
     try:
         all_hebergement = (
-            Hebergement.objects.filter(autorisation=True)
+            Hebergement.objects.filter(autorisation=True, delete=False)
             .annotate(
                 min_prix_nuit_chambre=Min("hebergementchambre__prix_nuit_chambre")
             )
@@ -613,7 +613,7 @@ def get_all_accessoire(request):
 def get_suggestion_hebergements(request):
     try:
         all_hebergement = (
-            Hebergement.objects.filter(autorisation=True)
+            Hebergement.objects.filter(autorisation=True, delete=False)
             .annotate(
                 min_prix_nuit_chambre=Min("hebergementchambre__prix_nuit_chambre"),
                 note_moyenne=Avg("avis_hotel__note"),
@@ -637,7 +637,7 @@ def get_suggestion_hebergements(request):
 def get_id_hebergements(request, hebergement_id):
     try:
         id_hebergement = Hebergement.objects.filter(
-            pk=hebergement_id, autorisation=True
+            pk=hebergement_id, autorisation=True, delete=False
         )
     except Hebergement.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -1045,7 +1045,7 @@ class ToggleDeleteHebergement(APIView):
         try:
             hebergement = Hebergement.objects.get(pk=pk)
             hebergement.delete = not hebergement.delete
-            hebergement.autorisation = False
+            hebergement.autorisation = not hebergement.autorisation
             hebergement.save()
             return Response({"delete": hebergement.delete}, status=status.HTTP_200_OK)
         except Hebergement.DoesNotExist:

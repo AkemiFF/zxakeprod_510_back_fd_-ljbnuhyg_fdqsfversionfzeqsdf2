@@ -247,6 +247,14 @@ class ProduitArtisanalDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
 
 
+class ClientCommandesListView(generics.ListAPIView):
+    serializer_class = CommandeProduitSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return CommandeProduit.objects.filter(client=self.request.user)
+
+
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
 def add_to_cart(request):

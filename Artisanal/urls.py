@@ -14,6 +14,11 @@ router.register(r"commandes", CommandeViewSet)
 
 urlpatterns = [
     path(
+        "client/commandes/",
+        ClientCommandesListView.as_view(),
+        name="client-commandes-list",
+    ),
+    path(
         "transactions/create/",
         CreateAchatView.as_view(),
         name="create-transaction",

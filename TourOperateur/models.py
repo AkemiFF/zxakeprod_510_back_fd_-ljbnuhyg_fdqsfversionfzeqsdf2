@@ -157,7 +157,11 @@ class Voyage(models.Model):
         return self.likes.count()
 
     def get_couverture_images(self):
-        return self.images_voyage.filter(couverture=True)
+        couverture_images = self.images_voyage.filter(couverture=True)
+        if couverture_images.exists():
+            return couverture_images
+        else:
+            return self.images_voyage.all()
 
     class Meta:
         verbose_name = "Voyage"
