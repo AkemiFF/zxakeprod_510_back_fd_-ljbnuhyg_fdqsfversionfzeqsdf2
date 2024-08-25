@@ -1,9 +1,10 @@
 from rest_framework import serializers
 from .models import *
 from Accounts.models import *
-from Hebergement.models import Localisation
 from django.contrib.auth import get_user_model
 from datetime import datetime
+from django.utils.dateformat import format
+
 
 User = get_user_model()
 
@@ -296,9 +297,16 @@ class TransactionArtisanatSerializer(serializers.ModelSerializer):
 
 
 class CommandeProduitSerializer(serializers.ModelSerializer):
+    produit = ProduitArtisanalSerializer()
+    date_commande_formatee = serializers.SerializerMethodField()
+
     class Meta:
         model = CommandeProduit
         fields = "__all__"
+        extra_fields = ["date_commande_formatee"]
+
+    def get_date_commande_formatee(self, obj):
+        return format(obj.date_commande, "d/m/Y H:i")
 
 
 class AvisClientProduitArtisanalSerializer(serializers.ModelSerializer):
