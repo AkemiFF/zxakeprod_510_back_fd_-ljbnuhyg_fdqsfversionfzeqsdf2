@@ -126,23 +126,23 @@ class Client(AbstractUser):
     #     super().save(*args, **kwargs)
 
 
-Client._meta.get_field("password").validators = [
-    RegexValidator(
-        regex=r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$",
-        message=_(
-            "Le mot de passe doit contenir au moins 8 caractères, une lettre et un chiffre."
-        ),
-    )
-]
+# Client._meta.get_field("password").validators = [
+#     RegexValidator(
+#         regex=r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$",
+#         message=_(
+#             "Le mot de passe doit contenir au moins 8 caractères, une lettre et un chiffre."
+#         ),
+#     )
+# ]
 
-ResponsableEtablissement._meta.get_field("password").validators = [
-    RegexValidator(
-        regex=r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$",
-        message=_(
-            "Le mot de passe doit contenir au moins 8 caractères, une lettre et un chiffre."
-        ),
-    )
-]
+# ResponsableEtablissement._meta.get_field("password").validators = [
+#     RegexValidator(
+#         regex=r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$",
+#         message=_(
+#             "Le mot de passe doit contenir au moins 8 caractères, une lettre et un chiffre."
+#         ),
+#     )
+# ]
 
 
 class VerificationCode(models.Model):
