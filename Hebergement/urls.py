@@ -110,6 +110,12 @@ urlpatterns = [
         name="hebergements-by-responsable",
     ),
     # HEBERGEMENT (get tout les hebergements, visualiser selon id hebergement, post, modifier, et delete Hebergement)
+    path(
+        "get-image-location/<str:location>/",
+        views.get_accommodations_by_city_or_address,
+        name="get_accommodations_by_city",
+    ),
+    path("cities/", views.get_unique_cities, name="get_unique_cities"),
     path("get-all-hebergement/", views.get_all_hebergements, name="hebergement-all"),
     path(
         "suggestion/", views.get_suggestion_hebergements, name="hebergement-suggesion"
