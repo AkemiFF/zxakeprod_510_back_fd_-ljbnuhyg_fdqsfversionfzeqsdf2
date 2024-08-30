@@ -8,6 +8,17 @@ urlpatterns = [
     path("hebergement/", include("Hebergement.urls")),
     path("accounts/", include("Accounts.urls")),
     path("artisanat/", include("Artisanal.urls")),
+    path(
+        "week-stats/",
+        StatsDerniersJoursAPIView.as_view(),
+        name="stats-derniers-jours",
+    ),
+    path(
+        "monthly-stats/",
+        StatsDerniersMoisAPIView.as_view(),
+        name="stats-derniers-mois",
+    ),
+    path("stats-counts/", StatsCountsAPIView.as_view(), name="stats-counts"),
     path("chatbot/", include("ChatBot.urls")),
     path("tour/", include("TourOperateur.urls")),
     path("get-csrf-token/", views.get_csrf_token, name="get_csrf_token"),

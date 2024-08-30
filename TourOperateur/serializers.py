@@ -34,6 +34,38 @@ class DetailClientSerializer(serializers.ModelSerializer):
         ]
 
 
+class CreateReservationVoyageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReservationVoyage
+        fields = "__all__"
+
+
+class TransactionTourSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TransactionTour
+        fields = [
+            "transaction_id",
+            "status",
+            "amount",
+            "currency",
+            "payer_name",
+            "payer_email",
+            "payer_id",
+            "payee_email",
+            "merchant_id",
+            "description",
+            "shipping_address",
+            "shipping_city",
+            "shipping_state",
+            "shipping_postal_code",
+            "shipping_country",
+            "create_time",
+            "update_time",
+            "capture_id",
+            "client",
+        ]
+
+
 class AvisTourOperateurSerializer(serializers.ModelSerializer):
     client = ClientSerializer(read_only=True)
 
@@ -345,6 +377,7 @@ class ClientListSerializer(serializers.ModelSerializer):
 
 class ShortVoyageSerializer(serializers.ModelSerializer):
     reservations = NewReservationVoyageSerializer(many=True, read_only=True)
+    images = serializers.SerializerMethodField()
 
     class Meta:
         model = Voyage
@@ -354,7 +387,15 @@ class ShortVoyageSerializer(serializers.ModelSerializer):
             "ville_depart",
             "destination_voyage",
             "reservations",
+            "date_debut",
+            "date_fin",
+            "images",
         ]
+
+    def get_images(self, obj):
+
+        images = ImageVoyage.objects.filter(image_voyage=obj)
+        return ImageVoyageSerializer(images, many=True).data
 
 
 class ShortTrajetVoyageSerializer(serializers.ModelSerializer):
@@ -490,3 +531,15 @@ class ListVoyageSerializer(serializers.ModelSerializer):
             serializer = TypeTransportSerializer(obj.type_transport)
             return serializer.data
         return None
+
+
+class LongReservationVoyageSerializer(serializers.ModelSerializer):
+    voyage = ShortVoyageSerializer(read_only=True)
+
+    class Meta:
+        model = ReservationVoyage
+        fields = "__all__"
+
+    def get_clients_list(self, obj):
+        client_list = Client.objects.filter(id=obj)
+        return ClientListSerializer(client_list, many=True).data

@@ -1,9 +1,10 @@
 from rest_framework import serializers
 from .models import *
 from Accounts.models import *
-from Hebergement.models import Localisation
 from django.contrib.auth import get_user_model
 from datetime import datetime
+from django.utils.dateformat import format
+
 
 User = get_user_model()
 
@@ -166,7 +167,8 @@ class ImageProduitArtisanalSerializer(serializers.ModelSerializer):
 class ProduitArtisanalSerializer(serializers.ModelSerializer):
     artisanat = ArtisanatDetailSerializer()
     images = ImageProduitArtisanalSerializer(many=True, read_only=True)
-    total_likes = serializers.ReadOnlyField()  # Champ readonly pour le nombre de likes
+    total_likes = serializers.ReadOnlyField()
+    prix_artisanat = serializers.SerializerMethodField()
 
     class Meta:
         model = ProduitArtisanal
@@ -174,7 +176,7 @@ class ProduitArtisanalSerializer(serializers.ModelSerializer):
             "id",
             "artisanat",
             "images",
-            "total_likes",  # Inclure le champ total_likes
+            "total_likes",
             "nom_produit_artisanal",
             "description_artisanat",
             "prix_artisanat",
@@ -185,6 +187,9 @@ class ProduitArtisanalSerializer(serializers.ModelSerializer):
             "specifications",
             "likes",
         ]
+
+    def get_prix_artisanat(self, obj):
+        return obj.prix_final()
 
 
 class FieldsProduitArtisanalSerializer(serializers.ModelSerializer):
@@ -285,6 +290,25 @@ class ArtisanatSerializer(serializers.ModelSerializer):
         return ProduitArtisanal.objects.filter(artisanat=obj).count()
 
 
+class TransactionArtisanatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TransactionArtisanat
+        fields = "__all__"
+
+
+class CommandeProduitSerializer(serializers.ModelSerializer):
+    produit = ProduitArtisanalSerializer()
+    date_commande_formatee = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CommandeProduit
+        fields = "__all__"
+        extra_fields = ["date_commande_formatee"]
+
+    def get_date_commande_formatee(self, obj):
+        return format(obj.date_commande, "d/m/Y H:i")
+
+
 class AvisClientProduitArtisanalSerializer(serializers.ModelSerializer):
     utilisateur = serializers.StringRelatedField()
 
@@ -310,6 +334,7 @@ class ProduitArtisanalDetailSerializer(serializers.ModelSerializer):
     avis_clients = AvisClientProduitArtisanalSerializer(many=True, read_only=True)
     images = ImageProduitArtisanalSerializer(many=True, read_only=True)
     artisanat = ArtisanatDetailSerializer(read_only=True)
+    prix_artisanat = serializers.SerializerMethodField()
 
     class Meta:
         model = ProduitArtisanal
@@ -327,6 +352,9 @@ class ProduitArtisanalDetailSerializer(serializers.ModelSerializer):
             "avis_clients",
             "images",
         ]
+
+    def get_prix_artisanat(self, obj):
+        return obj.prix_final()
 
 
 class NProduitArtisanalSerializer(serializers.ModelSerializer):

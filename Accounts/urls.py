@@ -104,6 +104,7 @@ urlpatterns = [
     path("client/delete/<int:pk>/", views.client_delete, name="client_delete"),
     # Registers
     path("client/login/", views.client_login, name="client_login"),
+    path("client/edit/", views.edit_client_pay_create, name="client_edit"),
     path("client/check-email/", views.CheckEmailView.as_view(), name="client_login"),
     path("client/loginwithemail/", views.client_login_with_email, name="client_login"),
     # path('registers/', views.RegisterView.as_view(), name='register'),
@@ -153,4 +154,5 @@ urlpatterns = [
         views.SomeProtectedView.as_view(),
         name="responsable_login",
     ),
+    path("pay-create-client/", views.client_pay_create, name="create-client"),
 ]

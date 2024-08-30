@@ -8,6 +8,11 @@ from rest_framework.routers import DefaultRouter
 
 urlpatterns = [
     path(
+        "client/reservations/",
+        views.ClientReservationsListView.as_view(),
+        name="client-reservations-list",
+    ),
+    path(
         "add-image/",
         views.AddTourImageView.as_view(),
         name="add-tour-image",
@@ -21,6 +26,11 @@ urlpatterns = [
         "voyages/<int:voyage_id>/add-images/",
         views.add_images_to_voyage,
         name="add-images-to-voyage",
+    ),
+    path(
+        "transactions/create/",
+        views.ReservationDeVoyageView.as_view(),
+        name="reservation-de-voyage",
     ),
     path("voyages/create/", views.create_voyage, name="create-voyage"),
     # Route pour mettre à jour les informations d'un voyage spécifique
@@ -38,6 +48,7 @@ urlpatterns = [
         name="tour_operateur-detail",
     ),
     path("voyages/", views.get_all_voyages, name="get_all_voyages"),
+    path("voyage/check/", views.CheckVoyageView.as_view(), name="voyage_check_voyages"),
     path("voyages-populaire/", views.get_popular_voyages, name="get_popular_voyages"),
     path(
         "operateurs-populaires/",

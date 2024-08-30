@@ -36,7 +36,32 @@ class TransactionHebergementAdmin(admin.ModelAdmin):
 
 # Enregistrez le modèle avec la classe d'administration personnalisée
 admin.site.register(TransactionHebergement, TransactionHebergementAdmin)
-admin.site.register(Hebergement)
+
+
+@admin.register(Hebergement)
+class HebergementAdmin(admin.ModelAdmin):
+    list_display = ["nom_hebergement", "taux_commission", "autorisation", "delete"]
+    fields = [
+        "nom_hebergement",
+        "description_hebergement",
+        "nombre_etoile_hebergement",
+        "responsable_hebergement",
+        "type_hebergement",
+        "nif",
+        "stat",
+        "autorisation",
+        "delete",
+        "taux_commission",
+        "likes",
+    ]
+
+
+@admin.register(Localisation)
+class LocalisationAdmin(admin.ModelAdmin):
+    list_display = ["adresse", "ville", "hebergement_id"]
+    fields = ["adresse", "ville", "latitude", "longitude", "hebergement_id"]
+
+
 admin.site.register(HebergementImage)
 
 admin.site.register(AccessoireHebergement)
@@ -48,7 +73,7 @@ admin.site.register(Chambre)
 admin.site.register(ChambrePersonaliser)
 admin.site.register(AccessoireChambre)
 admin.site.register(ImageChambre)
-admin.site.register(Localisation)
+# admin.site.register(Localisation)
 
 
 admin.site.register(TypeHebergement)
