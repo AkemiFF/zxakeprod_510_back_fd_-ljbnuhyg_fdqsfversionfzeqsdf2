@@ -56,6 +56,12 @@ class HebergementAdmin(admin.ModelAdmin):
     ]
 
 
+@admin.register(Localisation)
+class LocalisationAdmin(admin.ModelAdmin):
+    list_display = ["adresse", "ville", "hebergement_id"]
+    fields = ["adresse", "ville", "latitude", "longitude", "hebergement_id"]
+
+
 admin.site.register(HebergementImage)
 
 admin.site.register(AccessoireHebergement)
@@ -67,7 +73,7 @@ admin.site.register(Chambre)
 admin.site.register(ChambrePersonaliser)
 admin.site.register(AccessoireChambre)
 admin.site.register(ImageChambre)
-admin.site.register(Localisation)
+# admin.site.register(Localisation)
 
 
 admin.site.register(TypeHebergement)
