@@ -1527,8 +1527,17 @@ def get_accommodations_by_city_or_address(request, location):
 
 
 def get_unique_cities(request):
-    cities = Localisation.objects.values_list("ville", flat=True).distinct()
+    # Filtrer les hébergements en fonction des critères spécifiés
+    hebergements_autorises = Hebergement.objects.filter(autorisation=True, delete=False)
 
-    unique_cities = set(city.split(" ")[-1] for city in cities if city)
+    localisations = (
+        Localisation.objects.filter(hebergement_id__in=hebergements_autorises)
+        .values_list("ville", flat=True)
+        .distinct()
+    )
+
+    unique_cities = set(
+        localisation.split(" ")[-1] for localisation in localisations if localisation
+    )
 
     return JsonResponse(list(unique_cities), safe=False)
