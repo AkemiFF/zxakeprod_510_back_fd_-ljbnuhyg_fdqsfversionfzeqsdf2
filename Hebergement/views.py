@@ -1502,3 +1502,42 @@ class ClientReservationsListView(APIView):
         reservations = Reservation.objects.filter(client_reserve=client)
         serializer = ListReservationSerializer(reservations, many=True)
         return Response(serializer.data, status=200)
+
+
+def get_accommodations_by_city_or_address(request, location):
+    accommodations = Hebergement.objects.filter(
+        localisation__adresse__icontains=location, autorisation=True, delete=False
+    ) | Hebergement.objects.filter(
+        localisation__ville__icontains=location, autorisation=True, delete=False
+    )
+
+    images = []
+
+    for accommodation in accommodations.distinct():  # Pour éviter les doublons
+        for image in accommodation.images.all():
+            images.append(
+                {
+                    "src": image.image.url,
+                    "legende": image.legende_hebergement,
+                    "couverture": image.couverture,
+                }
+            )
+
+    return JsonResponse(images, safe=False)
+
+
+def get_unique_cities(request):
+    # Filtrer les hébergements en fonction des critères spécifiés
+    hebergements_autorises = Hebergement.objects.filter(autorisation=True, delete=False)
+
+    localisations = (
+        Localisation.objects.filter(hebergement_id__in=hebergements_autorises)
+        .values_list("ville", flat=True)
+        .distinct()
+    )
+
+    unique_cities = set(
+        localisation.split(" ")[-1] for localisation in localisations if localisation
+    )
+
+    return JsonResponse(list(unique_cities), safe=False)

@@ -21,6 +21,10 @@ class SuggestionHebergementSerializer(serializers.ModelSerializer):
         if couverture_image:
             absolute_url = request.build_absolute_uri(couverture_image.image.url)
             return absolute_url
+        else:
+            im = obj.images.all().first()
+            absolute_url = request.build_absolute_uri(im.image.url)
+            return absolute_url
 
         return None
 
