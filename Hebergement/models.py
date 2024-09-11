@@ -148,7 +148,7 @@ class HebergementChambre(models.Model):
     description = models.CharField(max_length=2000, null=True, blank=True)
     superficie = models.IntegerField(null=True, blank=True)
     prix_nuit_chambre = models.DecimalField(max_digits=8, decimal_places=2)
-    disponible_chambre = models.IntegerField(null=True)
+    disponible_chambre = models.IntegerField(null=True, default=1)
     capacite = models.IntegerField(null=True)
     status = models.IntegerField(null=True, blank=True)
     accessoires = models.ManyToManyField(
@@ -262,7 +262,9 @@ class Reservation(models.Model):
     )
     date_debut_reserve = models.DateField()
     date_fin_reserve = models.DateField()
+    nombre_chambre_reserve = models.IntegerField(default=1)
     nombre_personnes_reserve = models.IntegerField(default=1)
+
     prix_total_reserve = models.DecimalField(max_digits=10, decimal_places=2)
     est_validee_reserve = models.BooleanField(default=False)
     transaction = models.ForeignKey(
