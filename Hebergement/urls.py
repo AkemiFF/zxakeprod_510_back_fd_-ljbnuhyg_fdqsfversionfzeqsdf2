@@ -245,6 +245,11 @@ urlpatterns = [
         name="list_chambres_by_hotel",
     ),
     path(
+        "<int:pk>/commission/",
+        views.edit_commission,
+        name="edit_commission",
+    ),
+    path(
         "add-hebergement-chambre/",
         views.add_hebergement_chambre,
         name="add-hebergement-chambre",

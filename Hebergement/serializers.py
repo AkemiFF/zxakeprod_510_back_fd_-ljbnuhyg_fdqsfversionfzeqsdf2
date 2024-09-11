@@ -158,27 +158,6 @@ class HebergementSerializer(serializers.ModelSerializer):
         return hebergement
 
 
-class MinHebergementSerializer(serializers.ModelSerializer):
-    localisation = LocalisationSerializer()
-
-    class Meta:
-        model = Hebergement
-        fields = [
-            "id",
-            "nom_hebergement",
-            "description_hebergement",
-            "nombre_etoile_hebergement",
-            "responsable_hebergement",
-            "type_hebergement",
-            "nif",
-            "stat",
-            "autorisation",
-            "created_at",
-            "updated_at",
-            "localisation",
-        ]
-
-
 class TypeHebergementSerializer(serializers.ModelSerializer):
     class Meta:
         model = TypeHebergement
@@ -565,6 +544,14 @@ class EditChambreSerializer(serializers.ModelSerializer):
         return instance
 
 
+class EditComissionHebergementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Hebergement
+        fields = [
+            "taux_commission",
+        ]
+
+
 class ImageChambreSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImageChambre
@@ -665,4 +652,25 @@ class ListReservationSerializer(serializers.ModelSerializer):
             "est_validee_reserve",
             "created_at",
             "updated_at",
+        ]
+
+
+class MinHebergementSerializer(serializers.ModelSerializer):
+    localisation = LocalisationSerializer()
+
+    class Meta:
+        model = Hebergement
+        fields = [
+            "id",
+            "nom_hebergement",
+            "description_hebergement",
+            "nombre_etoile_hebergement",
+            "responsable_hebergement",
+            "type_hebergement",
+            "nif",
+            "stat",
+            "autorisation",
+            "created_at",
+            "updated_at",
+            "localisation",
         ]
