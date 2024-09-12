@@ -245,6 +245,16 @@ urlpatterns = [
         name="list_chambres_by_hotel",
     ),
     path(
+        "<int:pk>/commission/",
+        views.edit_commission,
+        name="edit_commission",
+    ),
+    path(
+        "notifications/<int:hebergement_id>/",
+        views.NotificationsByHebergementView.as_view(),
+        name="notifications_by_hebergement",
+    ),
+    path(
         "add-hebergement-chambre/",
         views.add_hebergement_chambre,
         name="add-hebergement-chambre",

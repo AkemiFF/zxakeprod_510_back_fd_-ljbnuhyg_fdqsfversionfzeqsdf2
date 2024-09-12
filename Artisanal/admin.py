@@ -18,6 +18,7 @@ admin.site.register(AvisClientProduitArtisanal)
 admin.site.register(Specification)
 admin.site.register(Artisanat)
 admin.site.register(LocalisationArtisanat)
+admin.site.register(TransactionArtisanat)
 admin.site.register(ImageProduitArtisanal)
 
 

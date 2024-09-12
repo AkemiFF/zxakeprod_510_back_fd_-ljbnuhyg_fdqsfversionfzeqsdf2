@@ -1,6 +1,7 @@
 from django.db import models
 from Accounts.models import ResponsableEtablissement, Client
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
 
 
 class TypeHebergement(models.Model):
@@ -148,7 +149,7 @@ class HebergementChambre(models.Model):
     description = models.CharField(max_length=2000, null=True, blank=True)
     superficie = models.IntegerField(null=True, blank=True)
     prix_nuit_chambre = models.DecimalField(max_digits=8, decimal_places=2)
-    disponible_chambre = models.IntegerField(null=True)
+    disponible_chambre = models.IntegerField(null=True, default=1)
     capacite = models.IntegerField(null=True)
     status = models.IntegerField(null=True, blank=True)
     accessoires = models.ManyToManyField(
@@ -262,7 +263,9 @@ class Reservation(models.Model):
     )
     date_debut_reserve = models.DateField()
     date_fin_reserve = models.DateField()
+    nombre_chambre_reserve = models.IntegerField(default=1)
     nombre_personnes_reserve = models.IntegerField(default=1)
+
     prix_total_reserve = models.DecimalField(max_digits=10, decimal_places=2)
     est_validee_reserve = models.BooleanField(default=False)
     transaction = models.ForeignKey(
@@ -279,3 +282,20 @@ class Reservation(models.Model):
         return (
             f"{self.client_reserve} + {self.hebergement} + {self.est_validee_reserve}"
         )
+
+
+class Notification(models.Model):
+    hebergement = models.ForeignKey(
+        Hebergement, on_delete=models.CASCADE, related_name="notifications"
+    )
+    message = models.TextField()
+    date_created = models.DateTimeField(default=timezone.now)
+    is_read = models.BooleanField(default=False)
+
+    def __str__(self):
+        return (
+            f"Notification for {self.hebergement.nom_hebergement} - {self.message[:50]}"
+        )
+
+    class Meta:
+        ordering = ["-date_created"]

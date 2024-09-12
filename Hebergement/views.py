@@ -1,7 +1,15 @@
 from rest_framework import generics
 from .models import Hebergement
 from .serializers import HebergementSerializer
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import (
+    api_view,
+    permission_classes,
+    authentication_classes,
+)
+
+from rest_framework.exceptions import NotFound
+
+from API.authentication import CustomJWTAuthentication
 from rest_framework.response import Response
 from rest_framework import status
 from Hebergement.serializers import *
@@ -19,8 +27,7 @@ from django.shortcuts import get_object_or_404
 from .models import Hebergement
 from django.conf import settings
 from .utils import generer_description_hebergement
-import os
-from Accounts.serializers import ResponsableEtablissementSerializer
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -33,7 +40,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Reservation, Hebergement
 from django.http import JsonResponse
-from django.views.decorators.http import require_POST
 from django.utils.dateparse import parse_date
 from Accounts.permissions import IsResponsable
 
@@ -309,8 +315,27 @@ class ReservationsByHebergementView(APIView):
             )
 
         reservations = Reservation.objects.filter(hebergement=hebergement)
-        serializer = ReservationSerializer(reservations, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        reservations_data = []
+
+        for reservation in reservations:
+            # Calculate the number of days and nights
+            date_debut = reservation.date_debut_reserve
+            date_fin = reservation.date_fin_reserve
+            delta = date_fin - date_debut
+
+            days = delta.days
+            nights = days - 1 if days > 0 else 0
+
+            # Serialize the reservation data
+            serialized_data = ReservationSerializer(reservation).data
+
+            # Add days and nights to the serialized data
+            serialized_data["nombre_jours"] = days
+            serialized_data["nombre_nuits"] = nights
+
+            reservations_data.append(serialized_data)
+
+        return Response(reservations_data, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
@@ -387,10 +412,10 @@ import base64
 from django.core.files.base import ContentFile
 
 
-@api_view(["PUT"])
+@api_view(["PATCH"])
 @permission_classes([AllowAny])
 def edit_hebergement_chambre(request, pk):
-    print(request.data)
+
     try:
         hebergement_chambre = HebergementChambre.objects.get(pk=pk)
     except HebergementChambre.DoesNotExist:
@@ -399,20 +424,16 @@ def edit_hebergement_chambre(request, pk):
             status=status.HTTP_404_NOT_FOUND,
         )
 
-    if request.method == "PUT":
+    if request.method == "PATCH":
         accessories = []
         for key in request.data:
             if key.startswith("accessories"):
                 accessories.append(int(request.data[key]))
 
         images_list = []
-        for key, value in request.data.items():
-            if key.startswith("images_chambre"):
-                # Assuming the front sends base64 encoded images
-                format, imgstr = value.split(";base64,")
-                ext = format.split("/")[-1]
-                img_data = ContentFile(base64.b64decode(imgstr), name=f"temp.{ext}")
-                images_list.append(img_data)
+        for key, value in request.FILES.lists():
+            if key.startswith("images"):
+                images_list.extend(value)
 
         serializer_data = {
             key: request.data[key]
@@ -433,22 +454,75 @@ def edit_hebergement_chambre(request, pk):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class NotificationsByHebergementView(generics.ListAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [IsResponsable]
+    authentication_classes = [CustomJWTAuthentication]
+
+    def get_queryset(self):
+        hebergement_id = self.kwargs.get("hebergement_id")
+        try:
+            hebergement = Hebergement.objects.get(id=hebergement_id)
+        except Hebergement.DoesNotExist:
+            raise NotFound("Hébergement non trouvé.")
+
+        return Notification.objects.filter(hebergement=hebergement)
+
+
+@api_view(["PATCH", "GET"])
+@authentication_classes([CustomJWTAuthentication])
+@permission_classes([IsResponsable])
+def edit_commission(request, pk):
+    try:
+        hebergement = Hebergement.objects.get(
+            pk=pk
+        )  # Assuming you want to modify Hebergement, not HebergementChambre
+    except Hebergement.DoesNotExist:
+        return Response(
+            {"error": "Hebergement not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+    if request.method == "GET":
+        serializer = EditComissionHebergementSerializer(hebergement)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    if request.method == "PATCH":
+        # Only extract the commission data from the request
+        commission_data = {"taux_commission": request.data.get("commission")}
+
+        # Use partial=True to only update the fields provided
+        serializer = EditComissionHebergementSerializer(
+            hebergement, data=commission_data, partial=True
+        )
+
+        if serializer.is_valid():
+            hebergement = serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def add_hebergement_chambre(request):
     if request.method == "POST":
         # Extract files and accessories from the request
         files = request.FILES
-
         accessories = []
+
+        # Correctly handle the extraction of indexed accessories
         for key in request.data:
-            if key.startswith("accessories"):
+            if key.startswith(
+                "accessories"
+            ):  # Handles indexed accessories (e.g., accessories[0], accessories[1])
                 accessories.append(int(request.data[key]))
 
         images_list = []
         for key, value in files.lists():
-            images_list.extend(value)
+            if key.startswith("images"):  # Ensure this catches images
+                images_list.extend(value)
 
+        # Prepare serializer data excluding accessories and images fields
         serializer_data = {
             key: request.data[key]
             for key in request.data
@@ -458,14 +532,15 @@ def add_hebergement_chambre(request):
         serializer_data["images_chambre"] = images_list
         serializer_data["accessoires"] = accessories
 
-        # Logging instead of print statements
-
+        # Validate and save the data using the serializer
         serializer = AjoutChambreSerializer(data=serializer_data)
 
         if serializer.is_valid():
             hebergement_chambre = serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            print(serializer.errors)  # Debug serializer errors
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 def generer_description_view(request, hebergement_id):
@@ -1014,9 +1089,27 @@ class MinHebergementDetailView(APIView):
 
     def patch(self, request, hebergement_id, *args, **kwargs):
         hebergement = get_object_or_404(Hebergement, id=hebergement_id)
-        serializer = MinHebergementSerializer(
-            hebergement, data=request.data, partial=True
-        )
+        data = request.data.copy()
+
+        # Handle localisation update separately
+        localisation_data = data.pop("localisation", None)
+
+        if localisation_data:
+            localisation = get_object_or_404(
+                Localisation, hebergement_id=hebergement.id
+            )
+            localisation_serializer = LocalisationSerializer(
+                localisation, data=localisation_data, partial=True
+            )
+            if localisation_serializer.is_valid():
+                localisation_serializer.save()
+            else:
+                return Response(
+                    localisation_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                )
+
+        # Handle the rest of the hebergement data
+        serializer = MinHebergementSerializer(hebergement, data=data, partial=True)
 
         if serializer.is_valid():
             serializer.save()

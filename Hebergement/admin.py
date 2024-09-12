@@ -80,5 +80,6 @@ admin.site.register(TypeHebergement)
 
 admin.site.register(Reservation)
 admin.site.register(AvisClients)
+admin.site.register(Notification)
 admin.site.register(TypeAccessoire)
 # admin.site.register(HebergementLike)

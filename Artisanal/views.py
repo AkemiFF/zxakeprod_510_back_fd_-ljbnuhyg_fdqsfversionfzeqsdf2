@@ -185,6 +185,12 @@ class ArtisanatViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
 
 
+class LocalisationArtisanatCreateView(generics.CreateAPIView):
+    queryset = LocalisationArtisanat.objects.all()
+    serializer_class = LocalisationArtisanatSerializer
+    permission_classes = [permissions.AllowAny]
+
+
 class ArtisanatCreateView(generics.CreateAPIView):
     queryset = Artisanat.objects.all()
     serializer_class = ArtisanatSerializer

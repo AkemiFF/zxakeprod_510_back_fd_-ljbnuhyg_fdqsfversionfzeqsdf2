@@ -37,7 +37,7 @@ from rest_framework.status import HTTP_200_OK
 from .serializers import *
 from rest_framework import generics
 from django.contrib.auth.hashers import check_password
-
+from API.authentication import *
 from django.http import JsonResponse
 from rest_framework.response import Response
 
@@ -48,7 +48,7 @@ from Accounts.models import (
     Client,
 )
 from rest_framework.permissions import *
-from .permissions import IsClientUser
+from .permissions import *
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
@@ -161,6 +161,35 @@ class SomeProtectedView(APIView):
         if isinstance(user, ResponsableEtablissement):
             return Response({"message": f"Bienvenue, {user.username}!"})
         return Response({"error": "Unauthorized"}, status=401)
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsResponsable]
+    authentication_classes = [CustomJWTAuthentication]
+
+    def patch(self, request):
+        user = request.user
+        serializer = ChangePasswordSerializer(data=request.data)
+
+        if serializer.is_valid():
+            old_password = serializer.validated_data["old_password"]
+            new_password = serializer.validated_data["new_password"]
+
+            if not check_password(old_password, user.password):
+                return Response(
+                    {"error": "Old password is incorrect"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Changer le mot de passe
+            user.set_password(new_password)
+            user.save()
+
+            return Response(
+                {"message": "Password updated successfully"}, status=status.HTTP_200_OK
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ResponsableLoginView(APIView):

@@ -158,27 +158,6 @@ class HebergementSerializer(serializers.ModelSerializer):
         return hebergement
 
 
-class MinHebergementSerializer(serializers.ModelSerializer):
-    localisation = LocalisationSerializer()
-
-    class Meta:
-        model = Hebergement
-        fields = [
-            "id",
-            "nom_hebergement",
-            "description_hebergement",
-            "nombre_etoile_hebergement",
-            "responsable_hebergement",
-            "type_hebergement",
-            "nif",
-            "stat",
-            "autorisation",
-            "created_at",
-            "updated_at",
-            "localisation",
-        ]
-
-
 class TypeHebergementSerializer(serializers.ModelSerializer):
     class Meta:
         model = TypeHebergement
@@ -517,6 +496,21 @@ class GetChambreSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+from rest_framework import serializers
+from .models import (
+    HebergementChambre,
+    ImageChambre,
+    AccessoireChambre,
+    HebergementChambreAccessoire,
+)
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = "__all__"
+
+
 class EditChambreSerializer(serializers.ModelSerializer):
     images_chambre = serializers.ListField(
         child=serializers.ImageField(), required=False, write_only=True
@@ -537,32 +531,47 @@ class EditChambreSerializer(serializers.ModelSerializer):
         images_data = validated_data.pop("images_chambre", [])
         accessoires_data = validated_data.pop("accessoires", [])
 
+        # Mise à jour des autres attributs
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
         instance.save()
 
+        # Mise à jour des images
         if images_data:
-            instance.images.all().delete()  # Delete existing images if new ones are provided
+            # Supprimer les images existantes
+            instance.images_chambre.all().delete()
+            # Ajouter les nouvelles images
             for image_data in images_data:
                 ImageChambre.objects.create(
                     hebergement_chambre=instance, images=image_data
                 )
 
+        # Mise à jour des accessoires
         if accessoires_data:
-            instance.hebergementchambreaccessoire_set.all().delete()  # Delete existing accessories if new ones are provided
-            for i in accessoires_data:
+            # Supprimer les accessoires existants
+            instance.hebergementchambreaccessoire_set.all().delete()
+            # Ajouter les nouveaux accessoires
+            for accessoire_id in accessoires_data:
                 try:
-                    accessoire = AccessoireChambre.objects.get(id=i)
+                    accessoire = AccessoireChambre.objects.get(id=accessoire_id)
                     HebergementChambreAccessoire.objects.create(
                         hebergement_chambre=instance, accessoire_chambre=accessoire
                     )
                 except AccessoireChambre.DoesNotExist:
                     raise serializers.ValidationError(
-                        f"AccessoireChambre with id {i} does not exist."
+                        f"AccessoireChambre with id {accessoire_id} does not exist."
                     )
 
         return instance
+
+
+class EditComissionHebergementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Hebergement
+        fields = [
+            "taux_commission",
+        ]
 
 
 class ImageChambreSerializer(serializers.ModelSerializer):
@@ -665,4 +674,25 @@ class ListReservationSerializer(serializers.ModelSerializer):
             "est_validee_reserve",
             "created_at",
             "updated_at",
+        ]
+
+
+class MinHebergementSerializer(serializers.ModelSerializer):
+    localisation = LocalisationSerializer()
+
+    class Meta:
+        model = Hebergement
+        fields = [
+            "id",
+            "nom_hebergement",
+            "description_hebergement",
+            "nombre_etoile_hebergement",
+            "responsable_hebergement",
+            "type_hebergement",
+            "nif",
+            "stat",
+            "autorisation",
+            "created_at",
+            "updated_at",
+            "localisation",
         ]
