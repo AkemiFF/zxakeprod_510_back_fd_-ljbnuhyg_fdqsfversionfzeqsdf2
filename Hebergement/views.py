@@ -6,6 +6,9 @@ from rest_framework.decorators import (
     permission_classes,
     authentication_classes,
 )
+
+from rest_framework.exceptions import NotFound
+
 from API.authentication import CustomJWTAuthentication
 from rest_framework.response import Response
 from rest_framework import status
@@ -24,8 +27,7 @@ from django.shortcuts import get_object_or_404
 from .models import Hebergement
 from django.conf import settings
 from .utils import generer_description_hebergement
-import os
-from Accounts.serializers import ResponsableEtablissementSerializer
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -38,7 +40,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Reservation, Hebergement
 from django.http import JsonResponse
-from django.views.decorators.http import require_POST
 from django.utils.dateparse import parse_date
 from Accounts.permissions import IsResponsable
 
@@ -411,10 +412,10 @@ import base64
 from django.core.files.base import ContentFile
 
 
-@api_view(["PUT"])
+@api_view(["PATCH"])
 @permission_classes([AllowAny])
 def edit_hebergement_chambre(request, pk):
-    print(request.data)
+
     try:
         hebergement_chambre = HebergementChambre.objects.get(pk=pk)
     except HebergementChambre.DoesNotExist:
@@ -423,20 +424,16 @@ def edit_hebergement_chambre(request, pk):
             status=status.HTTP_404_NOT_FOUND,
         )
 
-    if request.method == "PUT":
+    if request.method == "PATCH":
         accessories = []
         for key in request.data:
             if key.startswith("accessories"):
                 accessories.append(int(request.data[key]))
 
         images_list = []
-        for key, value in request.data.items():
-            if key.startswith("images_chambre"):
-                # Assuming the front sends base64 encoded images
-                format, imgstr = value.split(";base64,")
-                ext = format.split("/")[-1]
-                img_data = ContentFile(base64.b64decode(imgstr), name=f"temp.{ext}")
-                images_list.append(img_data)
+        for key, value in request.FILES.lists():
+            if key.startswith("images"):
+                images_list.extend(value)
 
         serializer_data = {
             key: request.data[key]
@@ -455,6 +452,21 @@ def edit_hebergement_chambre(request, pk):
             hebergement_chambre = serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class NotificationsByHebergementView(generics.ListAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [IsResponsable]
+    authentication_classes = [CustomJWTAuthentication]
+
+    def get_queryset(self):
+        hebergement_id = self.kwargs.get("hebergement_id")
+        try:
+            hebergement = Hebergement.objects.get(id=hebergement_id)
+        except Hebergement.DoesNotExist:
+            raise NotFound("Hébergement non trouvé.")
+
+        return Notification.objects.filter(hebergement=hebergement)
 
 
 @api_view(["PATCH", "GET"])
@@ -519,9 +531,6 @@ def add_hebergement_chambre(request):
 
         serializer_data["images_chambre"] = images_list
         serializer_data["accessoires"] = accessories
-
-        # Debugging/logging for request data
-        print(serializer_data)  # You can replace this with proper logging
 
         # Validate and save the data using the serializer
         serializer = AjoutChambreSerializer(data=serializer_data)
