@@ -137,6 +137,11 @@ urlpatterns = [
         name="responsable_verify_code",
     ),
     path(
+        "responsable/password/",
+        views.ChangePasswordView.as_view(),
+        name="change_password",
+    ),
+    path(
         "responsable-check-email/",
         views.CheckEmailResponsableView.as_view(),
         name="responsable_check_email",
