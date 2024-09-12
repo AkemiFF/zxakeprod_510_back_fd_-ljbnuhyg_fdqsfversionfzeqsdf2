@@ -278,8 +278,20 @@ class ResponsableSerializer(serializers.ModelSerializer):
         fields = ["id", "username", "email", "ban"]
 
 
+class LocalisationArtisanatSerializer(serializers.ModelSerializer):
+    artisanat = serializers.PrimaryKeyRelatedField(
+        queryset=Artisanat.objects.all(), required=False
+    )
+
+    class Meta:
+        model = LocalisationArtisanat
+        fields = "__all__"
+
+
 class ArtisanatSerializer(serializers.ModelSerializer):
-    responsable = ResponsableSerializer()
+    responsable = serializers.PrimaryKeyRelatedField(
+        queryset=ResponsableEtablissement.objects.all()
+    )
     total_produits = serializers.SerializerMethodField()
 
     class Meta:

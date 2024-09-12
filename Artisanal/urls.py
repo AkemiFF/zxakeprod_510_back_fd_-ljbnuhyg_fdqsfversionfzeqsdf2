@@ -19,6 +19,11 @@ urlpatterns = [
         name="client-commandes-list",
     ),
     path(
+        "localisation/create/",
+        LocalisationArtisanatCreateView.as_view(),
+        name="localisation-artisanat-create",
+    ),
+    path(
         "transactions/create/",
         CreateAchatView.as_view(),
         name="create-transaction",
