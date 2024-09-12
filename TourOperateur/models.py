@@ -157,7 +157,11 @@ class Voyage(models.Model):
         return self.likes.count()
 
     def get_couverture_images(self):
-        return self.images_voyage.filter(couverture=True)
+        couverture_images = self.images_voyage.filter(couverture=True)
+        if couverture_images.exists():
+            return couverture_images
+        else:
+            return self.images_voyage.all()
 
     class Meta:
         verbose_name = "Voyage"
@@ -230,19 +234,46 @@ class ImageVoyage(models.Model):
         verbose_name_plural = "Images Voyage"
 
 
+class TransactionTour(models.Model):
+    transaction_id = models.CharField(max_length=255, unique=True)
+    status = models.CharField(max_length=50)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=10)
+    payer_name = models.CharField(max_length=255)
+    payer_email = models.EmailField()
+    payer_id = models.CharField(max_length=255)
+    payee_email = models.EmailField()
+    merchant_id = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    shipping_address = models.CharField(max_length=255, null=True, blank=True)
+    shipping_city = models.CharField(max_length=100, null=True, blank=True)
+    shipping_state = models.CharField(max_length=100, null=True, blank=True)
+    shipping_postal_code = models.CharField(max_length=20, null=True, blank=True)
+    shipping_country = models.CharField(max_length=10, null=True, blank=True)
+    create_time = models.DateTimeField()
+    update_time = models.DateTimeField()
+    capture_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    client = models.ForeignKey(
+        Client, on_delete=models.CASCADE, related_name="transactions_tour"
+    )
+
+    def __str__(self):
+        return f"Transaction {self.transaction_id} - {self.status}"
+
+
 class ReservationVoyage(models.Model):
     voyage = models.ForeignKey(
-        Voyage, on_delete=models.CASCADE, related_name="reservations"
+        Voyage, on_delete=models.CASCADE, related_name="reservations_voyage"
     )
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
-    date_reservation_voyage = models.DateTimeField(auto_now_add=True)
-    nombre_voyageurs = models.IntegerField(null=True, blank=True, default=1)
-    STATUS_CHOICES = (
-        ("confirmed", _("Confirmée")),
-        ("pending", _("En attente")),
-        ("cancelled", _("Annulée")),
+
+    transaction = models.ForeignKey(
+        TransactionTour, on_delete=models.CASCADE, null=True, blank=True
     )
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    date_reservation_voyage = models.DateTimeField(auto_now_add=True)
+    nombre_voyageurs = models.IntegerField(default=1)
+    prix_total = models.FloatField(null=True, blank=True)
+    status = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.client} reserved {self.voyage}"

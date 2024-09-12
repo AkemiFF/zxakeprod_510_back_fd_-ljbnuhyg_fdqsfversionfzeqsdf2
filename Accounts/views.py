@@ -90,13 +90,13 @@ def client_pay_create(request):
 
             return Response(response_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    
+
+
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated])
 def edit_client_pay_create(request):
-    user = request.user 
-    serializer = FullClientSerializer(instance=user, data=request.data, partial=True) 
+    user = request.user
+    serializer = FullClientSerializer(instance=user, data=request.data, partial=True)
 
     if serializer.is_valid():
         user = serializer.save()
@@ -111,9 +111,10 @@ def edit_client_pay_create(request):
             "emailPhotoUrl": user.emailPhotoUrl,
         }
 
-        return Response(response_data, status=status.HTTP_200_OK)  # Utilisation de 200 OK pour la mise à jour réussie
+        return Response(
+            response_data, status=status.HTTP_200_OK
+        )  # Utilisation de 200 OK pour la mise à jour réussie
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 class CheckEmailResponsableView(APIView):
@@ -796,7 +797,7 @@ def verify_code(request):
         try:
             data = json.loads(request.body.decode("utf-8"))
             email = data["email"]
-            code = data["code"]
+            code = data["code"].replace(" ", "")
 
             if not email or not code:
                 return JsonResponse(

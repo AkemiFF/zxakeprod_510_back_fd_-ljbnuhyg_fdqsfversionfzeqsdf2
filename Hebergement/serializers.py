@@ -21,6 +21,10 @@ class SuggestionHebergementSerializer(serializers.ModelSerializer):
         if couverture_image:
             absolute_url = request.build_absolute_uri(couverture_image.image.url)
             return absolute_url
+        else:
+            im = obj.images.all().first()
+            absolute_url = request.build_absolute_uri(im.image.url)
+            return absolute_url
 
         return None
 
@@ -94,10 +98,13 @@ class HebergementSerializer(serializers.ModelSerializer):
     total_likes = serializers.ReadOnlyField()
 
     def get_min_prix_nuit_chambre(self, instance):
-        min_price = HebergementChambre.objects.filter(hebergement=instance).aggregate(
-            Min("prix_nuit_chambre")
-        )["prix_nuit_chambre__min"]
-        return min_price
+        chambres = HebergementChambre.objects.filter(hebergement=instance)
+
+        if not chambres.exists():
+            return None
+
+        min_price = min([chambre.prix_final() for chambre in chambres])
+        return round(min_price, 2)
 
     def get_accessoires(self, instance):
         accessoires = HebergementAccessoire.objects.filter(hebergement=instance)
@@ -149,27 +156,6 @@ class HebergementSerializer(serializers.ModelSerializer):
             HebergementImage.objects.create(hebergement=hebergement, image=image_file)
 
         return hebergement
-
-
-class MinHebergementSerializer(serializers.ModelSerializer):
-    localisation = LocalisationSerializer()
-
-    class Meta:
-        model = Hebergement
-        fields = [
-            "id",
-            "nom_hebergement",
-            "description_hebergement",
-            "nombre_etoile_hebergement",
-            "responsable_hebergement",
-            "type_hebergement",
-            "nif",
-            "stat",
-            "autorisation",
-            "created_at",
-            "updated_at",
-            "localisation",
-        ]
 
 
 class TypeHebergementSerializer(serializers.ModelSerializer):
@@ -314,16 +300,19 @@ class HebergementChambreSerializer(serializers.ModelSerializer):
     accessoires = AccessoireChambreSerializer(many=True)
     images_chambre = ImageChambreSerializer(many=True, read_only=True)
     reservation = serializers.SerializerMethodField()
+    prix_nuit_chambre = serializers.SerializerMethodField()
 
     class Meta:
         model = HebergementChambre
         fields = "__all__"
 
     def get_reservation(self, obj):
-        # Assurez-vous que 'chambre_reserve' est la bonne relation dans le modèle Reservation
         reservation = Reservation.objects.filter(chambre_reserve=obj)
         serializer = ReservationSerializer(reservation, many=True)
         return serializer.data
+
+    def get_prix_nuit_chambre(self, obj):
+        return round(obj.prix_final(), 2)
 
 
 class TypeAccessoireSerializer(serializers.ModelSerializer):
@@ -555,6 +544,14 @@ class EditChambreSerializer(serializers.ModelSerializer):
         return instance
 
 
+class EditComissionHebergementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Hebergement
+        fields = [
+            "taux_commission",
+        ]
+
+
 class ImageChambreSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImageChambre
@@ -608,6 +605,7 @@ class ShortHebergementSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "chambres",
+            "taux_commission",
             "localisation",
             "nom_hebergement",
             "description_hebergement",
@@ -654,4 +652,25 @@ class ListReservationSerializer(serializers.ModelSerializer):
             "est_validee_reserve",
             "created_at",
             "updated_at",
+        ]
+
+
+class MinHebergementSerializer(serializers.ModelSerializer):
+    localisation = LocalisationSerializer()
+
+    class Meta:
+        model = Hebergement
+        fields = [
+            "id",
+            "nom_hebergement",
+            "description_hebergement",
+            "nombre_etoile_hebergement",
+            "responsable_hebergement",
+            "type_hebergement",
+            "nif",
+            "stat",
+            "autorisation",
+            "created_at",
+            "updated_at",
+            "localisation",
         ]

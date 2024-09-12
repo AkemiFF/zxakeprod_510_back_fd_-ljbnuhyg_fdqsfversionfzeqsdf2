@@ -1,10 +1,7 @@
 from Accounts.models import Client
-from django.conf import settings
 from django.db import models
 from Accounts.models import *
-from django.core.exceptions import ValidationError
-
-from Hebergement.models import Localisation
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class Specification(models.Model):
@@ -31,6 +28,12 @@ class Artisanat(models.Model):
     active = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    taux_commission = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=7.00,
+        validators=[MinValueValidator(7.00), MaxValueValidator(15.00)],
+    )
 
     def __str__(self):
         return f"{self.responsable} ({self.nom})"
@@ -110,6 +113,10 @@ class ProduitArtisanal(models.Model):
 
     def total_likes(self):
         return self.likes.count()
+
+    def prix_final(self):
+        commission = self.artisanat.taux_commission / 100
+        return round(self.prix_artisanat * (1 + commission), 2)
 
 
 class AvisClientProduitArtisanal(models.Model):

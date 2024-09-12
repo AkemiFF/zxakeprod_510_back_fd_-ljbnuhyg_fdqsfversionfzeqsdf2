@@ -1,5 +1,6 @@
 from django.db import models
 from Accounts.models import ResponsableEtablissement, Client
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class TypeHebergement(models.Model):
@@ -82,6 +83,12 @@ class Hebergement(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     likes = models.ManyToManyField(Client, related_name="liked_hebergement", blank=True)
+    taux_commission = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=7.00,
+        validators=[MinValueValidator(7.00), MaxValueValidator(15.00)],
+    )
 
     def __str__(self):
         return self.nom_hebergement
@@ -141,12 +148,18 @@ class HebergementChambre(models.Model):
     description = models.CharField(max_length=2000, null=True, blank=True)
     superficie = models.IntegerField(null=True, blank=True)
     prix_nuit_chambre = models.DecimalField(max_digits=8, decimal_places=2)
-    disponible_chambre = models.IntegerField(null=True)
+    disponible_chambre = models.IntegerField(null=True, default=1)
     capacite = models.IntegerField(null=True)
     status = models.IntegerField(null=True, blank=True)
     accessoires = models.ManyToManyField(
         "AccessoireChambre", through="HebergementChambreAccessoire"
     )
+
+    def prix_final(self):
+        hebergement = self.hebergement
+        taux_commission = hebergement.taux_commission / 100
+        prix_final = self.prix_nuit_chambre * (1 + taux_commission)
+        return prix_final
 
     def __str__(self):
         return f"{self.hebergement} - {self.chambre} - {self.chambre_personaliser}"
@@ -249,7 +262,9 @@ class Reservation(models.Model):
     )
     date_debut_reserve = models.DateField()
     date_fin_reserve = models.DateField()
+    nombre_chambre_reserve = models.IntegerField(default=1)
     nombre_personnes_reserve = models.IntegerField(default=1)
+
     prix_total_reserve = models.DecimalField(max_digits=10, decimal_places=2)
     est_validee_reserve = models.BooleanField(default=False)
     transaction = models.ForeignKey(
