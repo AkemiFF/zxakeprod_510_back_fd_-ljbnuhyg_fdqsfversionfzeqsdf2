@@ -3,9 +3,26 @@ from django.dispatch import receiver
 
 from Hebergement.models import *
 
+
 from django.db.models.signals import post_migrate
 from django.dispatch import receiver
 from .models import TypeAccessoire, AccessoireHebergement
+from django.db.models.signals import post_save
+
+
+@receiver(post_save, sender=Hebergement)
+def create_welcome_notification(sender, instance, created, **kwargs):
+    if created:
+        Notification.objects.create(
+            hebergement=instance,
+            message=(
+                "Bonjour ! Votre hébergement a été créé avec succès. "
+                "Veuillez noter qu'il est actuellement en attente d'autorisation de la part de l'administrateur. "
+                "Vous serez informé dès que l'autorisation sera accordée. "
+                "Merci pour votre patience !"
+            ),
+            is_read=False,
+        )
 
 
 @receiver(post_migrate)
