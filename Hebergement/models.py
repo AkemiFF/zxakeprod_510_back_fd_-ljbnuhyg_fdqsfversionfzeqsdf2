@@ -1,6 +1,7 @@
 from django.db import models
 from Accounts.models import ResponsableEtablissement, Client
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
 
 
 class TypeHebergement(models.Model):
@@ -281,3 +282,20 @@ class Reservation(models.Model):
         return (
             f"{self.client_reserve} + {self.hebergement} + {self.est_validee_reserve}"
         )
+
+
+class Notification(models.Model):
+    hebergement = models.ForeignKey(
+        Hebergement, on_delete=models.CASCADE, related_name="notifications"
+    )
+    message = models.TextField()
+    date_created = models.DateTimeField(default=timezone.now)
+    is_read = models.BooleanField(default=False)
+
+    def __str__(self):
+        return (
+            f"Notification for {self.hebergement.nom_hebergement} - {self.message[:50]}"
+        )
+
+    class Meta:
+        ordering = ["-date_created"]
