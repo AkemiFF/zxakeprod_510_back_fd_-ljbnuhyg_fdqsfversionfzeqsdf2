@@ -252,7 +252,8 @@ class ResponsableLoginView(APIView):
 
 
 class ResponsableEtablissementDetailView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsResponsable]
+    authentication_classes = [CustomJWTAuthentication]
 
     def get(self, request, responsable_id):
         try:
