@@ -288,6 +288,12 @@ class LocalisationArtisanatSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class NotificationArtisanatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NotificationArtisanat
+        fields = "__all__"
+
+
 class ArtisanatSerializer(serializers.ModelSerializer):
     responsable = serializers.PrimaryKeyRelatedField(
         queryset=ResponsableEtablissement.objects.all()
@@ -300,6 +306,13 @@ class ArtisanatSerializer(serializers.ModelSerializer):
 
     def get_total_produits(self, obj):
         return ProduitArtisanal.objects.filter(artisanat=obj).count()
+
+
+class ArtisanatCommissionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Artisanat
+        fields = ["taux_commission"]
 
 
 class TransactionArtisanatSerializer(serializers.ModelSerializer):
