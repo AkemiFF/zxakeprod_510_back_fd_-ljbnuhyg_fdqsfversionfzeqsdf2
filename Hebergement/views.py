@@ -6,6 +6,9 @@ from rest_framework.decorators import (
     permission_classes,
     authentication_classes,
 )
+
+from rest_framework.exceptions import NotFound
+
 from API.authentication import CustomJWTAuthentication
 from rest_framework.response import Response
 from rest_framework import status
@@ -24,8 +27,7 @@ from django.shortcuts import get_object_or_404
 from .models import Hebergement
 from django.conf import settings
 from .utils import generer_description_hebergement
-import os
-from Accounts.serializers import ResponsableEtablissementSerializer
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -38,7 +40,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Reservation, Hebergement
 from django.http import JsonResponse
-from django.views.decorators.http import require_POST
 from django.utils.dateparse import parse_date
 from Accounts.permissions import IsResponsable
 
@@ -411,10 +412,10 @@ import base64
 from django.core.files.base import ContentFile
 
 
-@api_view(["PUT"])
+@api_view(["PATCH"])
 @permission_classes([AllowAny])
 def edit_hebergement_chambre(request, pk):
-    print(request.data)
+
     try:
         hebergement_chambre = HebergementChambre.objects.get(pk=pk)
     except HebergementChambre.DoesNotExist:
@@ -423,20 +424,16 @@ def edit_hebergement_chambre(request, pk):
             status=status.HTTP_404_NOT_FOUND,
         )
 
-    if request.method == "PUT":
+    if request.method == "PATCH":
         accessories = []
         for key in request.data:
             if key.startswith("accessories"):
                 accessories.append(int(request.data[key]))
 
         images_list = []
-        for key, value in request.data.items():
-            if key.startswith("images_chambre"):
-                # Assuming the front sends base64 encoded images
-                format, imgstr = value.split(";base64,")
-                ext = format.split("/")[-1]
-                img_data = ContentFile(base64.b64decode(imgstr), name=f"temp.{ext}")
-                images_list.append(img_data)
+        for key, value in request.FILES.lists():
+            if key.startswith("images"):
+                images_list.extend(value)
 
         serializer_data = {
             key: request.data[key]
@@ -455,6 +452,21 @@ def edit_hebergement_chambre(request, pk):
             hebergement_chambre = serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class NotificationsByHebergementView(generics.ListAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [IsResponsable]
+    authentication_classes = [CustomJWTAuthentication]
+
+    def get_queryset(self):
+        hebergement_id = self.kwargs.get("hebergement_id")
+        try:
+            hebergement = Hebergement.objects.get(id=hebergement_id)
+        except Hebergement.DoesNotExist:
+            raise NotFound("Hébergement non trouvé.")
+
+        return Notification.objects.filter(hebergement=hebergement)
 
 
 @api_view(["PATCH", "GET"])
@@ -519,9 +531,6 @@ def add_hebergement_chambre(request):
 
         serializer_data["images_chambre"] = images_list
         serializer_data["accessoires"] = accessories
-
-        # Debugging/logging for request data
-        print(serializer_data)  # You can replace this with proper logging
 
         # Validate and save the data using the serializer
         serializer = AjoutChambreSerializer(data=serializer_data)
@@ -1157,59 +1166,6 @@ class ToggleAutorisationView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-# @api_view(["POST"])
-# @permission_classes([AllowAny])
-# def check_availability_and_calculate_price(request):
-#     if request.method == "POST":
-#         data = request.data
-#         chambre_ids = data.get("chambre_ids", [])
-#         check_in = parse_date(data.get("check_in"))
-#         check_out = parse_date(data.get("check_out"))
-
-#         if not chambre_ids or not check_in or not check_out:
-#             return JsonResponse({"error": "Invalid data"}, status=404)
-
-#         nombre_de_jours = (check_out - check_in).days
-#         print(nombre_de_jours)
-#         total_price = 0
-#         unavailable_chambres = []
-
-#         for chambre_id in chambre_ids:
-#             try:
-#                 chambre = HebergementChambre.objects.get(id=chambre_id)
-#                 prix_par_nuit = chambre.prix_nuit_chambre
-#                 prix_total_chambre = prix_par_nuit * nombre_de_jours
-
-#                 reservation_exists = Reservation.objects.filter(
-#                     chambre_reserve=chambre,
-#                     date_debut_reserve__lt=check_out,
-#                     date_fin_reserve__gt=check_in,
-#                     est_validee_reserve=True,
-#                 ).exists()
-
-#                 if reservation_exists:
-#                     unavailable_chambres.append(chambre_id)
-#                 else:
-#                     total_price += prix_total_chambre
-
-#             except HebergementChambre.DoesNotExist:
-#                 unavailable_chambres.append(chambre_id)
-#         print(total_price)
-#         if unavailable_chambres:
-#             return JsonResponse(
-#                 {
-#                     "unavailable_chambres": unavailable_chambres,
-#                     "message": "Some rooms are not available for the selected dates.",
-#                 },
-#                 status=400,
-#             )
-
-#         return JsonResponse(
-#             {"total_price": total_price, "message": "All rooms are available."},
-#             status=200,
-#         )
-#     else:
-#         return JsonResponse({"error": "Invalid request"}, status=400)
 from django.http import JsonResponse
 from django.utils.dateparse import parse_date
 from .models import HebergementChambre, Reservation
@@ -1220,12 +1176,14 @@ from .models import HebergementChambre, Reservation
 def check_availability_and_calculate_price(request):
     if request.method == "POST":
         data = request.data
-        chambre_ids = data.get("chambre_ids", [])
+        chambre_details = data.get(
+            "chambres", []
+        )  # Liste d'objets contenant chambre id et quantité
         check_in = parse_date(data.get("check_in"))
         check_out = parse_date(data.get("check_out"))
         nombre_personnes = data.get("guests", 1)
 
-        if not chambre_ids or not check_in or not check_out:
+        if not chambre_details or not check_in or not check_out:
             return JsonResponse({"error": "Invalid data"}, status=400)
 
         nombre_de_jours = (check_out - check_in).days
@@ -1233,13 +1191,20 @@ def check_availability_and_calculate_price(request):
         unavailable_chambres = []
         reservation_details = []
 
-        for chambre_id in chambre_ids:
+        for chambre_detail in chambre_details:
+            chambre_id = chambre_detail.get("id")
+            quantity = chambre_detail.get(
+                "quantity", 1
+            )  # Quantité de chambres réservées
+
             try:
                 chambre = HebergementChambre.objects.get(id=chambre_id)
 
                 prix_par_nuit = chambre.prix_final()
                 prix_par_nuit_arrondi = round(prix_par_nuit, 2)
-                prix_total_chambre = prix_par_nuit_arrondi * nombre_de_jours
+                prix_total_chambre = (
+                    prix_par_nuit_arrondi * nombre_de_jours * quantity
+                )  # Multiplie par la quantité
 
                 reservation_exists = Reservation.objects.filter(
                     chambre_reserve=chambre,
@@ -1252,17 +1217,19 @@ def check_availability_and_calculate_price(request):
                     unavailable_chambres.append(chambre_id)
                 else:
                     total_price += prix_total_chambre
-                    reservation_details.append(
-                        {
-                            "hebergement": chambre.hebergement.id,
-                            "chambre_reserve": chambre.id,
-                            "date_debut_reserve": check_in,
-                            "date_fin_reserve": check_out,
-                            "nombre_personnes_reserve": nombre_personnes,
-                            "prix_total_reserve": prix_total_chambre,
-                            "est_validee_reserve": False,
-                        }
-                    )
+                    for _ in range(quantity):
+                        reservation_details.append(
+                            {
+                                "hebergement": chambre.hebergement.id,
+                                "chambre_reserve": chambre.id,
+                                "date_debut_reserve": check_in,
+                                "date_fin_reserve": check_out,
+                                "nombre_personnes_reserve": nombre_personnes,
+                                "nombre_chambre_reserve": quantity,
+                                "prix_total_reserve": prix_total_chambre,
+                                "est_validee_reserve": False,
+                            }
+                        )
 
             except HebergementChambre.DoesNotExist:
                 unavailable_chambres.append(chambre_id)
@@ -1286,77 +1253,6 @@ def check_availability_and_calculate_price(request):
         )
     else:
         return JsonResponse({"error": "Invalid request"}, status=400)
-
-
-# @api_view(["POST"])
-# @permission_classes([AllowAny])
-# def check_availability_and_calculate_price(request):
-#     if request.method == "POST":
-#         data = request.data
-#         chambre_ids = data.get("chambre_ids", [])
-#         check_in = parse_date(data.get("check_in"))
-#         check_out = parse_date(data.get("check_out"))
-#         nombre_personnes = data.get("guests", 1)
-
-#         if not chambre_ids or not check_in or not check_out:
-#             return JsonResponse({"error": "Invalid data"}, status=404)
-
-#         nombre_de_jours = (check_out - check_in).days
-#         total_price = 0
-#         unavailable_chambres = []
-#         reservation_details = []
-
-#         for chambre_id in chambre_ids:
-#             try:
-#                 chambre = HebergementChambre.objects.get(id=chambre_id)
-#                 prix_par_nuit = chambre.prix_nuit_chambre
-#                 prix_total_chambre = prix_par_nuit * nombre_de_jours
-
-#                 reservation_exists = Reservation.objects.filter(
-#                     chambre_reserve=chambre,
-#                     date_debut_reserve__lt=check_out,
-#                     date_fin_reserve__gt=check_in,
-#                     est_validee_reserve=True,
-#                 ).exists()
-
-#                 if reservation_exists:
-#                     unavailable_chambres.append(chambre_id)
-#                 else:
-#                     total_price += prix_total_chambre
-#                     reservation_details.append(
-#                         {
-#                             "hebergement": chambre.hebergement.id,
-#                             "chambre_reserve": chambre.id,
-#                             "date_debut_reserve": check_in,
-#                             "date_fin_reserve": check_out,
-#                             "nombre_personnes_reserve": nombre_personnes,
-#                             "prix_total_reserve": prix_total_chambre,
-#                             "est_validee_reserve": False,
-#                         }
-#                     )
-
-#             except HebergementChambre.DoesNotExist:
-#                 unavailable_chambres.append(chambre_id)
-
-#         if unavailable_chambres:
-#             return JsonResponse(
-#                 {
-#                     "unavailable_chambres": unavailable_chambres,
-#                     "message": "Some rooms are not available for the selected dates.",
-#                 },
-#                 status=400,
-#             )
-
-#         return JsonResponse(
-#             {
-#                 "total_price": total_price,
-#                 "message": "All rooms are available.",
-#                 "reservation_details": reservation_details,
-#             },
-#             status=200,
-#         )
-#     else:
-#         return JsonResponse({"error": "Invalid request"}, status=400)
 
 
 class CreateTransactionView(APIView):
@@ -1518,11 +1414,21 @@ def create_transaction(transaction_data, user):
     return None, serializer.errors
 
 
+from decimal import Decimal, ROUND_HALF_UP
+
 # class CreateReservationView(APIView):
 #     permission_classes = [IsAuthenticated]
 
 #     def post(self, request, *args, **kwargs):
-#         print(request.data.get("reservation_data"))
+
+#         reservation_data_list = request.data.get("reservation_data")
+
+#         if not reservation_data_list:
+#             return Response(
+#                 {"error": "No reservation data provided"},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+
 #         transaction, errors = create_transaction(
 #             request.data.get("transaction"), request.user
 #         )
@@ -1530,22 +1436,26 @@ def create_transaction(transaction_data, user):
 #         if errors:
 #             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
-#         # serializer = TransactionHebergementSerializer(data=request.data)
-#         serializer = ReservationSerializer1(data=request.data)
-#         if serializer.is_valid():
-#             reservation = serializer.save(client_reserve=request.user.client)
-#             return Response(
-#                 serializer.data.get("reservation_data"),
-#                 status=status.HTTP_201_CREATED,
-#             )
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#         created_reservations = []
+
+#         for reservation_data in reservation_data_list:
+
+#             reservation_data["client_reserve"] = request.user.id
+#             reservation_data["transaction_id"] = transaction.id
+
+#             serializer = ReservationSerializer1(data=reservation_data)
+#             if serializer.is_valid():
+#                 reservation = serializer.save()
+#                 created_reservations.append(serializer.data)
+#             else:
+#                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+#         return Response(created_reservations, status=status.HTTP_201_CREATED)
 class CreateReservationView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-
         reservation_data_list = request.data.get("reservation_data")
 
         if not reservation_data_list:
@@ -1554,6 +1464,7 @@ class CreateReservationView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # Créer une transaction
         transaction, errors = create_transaction(
             request.data.get("transaction"), request.user
         )
@@ -1561,18 +1472,60 @@ class CreateReservationView(APIView):
         if errors:
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
-        created_reservations = []
-
+        # Regrouper les réservations par chambre et hébergement
+        grouped_reservations = {}
         for reservation_data in reservation_data_list:
+            chambre_id = reservation_data["chambre_reserve"]
+            hebergement_id = reservation_data["hebergement"]
 
-            reservation_data["client_reserve"] = request.user.id
-            reservation_data["transaction_id"] = transaction.id
+            if (chambre_id, hebergement_id) not in grouped_reservations:
+                grouped_reservations[(chambre_id, hebergement_id)] = {
+                    "chambre_reserve": chambre_id,
+                    "hebergement": hebergement_id,
+                    "date_debut_reserve": reservation_data["date_debut_reserve"],
+                    "date_fin_reserve": reservation_data["date_fin_reserve"],
+                    "nombre_chambre_reserve": 0,  # Compter le nombre de chambres
+                    "nombre_personnes_reserve": 0,  # Somme des personnes
+                    "prix_total_reserve": 0,  # Somme des prix
+                    "client_reserve": request.user.id,
+                    "transaction": transaction.id,
+                }
 
-            serializer = ReservationSerializer1(data=reservation_data)
+            # Mise à jour des informations de réservation
+            grouped_reservations[(chambre_id, hebergement_id)][
+                "nombre_chambre_reserve"
+            ] += reservation_data["nombre_chambre_reserve"]
+            grouped_reservations[(chambre_id, hebergement_id)][
+                "nombre_personnes_reserve"
+            ] += reservation_data["nombre_personnes_reserve"]
+
+            # Calculer le prix total (si applicable)
+            # Supposons que tu as une fonction pour obtenir le prix par chambre
+            chambre = HebergementChambre.objects.get(id=chambre_id)
+            prix_par_nuit = chambre.prix_final()
+            nombre_de_jours = (
+                parse_date(reservation_data["date_fin_reserve"])
+                - parse_date(reservation_data["date_debut_reserve"])
+            ).days
+            prix_total_chambre = prix_par_nuit * nombre_de_jours
+            prix_total_chambre_total = (
+                prix_total_chambre * reservation_data["nombre_chambre_reserve"]
+            )
+
+            grouped_reservations[(chambre_id, hebergement_id)][
+                "prix_total_reserve"
+            ] += Decimal(prix_total_chambre_total).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
+
+        created_reservations = []
+        for key, data in grouped_reservations.items():
+            serializer = ReservationSerializer1(data=data)
             if serializer.is_valid():
                 reservation = serializer.save()
                 created_reservations.append(serializer.data)
             else:
+                print(serializer.errors)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(created_reservations, status=status.HTTP_201_CREATED)
@@ -1625,3 +1578,53 @@ def get_unique_cities(request):
     )
 
     return JsonResponse(list(unique_cities), safe=False)
+
+
+class HebergementImageView(APIView):
+    permission_classes = [IsResponsable]
+    authentication_classes = [CustomJWTAuthentication]
+
+    def get(self, request, hebergement_id, format=None):
+        """
+        Retourne toutes les images d'un hébergement spécifié.
+        """
+        images = HebergementImage.objects.filter(hebergement_id=hebergement_id)
+        serializer = HebergementImageSerializer(images, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, hebergement_id, format=None):
+        """
+        Crée de nouvelles images pour l'hébergement spécifié.
+        """
+        files = request.FILES
+        # Liste pour stocker les données de réponse après l'enregistrement
+        response_data = []
+
+        # Itérer sur tous les fichiers envoyés
+        for file in files.values():
+            # Créer une instance de HebergementImage pour chaque fichier
+            image_instance = HebergementImage(hebergement_id=hebergement_id, image=file)
+            image_instance.save()
+
+            # Sérialiser l'image pour la réponse
+            serializer = HebergementImageSerializer(image_instance)
+            response_data.append(serializer.data)
+
+        # Retourner les données des images nouvellement créées
+        return Response(response_data, status=status.HTTP_201_CREATED)
+
+    def delete(self, request, hebergement_id, format=None):
+        """
+        Supprime toutes les images d'un hébergement spécifié.
+        """
+        image_ids = request.data.get("image_ids", [])
+
+        if not image_ids:
+            return Response(
+                {"error": "No image IDs provided"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        images = HebergementImage.objects.filter(id__in=image_ids)
+        count, _ = images.delete()
+
+        return Response({"deleted": count}, status=status.HTTP_204_NO_CONTENT)

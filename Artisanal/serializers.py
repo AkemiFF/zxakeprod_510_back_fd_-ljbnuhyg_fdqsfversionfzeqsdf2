@@ -278,8 +278,26 @@ class ResponsableSerializer(serializers.ModelSerializer):
         fields = ["id", "username", "email", "ban"]
 
 
+class LocalisationArtisanatSerializer(serializers.ModelSerializer):
+    artisanat = serializers.PrimaryKeyRelatedField(
+        queryset=Artisanat.objects.all(), required=False
+    )
+
+    class Meta:
+        model = LocalisationArtisanat
+        fields = "__all__"
+
+
+class NotificationArtisanatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NotificationArtisanat
+        fields = "__all__"
+
+
 class ArtisanatSerializer(serializers.ModelSerializer):
-    responsable = ResponsableSerializer()
+    responsable = serializers.PrimaryKeyRelatedField(
+        queryset=ResponsableEtablissement.objects.all()
+    )
     total_produits = serializers.SerializerMethodField()
 
     class Meta:
@@ -288,6 +306,13 @@ class ArtisanatSerializer(serializers.ModelSerializer):
 
     def get_total_produits(self, obj):
         return ProduitArtisanal.objects.filter(artisanat=obj).count()
+
+
+class ArtisanatCommissionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Artisanat
+        fields = ["taux_commission"]
 
 
 class TransactionArtisanatSerializer(serializers.ModelSerializer):

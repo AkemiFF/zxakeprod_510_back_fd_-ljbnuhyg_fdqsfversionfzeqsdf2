@@ -7,10 +7,15 @@ from rest_framework.decorators import (
     api_view,
     permission_classes,
 )
+from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.views import APIView
 from django.db.models import Count
 from django.db.models import F, FloatField
+from Accounts.permissions import IsResponsable
+from API.authentication import CustomJWTAuthentication
+
+from django.shortcuts import get_object_or_404
 
 
 class SpecificationListView(generics.ListAPIView):
@@ -183,6 +188,123 @@ class ArtisanatViewSet(viewsets.ModelViewSet):
     queryset = Artisanat.objects.all()
     serializer_class = ArtisanatDetailSerializer
     permission_classes = [permissions.AllowAny]
+
+
+class LocalisationArtisanatCreateView(generics.CreateAPIView):
+    queryset = LocalisationArtisanat.objects.all()
+    serializer_class = LocalisationArtisanatSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class NotificationsByArtisanatView(generics.ListAPIView):
+    serializer_class = NotificationArtisanatSerializer
+    permission_classes = [IsResponsable]
+    authentication_classes = [CustomJWTAuthentication]
+
+    def get_queryset(self):
+        artisanat_id = self.kwargs.get("pk")
+        try:
+            artisanat = Artisanat.objects.get(id=artisanat_id)
+        except Artisanat.DoesNotExist:
+            raise NotFound("Artisanat non trouvé.")
+
+        return NotificationArtisanat.objects.filter(artisanat=artisanat)
+
+
+class ArtisanatTauxCommissionView(generics.RetrieveUpdateAPIView):
+    queryset = Artisanat.objects.all()
+    serializer_class = ArtisanatCommissionSerializer
+    permission_classes = [IsResponsable]
+    authentication_classes = [CustomJWTAuthentication]
+
+    def get_object(self):
+        return get_object_or_404(Artisanat, pk=self.kwargs["pk"])
+
+    def patch(self, request, *args, **kwargs):
+        # Récupérer l'objet Artisanat correspondant
+        artisanat = self.get_object()
+        # Vérifier que `taux_commission` est présent dans les données envoyées
+        taux_commission = request.data.get("taux_commission")
+
+        if taux_commission:
+            artisanat.taux_commission = taux_commission
+            artisanat.save()
+
+            return Response(
+                {"message": "Taux de commission mis à jour avec succès"},
+                status=status.HTTP_200_OK,
+            )
+        else:
+            return Response(
+                {"error": "Le taux de commission est requis"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+class ArtisanatDetailView(APIView):
+    permission_classes = [IsResponsable]
+    authentication_classes = [CustomJWTAuthentication]
+
+    def get(self, request, pk):
+        try:
+            artisanat = Artisanat.objects.get(pk=pk)
+            localisation = LocalisationArtisanat.objects.get(artisanat=artisanat)
+        except Artisanat.DoesNotExist:
+            return Response(
+                {"error": "Artisanat not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except LocalisationArtisanat.DoesNotExist:
+            return Response(
+                {"error": "Localisation not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        artisanat_serializer = ArtisanatSerializer(artisanat)
+        localisation_serializer = LocalisationArtisanatSerializer(localisation)
+
+        return Response(
+            {
+                "artisanat": artisanat_serializer.data,
+                "localisation": localisation_serializer.data,
+            }
+        )
+
+    def patch(self, request, pk):
+        try:
+            artisanat = Artisanat.objects.get(pk=pk)
+            localisation = LocalisationArtisanat.objects.get(artisanat=artisanat)
+        except Artisanat.DoesNotExist:
+            return Response(
+                {"error": "Artisanat not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except LocalisationArtisanat.DoesNotExist:
+            return Response(
+                {"error": "Localisation not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        artisanat_serializer = ArtisanatSerializer(
+            artisanat, data=request.data.get("artisanat", {}), partial=True
+        )
+        localisation_serializer = LocalisationArtisanatSerializer(
+            localisation, data=request.data.get("localisation", {}), partial=True
+        )
+
+        if artisanat_serializer.is_valid() and localisation_serializer.is_valid():
+            artisanat_serializer.save()
+            localisation_serializer.save()
+            return Response(
+                {
+                    "artisanat": artisanat_serializer.data,
+                    "localisation": localisation_serializer.data,
+                }
+            )
+        else:
+            return Response(
+                {
+                    "artisanat_errors": artisanat_serializer.errors,
+                    "localisation_errors": localisation_serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 class ArtisanatCreateView(generics.CreateAPIView):
