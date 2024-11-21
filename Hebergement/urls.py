@@ -285,4 +285,9 @@ urlpatterns = [
         views.HebergementImageView.as_view(),
         name="hebergement-images",
     ),
+    path(
+        "<int:pk>/description/",
+        views.HebergementDescriptionView.as_view(),
+        name="hebergement-description",
+    ),
 ]

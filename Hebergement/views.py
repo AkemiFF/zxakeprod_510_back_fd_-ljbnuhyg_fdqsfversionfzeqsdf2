@@ -6,6 +6,7 @@ from rest_framework.decorators import (
     permission_classes,
     authentication_classes,
 )
+from rest_framework.generics import RetrieveUpdateAPIView
 
 from rest_framework.exceptions import NotFound
 
@@ -1580,6 +1581,26 @@ def get_unique_cities(request):
     return JsonResponse(list(unique_cities), safe=False)
 
 
+class HebergementDescriptionView(RetrieveUpdateAPIView):
+    permission_classes = [IsResponsable]
+    authentication_classes = [CustomJWTAuthentication]
+    queryset = Hebergement.objects.all()
+    serializer_class = HebergementDescriptionSerializer
+
+    def get(self, request, *args, **kwargs):
+        hebergement = self.get_object()
+        serializer = self.get_serializer(hebergement)
+        return Response(serializer.data)
+
+    def patch(self, request, *args, **kwargs):
+        hebergement = self.get_object()
+        serializer = self.get_serializer(hebergement, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class HebergementImageView(APIView):
     permission_classes = [IsResponsable]
     authentication_classes = [CustomJWTAuthentication]
@@ -1618,7 +1639,7 @@ class HebergementImageView(APIView):
         Supprime toutes les images d'un hébergement spécifié.
         """
         image_ids = request.data.get("image_ids", [])
-
+        print(image_ids)
         if not image_ids:
             return Response(
                 {"error": "No image IDs provided"}, status=status.HTTP_400_BAD_REQUEST
