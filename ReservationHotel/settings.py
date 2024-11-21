@@ -9,8 +9,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 N_RUN = 0
 
 FrontHosts = [
-    "http://192.168.88.30:3000",
-    "http://192.168.88.30",
+    "http://192.168.83.152:3000",
+    "http://192.168.83.152",
     "http://localhost:3000",
     "http://192.168.88.23:3000",
     "http://192.168.88.43:3000",
@@ -19,6 +19,7 @@ FrontHosts = [
     "http://172.10.191.26:3000",
     "http://35.184.115.101",
     "https://www.craft-aftrip.com",
+    "https://4de1-102-17-140-63.ngrok-free.app",
     "https://craft-aftrip.com",
     "http://192.168.88.4:3000",
     "http://192.168.88.4",
@@ -108,23 +109,23 @@ LOGIN_REDIRECT_URL = "/"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "craft",
-        "USER": "postgres",
-        "PASSWORD": "H{S[jcJ7(x50LD2N",
-        "HOST": "34.122.112.53",
-        "PORT": "5432",
-    }
-}
-
 # DATABASES = {
 #     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
+#         "ENGINE": "django.db.backends.postgresql_psycopg2",
+#         "NAME": "craft",
+#         "USER": "postgres",
+#         "PASSWORD": "H{S[jcJ7(x50LD2N",
+#         "HOST": "34.122.112.53",
+#         "PORT": "5432",
 #     }
 # }
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -190,13 +191,13 @@ REST_FRAMEWORK = {
 
 # SECURISATION XSS - SSL
 
-SECURE_CONTENT_TYPE_NOSNIFF = True
-SECURE_BROWSER_XSS_FILTER = True
-X_FRAME_OPTIONS = "DENY"
-SECURE_HSTS_SECONDS = 3600
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_SSL_REDIRECT = True
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# SECURE_CONTENT_TYPE_NOSNIFF = True
+# SECURE_BROWSER_XSS_FILTER = True
+# X_FRAME_OPTIONS = 'DENY'
+# SECURE_HSTS_SECONDS = 3600
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# SECURE_SSL_REDIRECT = True
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

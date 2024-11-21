@@ -2,6 +2,8 @@ from Accounts.models import Client
 from django.db import models
 from Accounts.models import *
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
+from decimal import Decimal
 
 
 class Specification(models.Model):
@@ -31,8 +33,11 @@ class Artisanat(models.Model):
     taux_commission = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=7.00,
-        validators=[MinValueValidator(7.00), MaxValueValidator(15.00)],
+        default=Decimal("7.00"),
+        validators=[
+            MinValueValidator(Decimal("7.00")),
+            MaxValueValidator(Decimal("15.00")),
+        ],
     )
 
     def __str__(self):
@@ -64,6 +69,23 @@ class TransactionArtisanat(models.Model):
 
     def __str__(self):
         return f"Transaction {self.transaction_id} - {self.status}"
+
+
+class NotificationArtisanat(models.Model):
+    artisanat = models.ForeignKey(
+        Artisanat, on_delete=models.CASCADE, related_name="notifications_artisanat"
+    )
+    message = models.TextField()
+    date_created = models.DateTimeField(default=timezone.now)
+    is_read = models.BooleanField(default=False)
+
+    def __str__(self):
+        return (
+            f"Notification for {self.hebergement.nom_hebergement} - {self.message[:50]}"
+        )
+
+    class Meta:
+        ordering = ["-date_created"]
 
 
 class LocalisationArtisanat(models.Model):

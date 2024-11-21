@@ -280,4 +280,14 @@ urlpatterns = [
         views.CreateReservationView.as_view(),
         name="create-reservation",
     ),
+    path(
+        "<int:hebergement_id>/images/",
+        views.HebergementImageView.as_view(),
+        name="hebergement-images",
+    ),
+    path(
+        "<int:pk>/description/",
+        views.HebergementDescriptionView.as_view(),
+        name="hebergement-description",
+    ),
 ]

@@ -92,4 +92,19 @@ urlpatterns = [
         ProduitArtisanalDeleteView.as_view(),
         name="produit-artisanal-delete",
     ),
+    path(
+        "notifications/<int:pk>/",
+        NotificationsByArtisanatView.as_view(),
+        name="notifications_by_artisanat",
+    ),
+    path(
+        "<int:pk>/commission/",
+        ArtisanatTauxCommissionView.as_view(),
+        name="artisanat-taux-commission",
+    ),
+    path(
+        "<int:pk>/",
+        ArtisanatDetailView.as_view(),
+        name="artisanat-detail",
+    ),
 ]
