@@ -511,6 +511,12 @@ class NotificationSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class HebergementDescriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Hebergement
+        fields = ["description_hebergement"]
+
+
 class EditChambreSerializer(serializers.ModelSerializer):
     images_chambre = serializers.ListField(
         child=serializers.ImageField(), required=False, write_only=True
