@@ -14,7 +14,7 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 else:
-    # Serve static files in production only if absolutely necessary (e.g., custom use cases)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)    
     urlpatterns.append(
         path('static/<path:path>', serve, {'document_root': settings.STATIC_ROOT}),
     )
