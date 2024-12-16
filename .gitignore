@@ -1,8 +1,7 @@
 
 # Ignore Python cache directories
 __pycache__/
-migrations
-migrations/
+
 # Ignore other directories or files
 *.pyc
 *.pyo
