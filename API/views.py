@@ -1,29 +1,26 @@
-from django.middleware.csrf import get_token
-from django.shortcuts import render
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import *
-from rest_framework.decorators import api_view, permission_classes
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.http import JsonResponse
-from rest_framework_simplejwt.views import TokenObtainPairView
-from API.serializers import *
-from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework import status
-from .authentication import CustomJWTAuthentication
-from rest_framework_simplejwt.views import TokenViewBase
+from datetime import datetime as dt
+from datetime import timedelta
+
 from Accounts.models import Client, ResponsableEtablissement
 from Accounts.permissions import *
-from django.utils import timezone
-from rest_framework import status
-from datetime import timedelta
-from Hebergement.models import Reservation
-from Artisanal.models import Artisanat, CommandeProduit
-from TourOperateur.models import ReservationVoyage, TourOperateur
-from django.utils import timezone
-from datetime import datetime as dt
+from API.serializers import *
 from dateutil.relativedelta import relativedelta
+from django.http import JsonResponse
+from django.middleware.csrf import get_token
+from django.shortcuts import render
+from django.utils import timezone
+from django.views.decorators.csrf import ensure_csrf_cookie
+from Hebergement.models import Reservation
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import *
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenViewBase
+from TourOperateur.models import ReservationVoyage, TourOperateur
+
+from .authentication import CustomJWTAuthentication
 
 
 class StatsCountsAPIView(APIView):
@@ -33,13 +30,13 @@ class StatsCountsAPIView(APIView):
         # Compter les instances de chaque modèle
         tour_operateur_count = TourOperateur.objects.count()
         hebergement_count = Hebergement.objects.count()
-        artisanat_count = Artisanat.objects.count()
+     
 
         # Préparer les données à retourner
         data = {
             "nombre_tour_operateur": tour_operateur_count,
             "nombre_hebergement": hebergement_count,
-            "nombre_artisanat": artisanat_count,
+            "nombre_artisanat": 1,
         }
 
         return Response(data, status=status.HTTP_200_OK)
@@ -79,12 +76,7 @@ class StatsDerniersMoisAPIView(APIView):
                     created_at__lt=next_month_aware,
                 ).count()
             )
-            achats_produits_artisanaux.append(
-                CommandeProduit.objects.filter(
-                    date_commande__gte=start_month_aware,
-                    date_commande__lt=next_month_aware,
-                ).count()
-            )
+     
             reservations_voyages.append(
                 ReservationVoyage.objects.filter(
                     date_reservation_voyage__gte=start_month_aware,
@@ -132,11 +124,7 @@ class StatsDerniersJoursAPIView(APIView):
                     created_at__gte=day, created_at__lt=next_day
                 ).count()
             )
-            achats_produits_artisanaux.append(
-                CommandeProduit.objects.filter(
-                    date_commande__gte=day, date_commande__lt=next_day
-                ).count()
-            )
+  
             reservations_voyages.append(
                 ReservationVoyage.objects.filter(
                     date_reservation_voyage__gte=day,

@@ -1,21 +1,20 @@
-from django.conf import settings
 import time
-from django.http import JsonResponse
+
 import requests
-from openai import OpenAI
-from django.apps import apps
-from django.db.models import Field
 from Accounts.models import *
+from ChatBot.assistant import DatabaseAssistant
+from ChatBot.helpers import get_model_structure
+from django.apps import apps
+from django.conf import settings
+from django.db.models import Field
+from django.http import JsonResponse
 from Hebergement.models import *
-from TourOperateur.models import *
-from Artisanal.models import *
+from openai import OpenAI
+from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from ChatBot.assistant import DatabaseAssistant
-from rest_framework import status
-from ChatBot.helpers import get_model_structure
-
+from TourOperateur.models import *
 
 api_key = settings.OPENAI_API_KEY
 # assistant = DatabaseAssistant()

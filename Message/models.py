@@ -1,16 +1,10 @@
+from django.conf import settings
 from django.db import models
-from django.contrib.auth.models import User
-from polymorphic.models import PolymorphicModel
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
-from Artisanal.models import *
-from TourOperateur.models import *
 from Hebergement.models import *
-from django.conf import settings
+from TourOperateur.models import *
 
-
-from django.db import models
-from django.conf import settings
 
 class Message(models.Model):
     client = models.ForeignKey(
@@ -36,20 +30,6 @@ class HebergementMessage(Message):
     receiver = models.ForeignKey(
         Hebergement, related_name='messages', on_delete=models.CASCADE)
     
-    def __str__(self):
-        if self.client_is_sender:
-            return f"{self.client} -> {self.receiver}: {self.content}"
-        else:
-            return f"{self.receiver} -> {self.client}: {self.content}"
-
-    def get_receiver(self):
-        return self.receiver
-
-
-class ArtisanatMessage(Message):
-    receiver = models.ForeignKey(
-        Artisanat, related_name='messages', on_delete=models.CASCADE)
-
     def __str__(self):
         if self.client_is_sender:
             return f"{self.client} -> {self.receiver}: {self.content}"
