@@ -1,48 +1,26 @@
-from rest_framework import generics
-from .models import Hebergement
-from .serializers import HebergementSerializer
-from rest_framework.decorators import (
-    api_view,
-    permission_classes,
-    authentication_classes,
-)
-from rest_framework.generics import RetrieveUpdateAPIView
-
-from rest_framework.exceptions import NotFound
-
-from API.authentication import CustomJWTAuthentication
-from rest_framework.response import Response
-from rest_framework import status
-from Hebergement.serializers import *
-from Hebergement.models import *
-from rest_framework.permissions import *
-from django.db.models import Min
-from django.shortcuts import get_object_or_404, render
-from django.http import JsonResponse
-from .models import Hebergement
-from Hebergement.utils import generer_description_hebergement  # type: ignore
-from django.conf import settings
-from rest_framework.views import APIView
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from .models import Hebergement
-from django.conf import settings
-from .utils import generer_description_hebergement
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .models import Hebergement, Reservation, Chambre
-from django.db.models import Count
-from django.db.models.functions import TruncMonth
-from django.db.models import Sum
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .models import Reservation, Hebergement
-from django.http import JsonResponse
-from django.utils.dateparse import parse_date
 from Accounts.permissions import IsResponsable
+from API.authentication import CustomJWTAuthentication
+from django.conf import settings
+from django.db.models import Count, Min, Sum
+from django.db.models.functions import TruncMonth
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, render
+from django.utils.dateparse import parse_date
+from Hebergement.models import *
+from Hebergement.serializers import *
+from Hebergement.utils import generer_description_hebergement  # type: ignore
+from rest_framework import generics, status
+from rest_framework.decorators import (api_view, authentication_classes,
+                                       permission_classes)
+from rest_framework.exceptions import NotFound
+from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework.permissions import *
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from .models import Chambre, Hebergement, Reservation
+from .serializers import HebergementSerializer
+from .utils import generer_description_hebergement
 
 
 class AdminHebergementListView(generics.ListAPIView):
