@@ -1,6 +1,8 @@
+from decimal import Decimal
+
+from Accounts.models import Client, ResponsableEtablissement
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from Accounts.models import ResponsableEtablissement, Client
-from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 
 
@@ -88,7 +90,10 @@ class Hebergement(models.Model):
         max_digits=5,
         decimal_places=2,
         default=7.00,
-        validators=[MinValueValidator(7.00), MaxValueValidator(15.00)],
+        validators=[
+            MinValueValidator(Decimal("7.00")),
+            MaxValueValidator(Decimal("15.00"))
+        ],
     )
 
     def __str__(self):

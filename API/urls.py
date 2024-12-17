@@ -1,13 +1,13 @@
-from django.contrib import admin
-from django.urls import path, include
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from API import views
 from API.views import *
+from django.contrib import admin
+from django.urls import include, path
+from rest_framework_simplejwt.views import (TokenObtainPairView,
+                                            TokenRefreshView)
 
 urlpatterns = [
     path("hebergement/", include("Hebergement.urls")),
     path("accounts/", include("Accounts.urls")),
-    path("artisanat/", include("Artisanal.urls")),
     path(
         "week-stats/",
         StatsDerniersJoursAPIView.as_view(),

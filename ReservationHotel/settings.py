@@ -1,28 +1,16 @@
-from decouple import config
+import os
 from datetime import timedelta
 from pathlib import Path
-import os
 
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 N_RUN = 0
 
 FrontHosts = [
-    "http://192.168.83.152:3000",
-    "http://192.168.83.152",
     "http://localhost:3000",
-    "http://192.168.88.23:3000",
-    "http://192.168.88.43:3000",
-    "http://127.0.0.1:3000",
-    "http://34.16.111.40",
-    "http://172.10.191.26:3000",
-    "http://35.184.115.101",
-    "https://www.craft-aftrip.com",
-    "https://4de1-102-17-140-63.ngrok-free.app",
     "https://craft-aftrip.com",
-    "http://192.168.88.4:3000",
-    "http://192.168.88.4",
 ]
 
 
@@ -49,13 +37,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # "allauth",
-    # "allauth.account",
-    # "allauth.socialaccount",
-    # "allauth.socialaccount.providers.google",
     "corsheaders",
     "Accounts",
-    "Artisanal",
     "ChatBot",
     "Hebergement",
     "TourOperateur",
@@ -109,23 +92,23 @@ LOGIN_REDIRECT_URL = "/"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql_psycopg2",
-#         "NAME": "craft",
-#         "USER": "postgres",
-#         "PASSWORD": "H{S[jcJ7(x50LD2N",
-#         "HOST": "34.122.112.53",
-#         "PORT": "5432",
-#     }
-# }
-
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "aftrip",
+        "USER": "aftrip",
+        "PASSWORD": config("DB_PASS"),
+        "HOST": config("DB_HOST"),
+        "PORT": "5432",
     }
 }
+
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -161,8 +144,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = "static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "images"),

@@ -1,60 +1,43 @@
-from django.shortcuts import render
-from templated_email import send_templated_mail
-from django.core.exceptions import ObjectDoesNotExist
-from django.contrib.auth.hashers import make_password
-from django.template.loader import render_to_string
 import json
-from django.conf import settings
-from django.utils.crypto import get_random_string
-from django.core.mail import send_mail
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.views import APIView
-from django.views import View
-from rest_framework.decorators import api_view, permission_classes
-from .serializers import UserEmailSerializerVerify, UserSerializerVerify
-from rest_framework import status
-from rest_framework.permissions import AllowAny
-from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework import views, status
-from rest_framework.authtoken.models import Token
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from rest_framework.decorators import (
-    api_view,
-    authentication_classes,
-    permission_classes,
-)
-from Hebergement.models import Hebergement
-from Artisanal.models import Artisanat
-from Hebergement.serializers import MinHebergementSerializer
-from TourOperateur.models import TourOperateur
-from TourOperateur.serializers import TourOperateurSerializer
-from Artisanal.serializers import ArtisanatSerializer
-from django.contrib.auth.models import User
-from rest_framework.decorators import api_view
-from .models import Client, VerificationCode, ResponsableEtablissement
-from rest_framework.status import HTTP_200_OK
-from .serializers import *
-from rest_framework import generics
-from django.contrib.auth.hashers import check_password
-from API.authentication import *
-from django.http import JsonResponse
-from rest_framework.response import Response
 
-from Accounts.models import (
-    TypeResponsable,
-    ResponsableEtablissement,
-    TypeCarteBancaire,
-    Client,
-)
+from Accounts.models import (Client, ResponsableEtablissement,
+                             TypeCarteBancaire, TypeResponsable)
+from API.authentication import *
+from django.conf import settings
+from django.contrib.auth import authenticate
+from django.contrib.auth.hashers import check_password, make_password
+from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.mail import send_mail
+from django.core.validators import validate_email
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.template.loader import render_to_string
+from django.utils.crypto import get_random_string
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+from Hebergement.models import Hebergement
+from Hebergement.serializers import MinHebergementSerializer
+from rest_framework import generics, status, views
+from rest_framework.authtoken.models import Token
+from rest_framework.decorators import (api_view, authentication_classes,
+                                       permission_classes)
 from rest_framework.permissions import *
-from .permissions import *
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
-from django.contrib.auth import authenticate
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
+from rest_framework.views import APIView
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
+from templated_email import send_templated_mail
+from TourOperateur.models import TourOperateur
+from TourOperateur.serializers import TourOperateurSerializer
+
+from .models import Client, ResponsableEtablissement, VerificationCode
+from .permissions import *
+from .serializers import *
+from .serializers import UserEmailSerializerVerify, UserSerializerVerify
 
 
 class CreateClientView(APIView):
@@ -228,9 +211,6 @@ class ResponsableLoginView(APIView):
         if type_etablissement == 1:
             hebergements = Hebergement.objects.get(responsable_hebergement=user)
             etablissement_info = MinHebergementSerializer(hebergements)
-        elif type_etablissement == 2:
-            artisanat = Artisanat.objects.get(responsable=user)
-            etablissement_info = ArtisanatSerializer(artisanat)
         elif type_etablissement == 3:
             tour = TourOperateur.objects.get(responsable_TourOperateur=user)
             etablissement_info = TourOperateurSerializer(tour)

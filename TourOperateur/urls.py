@@ -1,10 +1,6 @@
-# urls.py
+from django.urls import path
 
-from django.urls import include, path
-from .views import VoyageListView, VoyageDetailView
 from . import views
-from rest_framework.routers import DefaultRouter
-
 
 urlpatterns = [
     path(
