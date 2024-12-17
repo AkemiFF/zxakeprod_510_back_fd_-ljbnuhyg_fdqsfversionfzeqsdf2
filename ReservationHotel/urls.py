@@ -8,13 +8,14 @@ urlpatterns = [
     path("", custom_404_view, name="page"),
     path("api/", include("API.urls")),
 ]
-
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 # Serve static and media files during development
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-else:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)    
-    urlpatterns.append(
-        path('static/<path:path>', serve, {'document_root': settings.STATIC_ROOT}),
-    )
+# if settings.DEBUG:
+#     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+#     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+# else:
+#     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)    
+#     urlpatterns.append(
+#         path('static/<path:path>', serve, {'document_root': settings.STATIC_ROOT}),
+#     )
