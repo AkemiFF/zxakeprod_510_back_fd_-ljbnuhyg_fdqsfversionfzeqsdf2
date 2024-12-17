@@ -221,19 +221,25 @@ class HebergementStatsView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, hebergement_id):
+        # Définir une clé de cache unique pour les statistiques de cet hébergement
+        cache_key = f"hebergement_stats_{hebergement_id}"
+
+        # Vérifier si les statistiques sont déjà dans le cache
+        stats_data = cache.get(cache_key)
+
+        if stats_data:
+            # Si les données sont dans le cache, les retourner directement
+            return Response(stats_data, status=status.HTTP_200_OK)
+
         try:
             # Vérifie si l'hébergement existe
             hebergement = Hebergement.objects.get(pk=hebergement_id)
 
             # Compte le nombre de réservations pour cet hébergement
-            reservation_count = Reservation.objects.filter(
-                hebergement=hebergement
-            ).count()
+            reservation_count = Reservation.objects.filter(hebergement=hebergement).count()
 
             # Compte le nombre de chambres disponibles pour cet hébergement
-            available_chambres_count = HebergementChambre.objects.filter(
-                hebergement=hebergement, status=1
-            ).count()
+            available_chambres_count = HebergementChambre.objects.filter(hebergement=hebergement, status=1).count()
 
             # Calcule le nombre total d'invités pour cet hébergement
             total_guests = (
@@ -243,20 +249,22 @@ class HebergementStatsView(APIView):
                 or 0
             )
 
-            return Response(
-                {
-                    "booking_count": reservation_count,
-                    "available_room_count": available_chambres_count,
-                    "total_guests": total_guests,
-                },
-                status=status.HTTP_200_OK,
-            )
+            # Créer les données de statistiques à renvoyer
+            stats_data = {
+                "booking_count": reservation_count,
+                "available_room_count": available_chambres_count,
+                "total_guests": total_guests,
+            }
+
+            # Sauvegarder les données dans le cache pendant 5 minutes
+            cache.set(cache_key, stats_data, timeout=300)
+
+            return Response(stats_data, status=status.HTTP_200_OK)
 
         except Hebergement.DoesNotExist:
             return Response(
                 {"error": "Hébergement non trouvé."}, status=status.HTTP_404_NOT_FOUND
             )
-
 
 class ClientsAndChambresByHebergementView(APIView):
     permission_classes = [AllowAny]
@@ -565,7 +573,7 @@ def get_hebergement_details(request, hebergement_id):
 
     # Tenter de récupérer l'hébergement depuis le cache
     hebergement_data = cache.get(cache_key)
-    print(hebergement_data)
+    
     if hebergement_data:
         return Response(hebergement_data, status=status.HTTP_200_OK)
 
@@ -583,6 +591,7 @@ def get_hebergement_details(request, hebergement_id):
         )
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -1068,10 +1077,19 @@ class MinHebergementDetailView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, hebergement_id, *args, **kwargs):
+        cache_key = f"hebergement_{hebergement_id}_min_detail"
+
+        hebergement_data = cache.get(cache_key)
+
+        if hebergement_data:
+            return Response(hebergement_data, status=status.HTTP_200_OK)
+
         hebergement = get_object_or_404(Hebergement, id=hebergement_id)
         serializer = MinHebergementSerializer(hebergement)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
+        cache.set(cache_key, serializer.data, timeout=300)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
     def put(self, request, hebergement_id, *args, **kwargs):
         hebergement = get_object_or_404(Hebergement, id=hebergement_id)
         serializer = MinHebergementSerializer(hebergement, data=request.data)
