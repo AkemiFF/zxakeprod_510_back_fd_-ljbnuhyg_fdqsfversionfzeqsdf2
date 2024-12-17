@@ -1,11 +1,12 @@
 from datetime import timezone
-from django.dispatch import receiver
-from django.db.models.signals import post_migrate
+
 from django.apps import apps
 from django.contrib.auth.hashers import make_password
-from django.db import models
-from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import RegexValidator
+from django.db import models
+from django.db.models.signals import post_migrate
+from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
 
@@ -71,9 +72,9 @@ class ResponsableEtablissement(AbstractUser):
     def __str__(self):
         return f"{self.username} {self.email} ({self.type_responsable})"
 
-    # def save(self, *args, **kwargs):
-    #     self.password_responsable = make_password(self.password_responsable)
-    #     super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        self.password_responsable = make_password(self.password_responsable)
+        super().save(*args, **kwargs)
 
 
 class Client(AbstractUser):
