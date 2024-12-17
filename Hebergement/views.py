@@ -60,12 +60,13 @@ class RecentReservationsForHebergementView(APIView):
             )
 
 
-from django.db.models.functions import ExtractWeekDay
 from django.db.models import Count
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from django.db.models.functions import ExtractWeekDay
 from rest_framework import status
-from .models import Reservation, Hebergement
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from .models import Hebergement, Reservation
 
 
 class ClientReservationsView(APIView):
@@ -388,6 +389,7 @@ def delete_hebergement_chambre(request, id):
 
 
 import base64
+
 from django.core.files.base import ContentFile
 
 
@@ -552,21 +554,35 @@ def generer_description_view(request, hebergement_id):
     print(description)
     return JsonResponse({"description": description})
 
+from django.core.cache import cache
+
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def get_hebergement_details(request, hebergement_id):
-    try:
+    # Définir une clé de cache unique pour cet hebergement
+    cache_key = f"hebergement_{hebergement_id}"
+
+    # Tenter de récupérer l'hébergement depuis le cache
+    hebergement_data = cache.get(cache_key)
+    print(hebergement_data)
+    if hebergement_data:
+        return Response(hebergement_data, status=status.HTTP_200_OK)
+
+    try:        
         hebergement = Hebergement.objects.get(id=hebergement_id)
         serializer = HebergementSerializerAll(hebergement)
+        
+        cache.set(cache_key, serializer.data, timeout=300)  
+
         return Response(serializer.data, status=status.HTTP_200_OK)
+
     except Hebergement.DoesNotExist:
         return Response(
             {"error": "Hebergement not found"}, status=status.HTTP_404_NOT_FOUND
         )
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -1147,6 +1163,7 @@ class ToggleAutorisationView(APIView):
 
 from django.http import JsonResponse
 from django.utils.dateparse import parse_date
+
 from .models import HebergementChambre, Reservation
 
 
@@ -1393,7 +1410,7 @@ def create_transaction(transaction_data, user):
     return None, serializer.errors
 
 
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 
 # class CreateReservationView(APIView):
 #     permission_classes = [IsAuthenticated]
