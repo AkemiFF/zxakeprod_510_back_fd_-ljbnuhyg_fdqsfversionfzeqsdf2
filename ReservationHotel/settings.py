@@ -1,4 +1,5 @@
 import os
+import ssl
 from datetime import timedelta
 from pathlib import Path
 
@@ -7,6 +8,7 @@ from decouple import config
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 N_RUN = 0
+CeleryAccess = config('CELERY_ACCESS')
 
 FrontHosts = [
     "http://localhost:3000",
@@ -38,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "corsheaders",
+    'celery',
     "Accounts",
     "ChatBot",
     "Hebergement",
@@ -242,3 +245,53 @@ CORS_ALLOW_HEADERS = [
     "User-Agent",
     "X-CSRFToken",
 ]
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
+
+CACHES = {
+    'default': {
+    'BACKEND': 'django_redis.cache.RedisCache',
+    'LOCATION': CeleryAccess,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'IGNORE_EXCEPTIONS': True, 
+            'SOCKET_CONNECT_TIMEOUT': 5, 
+            'SOCKET_TIMEOUT': 5,       
+            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+        },
+        'TIMEOUT': 300, 
+        'KEY_PREFIX': 'aftrip',  
+    }
+}
+
+
+
+CELERY_RESULT_BACKEND = CeleryAccess
+CELERY_BROKER_URL = CeleryAccess
+
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_WORKER_CANCEL_LONG_RUNNING_TASKS_ON_CONNECTION_LOSS = False  
+
+
+
+# Configurer l'usage de SSL pour les connexions rediss://
+CELERY_BROKER_USE_SSL = {
+    'ssl_cert_reqs': ssl.CERT_REQUIRED,
+    'ssl_keyfile': None,                 
+    'ssl_certfile': None,               
+    'ssl_ca_certs': None,               
+}
+
+# Options supplémentaires pour la gestion des connexions Redis
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    'visibility_timeout': 3600, 
+    'max_retries': 10,                   
+    'retry_policy': {
+        'interval_start': 0,            
+        'interval_step': 0.2,            
+        'interval_max': 15,           
+    },
+    'socket_timeout': 5,
+}
+
+CELERYD_POOL_RESTARTS = True
