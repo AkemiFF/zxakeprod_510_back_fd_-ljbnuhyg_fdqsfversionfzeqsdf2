@@ -1,48 +1,26 @@
-from rest_framework import generics
-from .models import Hebergement
-from .serializers import HebergementSerializer
-from rest_framework.decorators import (
-    api_view,
-    permission_classes,
-    authentication_classes,
-)
-from rest_framework.generics import RetrieveUpdateAPIView
-
-from rest_framework.exceptions import NotFound
-
-from API.authentication import CustomJWTAuthentication
-from rest_framework.response import Response
-from rest_framework import status
-from Hebergement.serializers import *
-from Hebergement.models import *
-from rest_framework.permissions import *
-from django.db.models import Min
-from django.shortcuts import get_object_or_404, render
-from django.http import JsonResponse
-from .models import Hebergement
-from Hebergement.utils import generer_description_hebergement  # type: ignore
-from django.conf import settings
-from rest_framework.views import APIView
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from .models import Hebergement
-from django.conf import settings
-from .utils import generer_description_hebergement
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .models import Hebergement, Reservation, Chambre
-from django.db.models import Count
-from django.db.models.functions import TruncMonth
-from django.db.models import Sum
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .models import Reservation, Hebergement
-from django.http import JsonResponse
-from django.utils.dateparse import parse_date
 from Accounts.permissions import IsResponsable
+from API.authentication import CustomJWTAuthentication
+from django.conf import settings
+from django.db.models import Count, Min, Sum
+from django.db.models.functions import TruncMonth
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, render
+from django.utils.dateparse import parse_date
+from Hebergement.models import *
+from Hebergement.serializers import *
+from Hebergement.utils import generer_description_hebergement  # type: ignore
+from rest_framework import generics, status
+from rest_framework.decorators import (api_view, authentication_classes,
+                                       permission_classes)
+from rest_framework.exceptions import NotFound
+from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework.permissions import *
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from .models import Chambre, Hebergement, Reservation
+from .serializers import HebergementSerializer
+from .utils import generer_description_hebergement
 
 
 class AdminHebergementListView(generics.ListAPIView):
@@ -82,12 +60,13 @@ class RecentReservationsForHebergementView(APIView):
             )
 
 
-from django.db.models.functions import ExtractWeekDay
 from django.db.models import Count
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from django.db.models.functions import ExtractWeekDay
 from rest_framework import status
-from .models import Reservation, Hebergement
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from .models import Hebergement, Reservation
 
 
 class ClientReservationsView(APIView):
@@ -242,19 +221,25 @@ class HebergementStatsView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, hebergement_id):
+        # Définir une clé de cache unique pour les statistiques de cet hébergement
+        cache_key = f"hebergement_stats_{hebergement_id}"
+
+        # Vérifier si les statistiques sont déjà dans le cache
+        stats_data = cache.get(cache_key)
+
+        if stats_data:
+            # Si les données sont dans le cache, les retourner directement
+            return Response(stats_data, status=status.HTTP_200_OK)
+
         try:
             # Vérifie si l'hébergement existe
             hebergement = Hebergement.objects.get(pk=hebergement_id)
 
             # Compte le nombre de réservations pour cet hébergement
-            reservation_count = Reservation.objects.filter(
-                hebergement=hebergement
-            ).count()
+            reservation_count = Reservation.objects.filter(hebergement=hebergement).count()
 
             # Compte le nombre de chambres disponibles pour cet hébergement
-            available_chambres_count = HebergementChambre.objects.filter(
-                hebergement=hebergement, status=1
-            ).count()
+            available_chambres_count = HebergementChambre.objects.filter(hebergement=hebergement, status=1).count()
 
             # Calcule le nombre total d'invités pour cet hébergement
             total_guests = (
@@ -264,20 +249,22 @@ class HebergementStatsView(APIView):
                 or 0
             )
 
-            return Response(
-                {
-                    "booking_count": reservation_count,
-                    "available_room_count": available_chambres_count,
-                    "total_guests": total_guests,
-                },
-                status=status.HTTP_200_OK,
-            )
+            # Créer les données de statistiques à renvoyer
+            stats_data = {
+                "booking_count": reservation_count,
+                "available_room_count": available_chambres_count,
+                "total_guests": total_guests,
+            }
+
+            # Sauvegarder les données dans le cache pendant 5 minutes
+            cache.set(cache_key, stats_data, timeout=300)
+
+            return Response(stats_data, status=status.HTTP_200_OK)
 
         except Hebergement.DoesNotExist:
             return Response(
                 {"error": "Hébergement non trouvé."}, status=status.HTTP_404_NOT_FOUND
             )
-
 
 class ClientsAndChambresByHebergementView(APIView):
     permission_classes = [AllowAny]
@@ -410,6 +397,7 @@ def delete_hebergement_chambre(request, id):
 
 
 import base64
+
 from django.core.files.base import ContentFile
 
 
@@ -574,21 +562,36 @@ def generer_description_view(request, hebergement_id):
     print(description)
     return JsonResponse({"description": description})
 
+from django.core.cache import cache
+
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def get_hebergement_details(request, hebergement_id):
-    try:
+    # Définir une clé de cache unique pour cet hebergement
+    cache_key = f"hebergement_{hebergement_id}"
+
+    # Tenter de récupérer l'hébergement depuis le cache
+    hebergement_data = cache.get(cache_key)
+    
+    if hebergement_data:
+        return Response(hebergement_data, status=status.HTTP_200_OK)
+
+    try:        
         hebergement = Hebergement.objects.get(id=hebergement_id)
         serializer = HebergementSerializerAll(hebergement)
+        
+        cache.set(cache_key, serializer.data, timeout=300)  
+
         return Response(serializer.data, status=status.HTTP_200_OK)
+
     except Hebergement.DoesNotExist:
         return Response(
             {"error": "Hebergement not found"}, status=status.HTTP_404_NOT_FOUND
         )
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
+    
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -1074,10 +1077,19 @@ class MinHebergementDetailView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, hebergement_id, *args, **kwargs):
+        cache_key = f"hebergement_{hebergement_id}_min_detail"
+
+        hebergement_data = cache.get(cache_key)
+
+        if hebergement_data:
+            return Response(hebergement_data, status=status.HTTP_200_OK)
+
         hebergement = get_object_or_404(Hebergement, id=hebergement_id)
         serializer = MinHebergementSerializer(hebergement)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
+        cache.set(cache_key, serializer.data, timeout=300)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
     def put(self, request, hebergement_id, *args, **kwargs):
         hebergement = get_object_or_404(Hebergement, id=hebergement_id)
         serializer = MinHebergementSerializer(hebergement, data=request.data)
@@ -1169,6 +1181,7 @@ class ToggleAutorisationView(APIView):
 
 from django.http import JsonResponse
 from django.utils.dateparse import parse_date
+
 from .models import HebergementChambre, Reservation
 
 
@@ -1415,7 +1428,7 @@ def create_transaction(transaction_data, user):
     return None, serializer.errors
 
 
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 
 # class CreateReservationView(APIView):
 #     permission_classes = [IsAuthenticated]

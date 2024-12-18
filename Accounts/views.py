@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.mail import send_mail
 from django.core.validators import validate_email
@@ -230,12 +231,21 @@ class ResponsableLoginView(APIView):
             status=status.HTTP_200_OK,
         )
 
-
 class ResponsableEtablissementDetailView(APIView):
     permission_classes = [IsResponsable]
     authentication_classes = [CustomJWTAuthentication]
 
     def get(self, request, responsable_id):
+        # Définir une clé de cache unique pour cet responsable
+        cache_key = f"responsable_detail_{responsable_id}"
+
+        # Vérifier si les données sont dans le cache
+        responsable_data = cache.get(cache_key)
+
+        if responsable_data:
+            # Si les données sont dans le cache, on les retourne directement
+            return Response(responsable_data, status=status.HTTP_200_OK)
+
         try:
             responsable = ResponsableEtablissement.objects.get(id=responsable_id)
         except ResponsableEtablissement.DoesNotExist:
@@ -243,7 +253,12 @@ class ResponsableEtablissementDetailView(APIView):
                 {"error": "Responsable non trouvé"}, status=status.HTTP_404_NOT_FOUND
             )
 
+        # Sérialiser les données du responsable
         serializer = ResponsableEtablissementSerializer(responsable)
+
+        # Sauvegarder dans le cache pendant 5 minutes
+        cache.set(cache_key, serializer.data, timeout=300)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def patch(self, request, responsable_id):
@@ -263,8 +278,6 @@ class ResponsableEtablissementDetailView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 def custom_404_view(request, exception=None):
     return render(request, "404.html")
 
